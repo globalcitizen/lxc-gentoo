@@ -27,18 +27,10 @@
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
 #    - creates a veth-connected guest
 #       - a virtual ethernet interface appears to the guest as 'eth0' and the
-#         host as '<guestname>' (max 15 characters; less show on 'ifconfig')
-#       - can optionally be bridged via bridge-utils 
-#       - a bridge is like a software-switch interface on the host and
-#         requires some host configuration, eg:
-#          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
-#          brctl addbr br0              # create bridge
-#          brctl setfd br0 0            # set forward delay to 0 seconds
-#          ifconfig br0 172.20.0.1      # set an IP for the bridge
-#          brctl addif br0 <guestname>  # add guest to bridge
-#          # ...iptables SNAT stuff...
-#    - guests can be altered to otherwise use a physical interface, vlan, etc.
-#    - typical startup time is 0.2-2 seconds
+#         host as '<guestname>' (max 15 characters; less show on 'ifconfig',
+#         use iputils' 'ip addr' instead)
+#       - guests can instead use physical interface, vlan, etc.
+#    - typical startup time is 0.2-0.3 seconds
 #    - very fast disk IO (unlike paravirtualised solutions)
 #   
 #   notes:
@@ -278,35 +270,13 @@ write_distro_network()
 	# Append LXC-specific gentoo network configuration instructions
 	cat <<- EOF >> "$ROOTFS/etc/conf.d/net"
 
-		# =================
-		# LXC CONFIGURATION
-		# =================
-		# eth0 (lxc virtualised network adapter)
-		#  optionally can be bridged.
-		#     - host br0 is managed with the bridge-utils package, ie:
-		#        brctl addbr br0
-		#        brctl setfd br0 0
-		#        ifconfig br0 172.20.0.1
-		#       ... or, on a gentoo host run:
-		#        # create init script
-		#        cd /etc/init.d && ln -s net.lo net.br0
-		#        # specify configuration
-		#        echo 'config_br0=( "172.20.0.1 netmask 255.255.0.0" )'>>/etc/conf.d/net
-		#        echo 'brctl_br0=( "setfd 0" "sethello 10" "stp off" )'>>/etc/conf.d/net
-		#        # bring up interface
-		#        /etc/init.d/net.br0 up
-		#        # set interface to start on boot
-		#        rc-update add net.br0 default
-		#
-		#     - host grants connectivity using iptables, eg:
-		#        EXTIF=eth0 # internet facing interface on the host
-		#        IP=\`ifconfig \$EXTIF|grep 'inet addr'|cut -d':' -f2|cut -d' ' -f1\`
-		#        iptables -t nat -A POSTROUTING -o \$EXTIF \\ 
-		#         -j SNAT --to-source \$IP
-		#       ... on a gentoo host, assuming external interface IP remains static
-		#           between reboots, then after running the above execute:
-		#             /etc/init.d/iptables save
-		#             rc-update add iptables default
+		# Use of this file is typically discouraged for lxc-gentoo guests.
+		# this is because it inhibits guest portability between disparate
+		# hosts. instead, use the guest-specific lxc.conf(5) file on the
+		# host to configure appropriate static interface addressing. This
+		# will result in a faster and more reliable startup than other
+		# options such as VLAN bridging with spanning tree complexities,
+		# or DHCP based autoconfiguration.
 	EOF
 	# only link for dchp, since static options render it unnecessary
 	# https://github.com/globalcitizen/lxc-gentoo/issues/33

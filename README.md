@@ -140,6 +140,80 @@ Available environment variables are as follows.
  </tbody>
 </table>
 
+
+Network Configuration Notes
+---------------------------
+
+LXC guests can have zero or more network interfaces, which can be of various
+types, and each of which may be configured with zero or more addresses. They
+may, regardless of the above, be granted access to zero or more external
+networks, real or virtual.
+
+As is typical of Unix (and Linux networking in particular), this basically 
+means "you can probably achieve anything you set your mind to, but it's not 
+going to be easy".
+
+The `lxc-gentoo` script therefore tries to provide a reasonable default for
+normal use cases, ie. by configuring guests to use one `veth`-type interface
+that can be connected to the outside world via `iptables`.
+
+Basic connectivity can be established with the following host-side commands:
+ - `lxc-start -n guest -f guest.conf`
+ - `ifconfig guest x.x.x.x`
+   (You should now be able to ping the guest. If not, check your `guest.conf`
+    network configuration versus the host-side configuration. Make sure that
+    both addresses are in the same range and differ, for example the host
+    may be `10.10.10.1` and the guest may be `10.10.10.2`)
+
+Once you have established basic connectivity, external network connectivity
+can be established as follows:
+ - `sysctl.net.ipv4.ip_forward=1`
+   (Optionally also set this in `/etc/systctl.conf` to persist after reboot)
+ - `iptables -t nat -A POSTROUTING -o outward-interface -j MASQUERADE`
+   (Where `outward-interface` is the name of the interface that carries
+    traffic to/from the host and the internet, or other destination that
+    you wish to allow the guest to connect to. Different distributions have
+    different ways to persist these `iptables` rules, but you can use
+    `iptables-save >some-ruleset` and `iptables-restore <some-ruleset` on
+    any distribution)
+
+Alternatively to a pure `iptables`-based approach, you may consider
+interface bridging. A bridge is like a software-switch interface on the 
+host and requires some configuration, ie:
+ - install the `bridge-utils` package (gentoo: `emerge bridge-utils`)
+ - `brctl addbr br0` (create a bridge (~=software switch backplane))
+ - `brctl setfd br0 0` (set forward delay of zero for optimisation)
+ - `ifconfig br0 172.20.0.1 255.255.255.0` (select an address range)
+ - `brctl addif br0 <guest-interface>` (add guest to bridge)
+
+For further reading, the following resources are recommended:
+ - `lxc.conf` man page, ie. `man 5 lxc.conf`.
+ - `man 8 iptables`
+ - `man 8 brctl`
+ - `man 8 ifconfig`; or the modern alternative `man 8 ip`
+
+The following notes describe LXC-specific network topology design
+considerations:
+ - Guest startup times will be higher if DHCP is used. In addition, DHCP use
+   creates a dependency on a valid guest-external DHCP configuration which
+   can compromise portability or reliability when executing in different
+   environments. As such, if you are planning to use your LXC guests for
+   executing what should be reliable, repeated jobs, consider avoiding DHCP.
+   Basically it is nothing but a potential source of failure (eg. address
+   pool exhaustion, DHCP server configuration expectation differences between
+   multiple guests, etc.) and should be removed if your infrastructure can
+   be configured to facilitate it. (KISS principal)
+ - VLANs have been observed to sometimes come up with unavoidable delays
+   (depending upon various factors such as spanning tree configuration and
+   intermediate hardware/software). For this reason they are perhaps best
+   left for the host system to establish connectivity with and for any LXC
+   guest access to be provided via the host `iptables` configuration. The
+   ideal setup will depend upon your particular use case. KISS.
+ - There have been bugs regarding relative MAC addresses in other LXC 
+   interface types in the past, which initially caused us to move toward 
+   `veth`-style interface configuration. Bear this in mind if moving back!
+
+
 Manual QEMU emulation setup
 ---------------------------
  - enable binfmt_misc support in your kernel.
