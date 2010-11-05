@@ -245,7 +245,7 @@ lxc.network.ipv4 = ${IPV4}
 lxc.rootfs = ${ROOTFS}
 
 # console access
-lxc.tty = 12
+lxc.tty = 1
 lxc.pts= 128
 
 # this part is based on 'linux capabilities', see: man 7 capabilities
@@ -336,10 +336,12 @@ create() {
     echo -n "Type guest root password:"
     stty -echo
     read GUESTROOTPASS
+    echo ""
     echo -n "Confirm guest root password:"
     read GUESTROOTPASS_CONFIRM
+    echo ""
     stty echo
-    echo "" # to force carriage return
+    echo ""
 
     if [ $GUESTROOTPASS != $GUESTROOTPASS_CONFIRM ]; then
       echo "Guest root passwords do not match :( ... exiting."
