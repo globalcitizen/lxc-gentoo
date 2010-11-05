@@ -334,10 +334,10 @@ create() {
     fi
 
     # Type guest root password
-    echo "Type guest root password:"
+    echo -n "Type guest root password:"
     stty -echo
     read GUESTROOTPASS
-    echo "Confirm guest root password:"
+    echo -n "Confirm guest root password:"
     read GUESTROOTPASS_CONFIRM
     stty echo
     echo "" # to force carriage return
