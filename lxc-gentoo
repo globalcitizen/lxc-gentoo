@@ -1,0 +1,519 @@
+#!/bin/bash
+
+###############################################################################
+#
+#  lxc-gentoo : script to create a gentoo lxc guest
+#  
+#   license: 
+#    - GPLv3 (you know the deal...)
+#
+#   requires:
+#    - kernel with relevant options enabled (see lxc-checkconfig)
+#    - wget and a working internet connection for HTTP fetches
+#    - iptables
+#    - bridge-utils
+#
+#   output environment description:
+#    - uses the latest stage3 and portage (ie: 'very latest gentoo')
+#    - creates a veth/bridge-connected guest
+#       - veth is a virtual ethernet interface, assigned to the guest
+#       - bridge is like a software-switch interface on the host
+#       - requires some host configuration, eg:
+#          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
+#          brctl addbr br0           # create bridge
+#          brctl setfd br0 0         # set forward delay to 0 seconds
+#          ifconfig br0 172.20.0.1   # set an IP for the bridge
+#          # ...iptables SNAT stuff...
+#    - typical startup time is <2 seconds
+#    - very fast disk IO (unlike paravirtualised solutions)
+#   
+#   notes:
+#    - because lxc.network.* directives currently cannot set additional routes
+#      it may be necessary to set these in-guest... see /etc/conf.d/net.example
+#    - because the network interface is already 'up', the net.eth0 init 
+#      script is not used during system startup.  this may affect init scripts
+#      with 'need net' dependencies
+#    - dedicated to all fellow ethical unix hackers who do not work for 
+#      morally corrupt governments and corporations: use your powers for good!
+#
+#   todo:
+#    - support for 'hardened' and selinux
+#    - support for alternate network configurations
+#    - support for openrc
+#    - support for reading from -f file for config on create
+#
+#   author:
+#    - Walter Stanish / walter _the-a-like-symbol-thinggy_ stani ^_^ sh
+#
+###############################################################################
+
+DISTRO="gentoo"
+CACHE="/var/cache/lxc/${DISTRO}"
+
+# Static defines
+WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+
+# Defaults only
+NAME="gentoo"
+UTSNAME="gentoo"
+IPV4="172.20.0.88"
+GATEWAY="172.20.0.1"
+ARCH="x86"
+if [ `uname -m`="x86_64" ]; then
+ ARCH="amd64"
+fi
+CONFFILE="${UTSNAME}.conf"
+
+# These paths are within the container so do not need to obey configure prefixes
+INITTAB="/etc/inittab"
+FSTAB="/etc/fstab"
+SSHD_CONFIG="/etc/ssh/sshd_config"
+
+################################################################################
+#                    DISTRO custom configuration files
+################################################################################
+
+# custom fstab
+
+write_distro_fstab() {
+cat <<EOF > ${ROOTFS}/${FSTAB}
+# required to prevent boot-time error display
+none / none defaults 0 0
+tmpfs  /dev/shm   tmpfs  defaults  0 0
+EOF
+}
+
+# custom inittab
+write_distro_inittab() {
+sed -i 's/^c[2-9]/#&/' ${ROOTFS}/${INITTAB} # disable spawning except on tty1
+}
+
+# custom network configuration
+write_distro_network() {
+# /etc/resolv.conf
+grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
+grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
+# gentoo network configuration
+cat <<EOF > ${ROOTFS}/etc/conf.d/net
+
+# eth0
+#  - lxc virtualised network adapter of type 'veth'
+#  - the interface is bridged to the br0 'virtual switch' on the host machine.
+#     - host br0 is managed with the bridge-utils package, ie:
+#        brctl addbr br0
+#        brctl setfd br0 0
+#        ifconfig br0 172.20.0.1
+#       ... or, on a gentoo host run:
+#        # create init script
+#        cd /etc/init.d && ln -s net.lo net.br0
+#        # specify configuration
+#        echo 'config_br0=( "172.20.0.1 netmask 255.255.0.0" )'>>/etc/conf.d/net
+#        echo 'brctl_br0=( "setfd 0" "sethello 10" "stp off" )'>>/etc/conf.d/net
+#        # bring up interface
+#        /etc/init.d/net.br0 up
+#        # set interface to start on boot
+#        rc-update add net.br0 default
+#
+#     - host grants connectivity using iptables, eg:
+#        EXTIF=eth0 # internet facing interface on the host
+#        IP=\`ifconfig \$EXTIF|grep 'inet addr'|cut -d':' -f2|cut -d' ' -f1\`
+#        iptables -t nat -A POSTROUTING -o \$EXTIF \\ 
+#         -j SNAT --to-source \$IP
+#       ... on a gentoo host, assuming external interface IP remains static
+#           between reboots, then after running the above execute:
+#             /etc/init.d/iptables save
+#             rc-update add iptables default
+#
+# required to allow for the net.eth0 script to come up and resolve any
+# openrc init system dependencies on 'net'
+config_eth0=( "null" )
+#
+# this entry is required since lxc.* directives on the host's lxc.conf
+# cannot yet (2010/11) pre-initilise default routes for a guest
+routes_eth0=( "default via ${GATEWAY}" )
+EOF
+}
+
+# custom hostname
+write_distro_hostname() {
+ echo -n " - setting hostname... "
+ cat <<EOF > ${ROOTFS}/etc/conf.d/hostname
+HOSTNAME=${UTSNAME}
+EOF
+ echo "done."
+}
+
+# fix init system
+write_distro_init_fixes() {
+ # remove udev
+ echo -n " - removing udev from init system... "
+ sed -i 's/^ *RC_DEVICES=.*$/RC_DEVICES="static"/' ${ROOTFS}/etc/conf.d/rc
+ chmod a-x ${ROOTFS}/etc/init.d/udev*
+ echo "done."
+ 
+ # remove urandom
+ echo -n " - removing urandom from init system... "
+ chmod a-x ${ROOTFS}/etc/init.d/urandom
+ echo "done."
+
+ # remove others
+ echo -n " - removing keymaps,rmnologin,numlock,checkfs,checkroot,consolefont..."
+ chmod a-x ${ROOTFS}/etc/init.d/{keymaps,rmnologin,numlock,checkfs,checkroot,consolefont}
+ echo "done."
+
+ # fix conf.d/clock TIMEZONE from 'Factory' to '' (self-managed)
+ echo -n " - fixing conf.d/clock TIMEZONE to '' (self-managed)... "
+ sed -i s/^.TIMEZONE=\"Factory\"/TIMEZONE=\"\"/ ${ROOTFS}/etc/conf.d/clock
+ echo "done."
+
+ # LATER - for openrc support - prevent unnecessary init scripts from running
+ #chmod a-x ${ROOTFS}/etc/init.d/{bootmisc,gpm,hostname,hwclock,mount-ro,network,swap,swclock,sysctl,termencoding,urandom}
+
+ # make init system shut up about disabled services (dirty hack but works)
+ # ...... breaks things!
+ #echo -n " - muting parallel init system permission warnings... "
+ #sed -i 's/" start$/" start \&>\/dev\/null/' ${ROOTFS}/lib64/rcscripts/sh/rc-services.sh
+ #echo "done."
+
+ # make init system shut up about missing module dependencies
+ echo -n " - muting module dependency warning... "
+ mkdir -p ${ROOTFS}/lib/modules/`uname -r` && chroot ${ROOTFS} depmod -a
+ echo "done."
+
+ # shut up clock
+ echo -n " - muting clock warning... "
+ sed -i 's/eq 1/eq ${fakeit}/' ${ROOTFS}/etc/init.d/clock
+ echo "done."
+}
+
+# custom sshd configuration file
+write_distro_sshd_config() {
+
+ # disabled...
+ return
+
+ echo -n " - enabling sshd... "
+ ln -s /etc/init.d/sshd ${ROOTFS}/etc/runlevels/default/sshd
+ echo "done."
+ echo -n " - setting root password to 'root' (PLEASE CHANGE) ... "
+ echo "root:root" | chroot ${ROOTFS} chpasswd
+ echo "done."
+ echo -n " - updating sshd configuration... "
+cat <<EOF > ${ROOTFS}/${SSHD_CONFIG}
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+UsePrivilegeSeparation yes
+KeyRegenerationInterval 3600
+ServerKeyBits 768
+SyslogFacility AUTH
+LogLevel INFO
+LoginGraceTime 120
+PermitRootLogin yes
+StrictModes yes
+RSAAuthentication yes
+PubkeyAuthentication yes
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+PermitEmptyPasswords yes
+ChallengeResponseAuthentication no
+EOF
+ echo "done."
+}
+
+################################################################################
+#                        lxc configuration files
+################################################################################
+
+write_lxc_configuration() {
+ echo -n " - writing LXC guest configuration... "
+cat <<EOF > ${CONFFILE}
+# set the hostname
+lxc.utsname = ${UTSNAME}
+
+# network interface
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = br0
+lxc.network.ipv4 = ${IPV4}
+
+# root filesystem location
+lxc.rootfs = ${ROOTFS}
+
+# console access
+lxc.tty = 1
+
+# this part is based on 'linux capabilities', see: man 7 capabilities
+#  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
+lxc.cap.drop = sys_module mknod setuid mac_override sys_boot
+
+# deny access to all devices by default, explicitly grant some permissions
+#
+#  format is [c|b] [major|*]:[minor|*] [r][w][m]
+#             ^     ^                   ^
+# char/block -'     \`- device number    \`-- read, write, mknod
+#
+# first deny all...
+lxc.cgroup.devices.deny = a
+# /dev/null and zero
+lxc.cgroup.devices.allow = c 1:3 rw
+lxc.cgroup.devices.allow = c 1:5 rw
+# /dev/{,u}random
+lxc.cgroup.devices.allow = c 1:9 rw
+lxc.cgroup.devices.allow = c 1:8 r
+# /dev/pts/*
+lxc.cgroup.devices.allow = c 136:* rw
+lxc.cgroup.devices.allow = c 5:2 rw
+# /dev/rtc -- disabled as it seems to fail anyway
+#lxc.cgroup.devices.allow = c 254:0 r
+# /dev/tty{1,2}
+lxc.cgroup.devices.allow = c 4:1 rwm
+lxc.cgroup.devices.allow = c 4:0 rwm
+lxc.cgroup.devices.allow = c 5:0 rwm
+lxc.cgroup.devices.allow = c 5:1 rwm
+
+EOF
+ echo "done."
+}
+
+create() {
+
+    # choose a container name, default is already in shell NAME variable
+    echo -n "What is the name for the container ? [${NAME}] "
+    read _NAME_
+
+    if [ ! -z "${_NAME_}" ]; then
+	NAME=${_NAME_}
+    fi
+
+    # choose a hostname, default is the container name
+    echo -n "What hostname do you wish for this container ? [${NAME}] "
+    read _UTSNAME_
+
+    if [ ! -z "${_UTSNAME_}" ]; then
+	UTSNAME=${_UTSNAME_}
+    else
+	UTSNAME=${NAME}
+    fi
+    CONFFILE="${UTSNAME}.conf"
+
+    # choose an ipv4 address, better to choose the same network than
+    # your host
+    echo -n "What IP address do you wish for this container ? [${IPV4}] "
+    read _IPV4_
+
+    if [ ! -z "${_IPV4_}" ]; then
+	IPV4=${_IPV4_}
+    fi
+
+    # choose the gateway ip address
+    echo -n "What is the gateway IP address ? [${GATEWAY}] "
+    read _GATEWAY_
+
+    if [ ! -z "${_GATEWAY_}" ]; then
+	GATEWAY=${_GATEWAY_}
+    fi
+
+    # choose the architecture
+    echo -n "Which gentoo architecture should we use in this container ? [${ARCH}] "
+    read _ARCH_
+    if [ ! -z "${_ARCH_}" ]; then
+    	ARCH=${_ARCH_}
+    fi
+
+    echo "Thanks!  Now sit back and relax while your gentoo brews...
+
+"
+    if which fortune 1>/dev/null 2>/dev/null ; then
+     echo '-----------------------------------------------------------------'
+     fortune
+     echo '-----------------------------------------------------------------'
+     echo ''
+    fi
+
+    # the rootfs name will be built with the container name
+    ROOTFS="./${NAME}"
+
+    # check if the rootfs does already exist
+    if [ ! -e "${ROOTFS}" ]; then
+	    mkdir -p /var/lock/subsys/
+	(
+	    flock -n -x 200
+
+
+	    RES=$?
+	    if [ "${RES}" != "0" ]; then
+		echo "Cache repository is busy."
+		break
+	    fi
+
+	    # check the mini distro was not already downloaded
+	    echo -n "Checking for pre-existing cache... "
+	    if [ ! -e "${CACHE}/rootfs" ]; then
+
+		echo "not found."
+
+		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
+		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
+		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n 's/.*stage3-amd64-\(........\)\.tar\.bz2.*/\1/p' |sort -r |uniq |head -n 1`
+		echo ${LATEST_STAGE3_TIMESTAMP}
+
+		echo -n "Downloading (~120MB), please wait... "
+		${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 1>/dev/null 2>/dev/null
+		RESULT=$?
+		if [ "${RESULT}" != "0" ]; then
+		    echo "failed!"
+		    exit 1
+		fi
+		echo "complete."
+
+		# make sure we are operating on a clear rootfs cache
+		rm -Rf ${CACHE}/rootfs #1>/dev/null 2>/dev/null
+		mkdir -p ${CACHE}/rootfs #1>/dev/null 2>/dev/null
+
+		echo -n "Extracting stage3 archive... "
+		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C ${CACHE}/rootfs 1>/dev/null 2>/dev/null
+		echo "done."
+		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
+		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+		echo "done."
+		echo -n "Extracting... "
+		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C ${CACHE}/rootfs/usr/ 1>/dev/null 2>/dev/null
+		echo "done."
+	    else
+		echo "found."
+	    fi
+
+            # make a local copy of the mini
+	    echo -n "Copying filesystem... "
+	    cp -a ${CACHE}/rootfs ${ROOTFS} && echo "done." || exit
+	) 200> "/var/lock/subsys/lxc"
+    fi
+
+write_lxc_configuration
+
+write_distro_inittab
+
+write_distro_hostname
+
+write_distro_fstab
+
+write_distro_network
+
+write_distro_sshd_config
+
+write_distro_init_fixes
+
+#/usr/sbin/lxc-create -n ${NAME} -f ${CONFFILE} 1>/dev/null 2>/dev/null
+RES=$?
+
+if [ "${RES}" != "0" ]; then
+    echo "Failed to create '${NAME}'"
+    exit 1
+fi
+
+echo "All done!"
+echo -e "\nYou can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'\n - For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net"
+}
+
+destroy() {
+
+    echo -n "What is the name for the container ? [${NAME}] "
+    read _NAME_
+
+    if [ ! -z "${_NAME_}" ]; then
+	NAME=${_NAME_}
+    fi
+
+    /usr/sbin/lxc-destroy -n ${NAME}
+    RETVAL=$?
+    if [ ! ${RETVAL} -eq 0 ]; then
+	echo "Failed to destroyed '${NAME}'"
+	return ${RETVAL}
+    fi
+
+    ROOTFS="./rootfs.${NAME}"
+
+    echo -n "Shall I remove the rootfs [y/n] ? "
+    read
+    if [ "${REPLY}" = "y" ]; then
+	rm -rf ${ROOTFS}
+    fi
+
+    return 0
+}
+
+help() {
+    cat <<EOF
+
+This script is a helper to create ${DISTRO} system containers.
+
+To make a container, simply run: 
+ 
+ lxc-${DISTRO} create
+
+ An interactive script will ask you for various information.
+
+ The first creation will download a ${DISTRO} stage3 and portage
+ snapshot and store it into a cache at ${CACHE}.
+
+Updating your cache:
+ At any time you can purge the ${DISTRO} cache download by calling
+ 'lxc-${DISTRO} purge'.  This will cause a new stage3/portage snapshot
+ to be downloaded on the next 'lxc-${DISTRO} create'.
+
+Have fun :)
+
+(PS: Unix hackers with a conscience do not work for morally corrupt 
+     corporations or governments.  Use your powers for good!)
+
+EOF
+}
+
+purge() {
+
+    if [ ! -e ${CACHE} ]; then
+	exit 0
+    fi
+
+    # lock, so we won't purge while someone is creating a repository
+    (
+	flock -n -x 200
+
+	RES=$?
+	if [ "${RES}" != "0" ]; then
+	    echo "Cache repository is busy."
+	    exit 1
+	fi
+
+	echo -n "Purging the download cache..."
+	rm --preserve-root --one-file-system -rf ${CACHE} && echo "Done." || exit 1
+	exit 0
+
+    ) 200> "/var/lock/subsys/lxc"
+}
+
+# Note: assuming uid==0 is root -- might break with userns??
+if [ "$(id -u)" != "0" ]; then
+	echo "This script should be run as 'root'"
+	exit 1
+fi
+
+CACHE="/var/cache/lxc/${DISTRO}"
+
+case "$1" in
+    create)
+	create;;
+    destroy)
+	destroy;;
+    help)
+	help;;
+    purge)
+	purge;;
+    *)
+	echo "Usage: $0 {create|destroy|purge|help}"
+	exit 1;;
+esac
