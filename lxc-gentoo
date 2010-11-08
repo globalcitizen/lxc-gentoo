@@ -416,7 +416,20 @@ if [ "${RES}" != "0" ]; then
 fi
 
 echo "All done!"
-echo -e "\nYou can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'\n - For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net"
+echo -e "\nYou can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'\n - For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net\n"
+echo "Note that container startup will show some errors, these do not matter."
+echo 
+echo "To enter your container for setup WITHOUT running it, try:"
+echo " # mount -t proc proc ${ROOTFS}/proc"
+echo " # mount -o bind /dev ${ROOTFS}/dev"
+echo " # chroot ${ROOTFS} /bin/bash"
+echo " # export PS1=\"(chroot) \$PS1\""
+echo " (chroot) #   <-- you are now in the guest"
+echo "... or, once the container is started with:"
+echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
+echo "    ... just use lxc-console -n ${NAME} to get a shell."
+echo ""
+echo "Please post feedback/questions @ http://lxc-gentoo.sf.net/"
 }
 
 destroy() {
