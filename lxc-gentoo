@@ -42,8 +42,9 @@
 #    - support for openrc
 #    - support for reading from -f file for config on create
 #
-#   author:
+#   authors:
 #    - Walter Stanish / walter _the-a-like-symbol-thinggy_ stani ^_^ sh
+#    - Julien Sanchez / julien.sanchez at gmail.com
 #
 ###############################################################################
 
@@ -281,6 +282,12 @@ EOF
  echo "done."
 }
 
+set_guest_root_password() {
+  echo -n " - setting guest root password.. "
+  echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
+  echo "done."
+}
+
 create() {
 
     # choose a container name, default is already in shell NAME variable
@@ -423,9 +430,7 @@ write_distro_sshd_config
 
 write_distro_init_fixes
 
-echo -n " - setting guest root password.. "
-echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
-echo "done."
+set_guest_root_password
 
 #/usr/sbin/lxc-create -n ${NAME} -f ${CONFFILE} 1>/dev/null 2>/dev/null
 RES=$?
