@@ -249,7 +249,7 @@ lxc.tty = 1
 
 # this part is based on 'linux capabilities', see: man 7 capabilities
 #  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
-lxc.cap.drop = sys_module mknod setuid mac_override sys_boot
+lxc.cap.drop = sys_module mknod mac_override sys_boot
 
 # deny access to all devices by default, explicitly grant some permissions
 #
