@@ -153,13 +153,14 @@ write_distro_init_fixes() {
  
  # remove urandom
  echo -n " - removing urandom from init system... "
- chmod a-x ${ROOTFS}/etc/init.d/urandom
+ #chmod a-x ${ROOTFS}/etc/init.d/urandom
+ rm ${ROOTFS}/etc/runlevels/boot/urandom
  echo "done."
 
  # remove others
  echo -n " - removing keymaps,rmnologin,numlock,checkfs,checkroot,consolefont..."
  #chmod a-x ${ROOTFS}/etc/init.d/{keymaps,rmnologin,numlock,checkfs,checkroot,consolefont}
- rm ${ROOTFS}/etc/runlevels/boot/{hostname,keymaps,rmnologin,numlock,checkfs,checkroot,consolefont}
+ rm ${ROOTFS}/etc/runlevels/boot/{hostname,keymaps,rmnologin,checkfs,checkroot,consolefont}
  echo "done."
 
  # fix conf.d/clock TIMEZONE from 'Factory' to '' (self-managed)
