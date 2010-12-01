@@ -528,8 +528,8 @@ purge() {
 	    exit 1
 	fi
 
-	echo -n "Purging the download cache..."
-	rm --preserve-root --one-file-system -rf ${CACHE} && echo "Done." || exit 1
+	echo -n "Purging the download cache... "
+	rm --preserve-root --one-file-system -rf ${CACHE} && echo "done" || exit 1
 	exit 0
 
     ) 200> "/var/lock/subsys/lxc"
