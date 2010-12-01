@@ -417,7 +417,7 @@ create() {
 
 write_lxc_configuration
 
-#write_distro_inittab
+write_distro_inittab
 
 #write_distro_hostname
 
