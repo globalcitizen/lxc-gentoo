@@ -245,7 +245,8 @@ lxc.network.ipv4 = ${IPV4}
 lxc.rootfs = ${ROOTFS}
 
 # console access
-lxc.tty = 1
+lxc.tty = 12
+lxc.pts= 128
 
 # this part is based on 'linux capabilities', see: man 7 capabilities
 #  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
