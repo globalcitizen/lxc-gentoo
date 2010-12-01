@@ -380,7 +380,7 @@ create() {
 
 		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
 		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "s/.*stage3-$ARCH-\(........\)\.tar\.bz2.*/\1/p" |sort -r |uniq |head -n 1`
+		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p" |sort -r |uniq |head -n 1`
 		echo ${LATEST_STAGE3_TIMESTAMP}
 
 		echo -n "Downloading (~120MB), please wait... "
@@ -418,7 +418,7 @@ create() {
 
 write_lxc_configuration
 
-write_distro_inittab
+#write_distro_inittab
 
 #write_distro_hostname
 
