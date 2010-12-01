@@ -159,8 +159,7 @@ write_distro_init_fixes() {
  echo "done."
 
  # remove others
- echo -n " - removing keymaps,rmnologin,numlock,checkfs,checkroot,consolefont..."
- #chmod a-x ${ROOTFS}/etc/init.d/{keymaps,rmnologin,numlock,checkfs,checkroot,consolefont}
+ echo -n " - removing hostname,keymaps,rmnologin,checkfs,checkroot,consolefont..."
  rm ${ROOTFS}/etc/runlevels/boot/{hostname,keymaps,rmnologin,checkfs,checkroot,consolefont}
  echo "done."
 
@@ -343,7 +342,7 @@ create() {
     echo "" # to force carriage return
 
     if [ $GUESTROOTPASS != $GUESTROOTPASS_CONFIRM ]; then
-      echo "Guest root passwords do not match. Exiting."
+      echo "Guest root passwords do not match :( ... exiting."
       exit 1
     fi
     echo "Thanks!  Now sit back and relax while your gentoo brews...

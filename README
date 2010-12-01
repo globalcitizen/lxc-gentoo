@@ -1,1 +1,13 @@
-lxc-gentoo lxc guest template from http://sourceforge.net/projects/lxc-gentoo/ with some personal fixes and changes
+lxc-gentoo lxc guest template
+
+this project was originally hosted at...
+ http://sourceforge.net/projects/lxc-gentoo/
+ 
+it was moved to github by Julien Sanchez at:
+ https://github.com/gentooboontoo/lxc-gentoo
+ ("personal fixes and changes")
+
+this was then forked again by the original 
+author in order to move project hosting to 
+github, which seems cool.  now available at:
+ https://github.com/globalcitizen/lxc-gentoo
