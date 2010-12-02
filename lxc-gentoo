@@ -57,7 +57,7 @@ WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 # Defaults only
 NAME="gentoo"
 UTSNAME="gentoo"
-IPV4="172.20.0.88"
+IPV4="172.20.0.88/24"
 GATEWAY="172.20.0.1"
 ARCH="x86"
 if [ `uname -m`="x86_64" ]; then
@@ -127,12 +127,14 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #
 # required to allow for the net.eth0 script to come up and resolve any
 # openrc init system dependencies on 'net'
-config_eth0=( "null" )
+config_eth0=( "${IPV4}" )
 #
 # this entry is required since lxc.* directives on the host's lxc.conf
 # cannot yet (2010/11) pre-initilise default routes for a guest
 routes_eth0=( "default via ${GATEWAY}" )
 EOF
+
+ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
 }
 
 # custom hostname
@@ -239,7 +241,9 @@ lxc.utsname = ${UTSNAME}
 lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = br0
-lxc.network.ipv4 = ${IPV4}
+# For now, lxc can't set default gateway,
+# so whole network config is set directly inside guest
+# lxc.network.ipv4 = 0.0.0.0
 
 # root filesystem location
 lxc.rootfs = ${ROOTFS}
