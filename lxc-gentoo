@@ -246,7 +246,7 @@ lxc.network.link = br0
 # lxc.network.ipv4 = 0.0.0.0
 
 # root filesystem location
-lxc.rootfs = ${ROOTFS}
+lxc.rootfs = `readlink -f ${ROOTFS}`
 
 # console access
 lxc.tty = 1
