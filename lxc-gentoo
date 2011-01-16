@@ -389,6 +389,7 @@ create() {
 
 		echo "not found."
 
+    # make unique variables for x86 and amd64 since stage3 url are different
     echo -n "Generating strings to run... "
     if [ $ARCH == 'x86' ]; then
       STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
