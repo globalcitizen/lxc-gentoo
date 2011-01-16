@@ -60,7 +60,7 @@ UTSNAME="gentoo"
 IPV4="172.20.0.88"
 GATEWAY="172.20.0.1"
 ARCH="x86"
-if [ `uname -m`="x86_64" ]; then
+if [ `uname -m` == "x86_64" ]; then
  ARCH="amd64"
 fi
 CONFFILE="${UTSNAME}.conf"
