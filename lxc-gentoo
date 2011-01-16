@@ -63,6 +63,7 @@ ARCH="x86"
 if [ `uname -m` == "x86_64" ]; then
  ARCH="amd64"
 fi
+SUBARCH=`uname -m`
 CONFFILE="${UTSNAME}.conf"
 
 # These paths are within the container so do not need to obey configure prefixes
@@ -332,6 +333,15 @@ create() {
     	ARCH=${_ARCH_}
     fi
 
+    # if x86 is given prompt for "subarch"
+    if [ "${ARCH}" == 'x86' ]; then
+      echo -n "Sub architecture of x86 ? [${SUBARCH}] "
+    	read _SUBARCH_
+      if [ ! -z "${_SUBARCH_}" ]; then
+        SUBARCH=${_SUBARCH_}
+      fi
+    fi
+
     # Type guest root password
     echo -n "Type guest root password:"
     stty -echo
@@ -379,13 +389,23 @@ create() {
 
 		echo "not found."
 
+    echo -n "Generating strings to run... "
+    if [ $ARCH == 'x86' ]; then
+      STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
+      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${SUBARCH}"
+    else
+      STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p"
+      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}"
+    fi
+
 		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
 		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p" |sort -r |uniq |head -n 1`
+		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "${STAGE3SED}" |sort -r |uniq |head -n 1`
 		echo ${LATEST_STAGE3_TIMESTAMP}
 
 		echo -n "Downloading (~120MB), please wait... "
-		${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 1>/dev/null 2>/dev/null
+		${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 "${STAGE3URL}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2" 1>/dev/null 2>/dev/null
+
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
 		    echo "failed!"
