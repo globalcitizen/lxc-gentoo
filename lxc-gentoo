@@ -39,13 +39,13 @@
 #   todo:
 #    - support for 'hardened' and selinux
 #    - support for alternate network configurations
-#    - support for openrc
 #    - support for reading from -f file for config on create
 #
 #   authors:
 #    - Anders Larsson / https://github.com/inbox/new/Wicla
 #    - Julien Sanchez / julien.sanchez at gmail.com
 #    - Walter Stanish / walter _the-a-like-symbol-thinggy_ stani ^_^ sh
+#    - Guillaume Zitta / lxc at zitta point fr
 #
 ###############################################################################
 
@@ -70,12 +70,30 @@ CONFFILE="${UTSNAME}.conf"
 # These paths are within the container so do not need to obey configure prefixes
 INITTAB="/etc/inittab"
 FSTAB="/etc/fstab"
-SSHD_CONFIG="/etc/ssh/sshd_config"
 
+#ENABLE_SSH, change to "Yes" to enable
+ENABLE_SSH="No" 
 ################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
 
+# populate /dev
+populate_dev() {
+	DEV="${ROOTFS}/dev"
+	rm -f ${DEV}/null ; mknod -m 666 ${DEV}/null c 1 3
+	mknod -m 666 ${DEV}/zero c 1 5
+	mknod -m 666 ${DEV}/random c 1 8
+	mknod -m 666 ${DEV}/urandom c 1 9
+	mkdir -m 755 ${DEV}/pts
+	mkdir -m 1777 ${DEV}/shm
+	mknod -m 666 ${DEV}/tty c 5 0
+	mknod -m 666 ${DEV}/tty0 c 4 0
+	mknod -m 666 ${DEV}/tty1 c 4 1
+	mknod -m 600 ${DEV}/console c 5 1
+	mknod -m 666 ${DEV}/full c 1 7
+	mknod -m 600 ${DEV}/initctl p
+	mknod -m 666 ${DEV}/ptmx c 5 2
+}
 # custom fstab
 
 write_distro_fstab() {
@@ -89,6 +107,8 @@ EOF
 # custom inittab
 write_distro_inittab() {
 sed -i 's/^c[2-9]/#&/' ${ROOTFS}/${INITTAB} # disable spawning except on tty1
+echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
+echo "1:12345:respawn:/sbin/agetty 38400 console linux" >> ${ROOTFS}/${INITTAB}
 }
 
 # custom network configuration
@@ -135,7 +155,7 @@ config_eth0=( "${IPV4}" )
 # cannot yet (2010/11) pre-initilise default routes for a guest
 routes_eth0=( "default via ${GATEWAY}" )
 EOF
-
+(cd ${ROOTFS}/etc/init.d ; ln -s net.lo net.eth0)
 ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
 }
 
@@ -150,82 +170,19 @@ EOF
 
 # fix init system
 write_distro_init_fixes() {
- # remove udev
- echo -n " - removing udev from init system... "
- sed -i 's/^ *RC_DEVICES=.*$/RC_DEVICES="static"/' ${ROOTFS}/etc/conf.d/rc
- chmod a-x ${ROOTFS}/etc/init.d/udev*
- echo "done."
- 
- # remove urandom
- echo -n " - removing urandom from init system... "
- #chmod a-x ${ROOTFS}/etc/init.d/urandom
- rm ${ROOTFS}/etc/runlevels/boot/urandom
- echo "done."
-
- # remove others
- echo -n " - removing hostname,keymaps,rmnologin,checkfs,checkroot,consolefont..."
- rm ${ROOTFS}/etc/runlevels/boot/{hostname,keymaps,rmnologin,checkfs,checkroot,consolefont}
- echo "done."
-
- # fix conf.d/clock TIMEZONE from 'Factory' to '' (self-managed)
- echo -n " - fixing conf.d/clock TIMEZONE to '' (self-managed)... "
- sed -i s/^.TIMEZONE=\"Factory\"/TIMEZONE=\"\"/ ${ROOTFS}/etc/conf.d/clock
- echo "done."
-
- # LATER - for openrc support - prevent unnecessary init scripts from running
- #chmod a-x ${ROOTFS}/etc/init.d/{bootmisc,gpm,hostname,hwclock,mount-ro,network,swap,swclock,sysctl,termencoding,urandom}
-
- # make init system shut up about disabled services (dirty hack but works)
- # ...... breaks things!
- #echo -n " - muting parallel init system permission warnings... "
- #sed -i 's/" start$/" start \&>\/dev\/null/' ${ROOTFS}/lib64/rcscripts/sh/rc-services.sh
- #echo "done."
-
- # make init system shut up about missing module dependencies
- echo -n " - muting module dependency warning... "
- mkdir -p ${ROOTFS}/lib/modules/`uname -r` && chroot ${ROOTFS} depmod -a
- echo "done."
-
- # shut up clock
- echo -n " - muting clock warning... "
- sed -i 's/eq 1/eq ${fakeit}/' ${ROOTFS}/etc/init.d/clock
- echo "done."
+	#thanks openrc, now it is simple :)
+	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
 }
 
 # custom sshd configuration file
 write_distro_sshd_config() {
 
  # disabled...
- return
+ [[ $ENABLE_SSH == "Yes" ]] || return
 
  echo -n " - enabling sshd... "
- ln -s /etc/init.d/sshd ${ROOTFS}/etc/runlevels/default/sshd
- echo "done."
- echo -n " - setting root password to 'root' (PLEASE CHANGE) ... "
- echo "root:root" | chroot ${ROOTFS} chpasswd
- echo "done."
- echo -n " - updating sshd configuration... "
-cat <<EOF > ${ROOTFS}/${SSHD_CONFIG}
-Port 22
-Protocol 2
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_dsa_key
-UsePrivilegeSeparation yes
-KeyRegenerationInterval 3600
-ServerKeyBits 768
-SyslogFacility AUTH
-LogLevel INFO
-LoginGraceTime 120
-PermitRootLogin yes
-StrictModes yes
-RSAAuthentication yes
-PubkeyAuthentication yes
-IgnoreRhosts yes
-RhostsRSAAuthentication no
-HostbasedAuthentication no
-PermitEmptyPasswords yes
-ChallengeResponseAuthentication no
-EOF
+ #ln -s /etc/init.d/sshd ${ROOTFS}/etc/runlevels/default/sshd
+ chroot ${ROOTFS} rc-update add sshd
  echo "done."
 }
 
@@ -448,6 +405,8 @@ write_lxc_configuration
 write_distro_inittab
 
 write_distro_hostname
+
+populate_dev
 
 write_distro_fstab
 
