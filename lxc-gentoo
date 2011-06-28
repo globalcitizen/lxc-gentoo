@@ -254,6 +254,8 @@ set_guest_root_password() {
 
 create() {
 
+  if [[ -z ${QUIET} ]]
+  then
     # choose a container name, default is already in shell NAME variable
     echo -n "What is the name for the container ? [${NAME}] "
     read _NAME_
@@ -303,6 +305,7 @@ create() {
         SUBARCH=${_SUBARCH_}
       fi
     fi
+  fi
 
     # Type guest root password
     echo -n "Type guest root password:"
@@ -473,6 +476,7 @@ destroy() {
 help() {
     cat <<EOF
 Usage: $0 {create|destroy|purge|help} [options]
+	-q : Quiet, use vars from env or options and do not ask me.
 	-i XX.XX.XX.XX/XX : IP/MASK of the container 	
 		Env. Var.: IPV4
 		Current Default: ${IPV4}
@@ -554,7 +558,7 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:" opt
+while getopts "i:g:n:u:a:q" opt
 do
         case $opt in
                 i) IPV4=$OPTARG ;;
@@ -562,6 +566,7 @@ do
                 n) NAME=$OPTARG ;;
                 u) UTSNAME=$OPTARG ;;
                 a) ARCH=$OPTARG ;;
+		q) QUIET=Yes ;;
                 \?) ;;
         esac
 done
