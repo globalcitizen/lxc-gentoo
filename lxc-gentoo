@@ -261,13 +261,11 @@ create() {
     fi
 
     # choose a hostname, default is the container name
-    echo -n "What hostname do you wish for this container ? [${NAME}] "
+    echo -n "What hostname do you wish for this container ? [${UTSNAME}] "
     read _UTSNAME_
 
     if [ ! -z "${_UTSNAME_}" ]; then
 	UTSNAME=${_UTSNAME_}
-    else
-	UTSNAME=${NAME}
     fi
     CONFFILE="${UTSNAME}.conf"
 
