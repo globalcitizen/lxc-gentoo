@@ -60,6 +60,7 @@ NAME=${NAME:-gentoo}
 UTSNAME=${UTSNAME:-gentoo}
 IPV4=${IPV4:-172.20.0.88/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
+GUESTROOTPASS="toor"
 if [ `uname -m` == "x86_64" ]; then
  ARCH=${ARCH:-amd64}
  SUBARCH=${SUBARCH:-i686}
@@ -305,8 +306,7 @@ create() {
         SUBARCH=${_SUBARCH_}
       fi
     fi
-  fi
-
+    
     # Type guest root password
     echo -n "Type guest root password:"
     stty -echo
@@ -322,6 +322,7 @@ create() {
       echo "Guest root passwords do not match :( ... exiting."
       exit 1
     fi
+  fi
     echo "Thanks!  Now sit back and relax while your gentoo brews...
 
 "
@@ -495,6 +496,9 @@ Usage: $0 {create|destroy|purge|help} [options]
 	-s SUBARCH : subarch for x86 		
 		Env. Var.: SUBARCH
 		Current Default: ${SUBARCH}
+	-p GUESTROOTPASS : password for root account
+		Env. Var.: GUESTROOTPASS
+		Current Default: ${GUESTROOTPASS}
 
 This script is a helper to create ${DISTRO} system containers.
 
@@ -566,6 +570,7 @@ do
                 n) NAME=$OPTARG ;;
                 u) UTSNAME=$OPTARG ;;
                 a) ARCH=$OPTARG ;;
+		p) GUESTROOTPASS=$OPTARG ;;
 		q) QUIET=Yes ;;
                 \?) ;;
         esac
