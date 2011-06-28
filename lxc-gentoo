@@ -480,25 +480,25 @@ Usage: $0 {create|destroy|purge|help} [options]
 	-q : Quiet, use vars from env or options and do not ask me.
 	-i XX.XX.XX.XX/XX : IP/MASK of the container 	
 		Env. Var.: IPV4
-		Current Default: ${IPV4}
+		Current/Default: ${IPV4}
 	-g GATEWAY : IP address of its gateway 		
 		Env. Var.: GATEWAY
-		Current Default: ${GATEWAY}
+		Current/Default: ${GATEWAY}
 	-n NAME : name of the container 		
 		Env. Var.: NAME
-		Current Default: ${NAME}
+		Current/Default: ${NAME}
 	-u UTSNAME : hostname of the container 		
 		Env. Var.: UTSNAME
-		Current Default: ${UTSNAME}
+		Current/Default: ${UTSNAME}
 	-a ARCHITECTURE : for now x86 or amd64 	
 		Env. Var.: ARCH
-		Current Default: ${ARCH}
+		Current/Default: ${ARCH}
 	-s SUBARCH : subarch for x86 		
 		Env. Var.: SUBARCH
-		Current Default: ${SUBARCH}
+		Current/Default: ${SUBARCH}
 	-p GUESTROOTPASS : password for root account
 		Env. Var.: GUESTROOTPASS
-		Current Default: ${GUESTROOTPASS}
+		Current/Default: ${GUESTROOTPASS}
 
 This script is a helper to create ${DISTRO} system containers.
 
