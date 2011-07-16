@@ -4,10 +4,11 @@
 # testable environment
 #  - lxc (linux containers)
 #  - vmware (fusion/osx, linux...)
+# NOTE: presently only vmware fusion/osx PoC code present
 
 # ---- initialisation -----------------
 global $settings;
-$settings['debug'] = 0;
+$settings['debug'] = 1;
 # first we determine which operating system we are running under in order
 # to ascertain the correct paths to the vmware tools
 $settings['_possible_vmware_dirs'] = array(
@@ -35,9 +36,14 @@ if($settings['vmware_dir']=='') { error("Proof of concept requires VMWare suppor
 $vm = '/Users/user/Documents/Virtual Machines.localized/Gentoo.vmwarevm/Gentoo.vmx';
 $vm_ip = '192.168.82.129';
 
+# validate the configuration
+vm_config_sanitise($vm);
+
 # check it's not already running
 if(vm_is_running($vm)) {
- error("The VM '$vm' is already running!");
+ warning("The VM '$vm' is already running! Stopping now...");
+ vmware_vm_stop($vm);
+ debug("VM '$vm' stopped.");
 }
 debug("Passed test for already running - good to proceed!");
 
@@ -63,8 +69,24 @@ else {
 
 # now we can use SSH to deploy code, etc.
 print "WIN!\n";
+sleep(2); # make sure SSH is up
+
+# test ssh
+print "Testing execution on VM via SSH... ";
+$result = remote_ssh_exec($vm_ip,'uname -a');
+print "result was '$result'.\n";
 
 exit(0);
+
+# execute a command on a remote IP via SSH,
+# and return the results.
+#  - note that this requires key based 
+#    authentication to be set up already!
+function remote_ssh_exec($ip,$cmd) {
+ exec("ssh -l root " . escapeshellcmd($ip) . ' ' .  escapeshellcmd($cmd),$output_lines);
+ $tr = join("\n",$output_lines);
+ return $tr;
+}
 
 # check an ip is alive
 #  $ip          IP to check
@@ -85,10 +107,16 @@ function ip_responds_to_ping($ip,$max_tries=1,$output_dots=0) {
  return false;
 }
 
+# stop a vm
+function vmware_vm_stop($path) {
+ global $settings;
+ exec(escapeshellarg($settings['vmware_dir'] . '/vmrun') . ' stop ' .  escapeshellarg($path));
+}
+
 # start a vm
 function vmware_vm_start($path) {
  global $settings;
- $return_code = exec(escapeshellarg($settings['vmware_dir'] . '/vmrun') . ' start ' .  escapeshellarg($path),$output_lines,$return);
+ exec(escapeshellarg($settings['vmware_dir'] . '/vmrun') . ' start ' .  escapeshellarg($path));
  # had sleep...
  if(vm_is_running($path)) {
   return true;
@@ -129,6 +157,20 @@ function vmware_running_vms() {
  }
  return $running_vms;
 }
+
+# sanitise the VM configuration supplied
+#  at the moment, this means ensuring that the 'msg.autoAnswer = TRUE'
+#  option is set, to prevent dialog boxes timing out the startup.
+function vm_config_sanitise($path) {
+ return true; # stub
+ debug("vm_config_sanitise() called on '$path'");
+ $cmd = 'cat ' . escapeshellarg($path);
+ `$cmd`;
+ exit(1);
+}
+
+
+########## general functions ########
 
 # warning
 function warning($string) {
