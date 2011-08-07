@@ -60,7 +60,7 @@ NAME=${NAME:-gentoo}
 UTSNAME=${UTSNAME:-gentoo}
 IPV4=${IPV4:-172.20.0.88/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
-GUESTROOTPASS="toor"
+GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
  ARCH=${ARCH:-amd64}
  SUBARCH=${SUBARCH:-i686}
@@ -272,7 +272,6 @@ create() {
     if [ ! -z "${_UTSNAME_}" ]; then
 	UTSNAME=${_UTSNAME_}
     fi
-    CONFFILE="${UTSNAME}.conf"
 
     # choose an ipv4 address, better to choose the same network than
     # your host
@@ -323,6 +322,8 @@ create() {
       exit 1
     fi
   fi
+
+    CONFFILE="${UTSNAME}.conf"
     echo "Thanks!  Now sit back and relax while your gentoo brews...
 
 "
@@ -562,7 +563,7 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:q" opt
+while getopts "i:g:n:u:a:p:q" opt
 do
         case $opt in
                 i) IPV4=$OPTARG ;;
@@ -589,3 +590,4 @@ case "$1" in
 	help	
 	exit 1;;
 esac
+
