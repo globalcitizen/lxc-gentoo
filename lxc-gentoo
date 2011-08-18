@@ -351,7 +351,7 @@ create() {
 	    fi
 
 	    # check the mini distro was not already downloaded
-            TEMPLATE="${CACHE}/${ARCH}_rootfs"
+            TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_rootfs"
 	    echo -n "Checking for pre-existing cache in ${TEMPLATE}... "
 	    if [ ! -e "${TEMPLATE}" ]; then
 
