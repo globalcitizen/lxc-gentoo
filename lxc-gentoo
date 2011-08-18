@@ -196,6 +196,9 @@ write_distro_sshd_config() {
 write_lxc_configuration() {
  echo -n " - writing LXC guest configuration... "
 cat <<EOF > ${CONFFILE}
+# set arch
+lxc.arch = ${LXC_ARCH}
+
 # set the hostname
 lxc.utsname = ${UTSNAME}
 
@@ -297,6 +300,7 @@ create() {
     	ARCH=${_ARCH_}
     fi
 
+    LXC_ARCH="x86_64"
     # if x86 is given prompt for "subarch"
     if [ "${ARCH}" == 'x86' ]; then
       echo -n "Sub architecture of x86 ? [${SUBARCH}] "
@@ -304,6 +308,7 @@ create() {
       if [ ! -z "${_SUBARCH_}" ]; then
         SUBARCH=${_SUBARCH_}
       fi
+      LXC_ARCH="${SUBARCH}"
     fi
     
     # Type guest root password
