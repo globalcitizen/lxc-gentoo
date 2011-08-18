@@ -351,8 +351,9 @@ create() {
 	    fi
 
 	    # check the mini distro was not already downloaded
-	    echo -n "Checking for pre-existing cache... "
-	    if [ ! -e "${CACHE}/rootfs" ]; then
+            TEMPLATE="${CACHE}/${ARCH}_rootfs"
+	    echo -n "Checking for pre-existing cache in ${TEMPLATE}... "
+	    if [ ! -e "${TEMPLATE}" ]; then
 
 		echo "not found."
 
@@ -382,18 +383,18 @@ create() {
 		echo "complete."
 
 		# make sure we are operating on a clear rootfs cache
-		rm -Rf ${CACHE}/rootfs #1>/dev/null 2>/dev/null
-		mkdir -p ${CACHE}/rootfs #1>/dev/null 2>/dev/null
+		rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
+		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 		echo -n "Extracting stage3 archive... "
-		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C ${CACHE}/rootfs 1>/dev/null 2>/dev/null
+		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
 		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
 		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Extracting... "
-		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C ${CACHE}/rootfs/usr/ 1>/dev/null 2>/dev/null
+		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
 		echo "done."
 	    else
 		echo "found."
@@ -401,7 +402,7 @@ create() {
 
             # make a local copy of the mini
 	    echo -n "Copying filesystem... "
-	    cp -a ${CACHE}/rootfs ${ROOTFS} && echo "done." || exit
+	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
 	) 200> "/var/lock/subsys/lxc"
     fi
 
