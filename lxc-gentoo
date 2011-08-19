@@ -196,6 +196,9 @@ write_distro_sshd_config() {
 write_lxc_configuration() {
  echo -n " - writing LXC guest configuration... "
 cat <<EOF > ${CONFFILE}
+# set arch
+lxc.arch = ${LXC_ARCH}
+
 # set the hostname
 lxc.utsname = ${UTSNAME}
 
@@ -297,6 +300,7 @@ create() {
     	ARCH=${_ARCH_}
     fi
 
+    LXC_ARCH="x86_64"
     # if x86 is given prompt for "subarch"
     if [ "${ARCH}" == 'x86' ]; then
       echo -n "Sub architecture of x86 ? [${SUBARCH}] "
@@ -304,6 +308,7 @@ create() {
       if [ ! -z "${_SUBARCH_}" ]; then
         SUBARCH=${_SUBARCH_}
       fi
+      LXC_ARCH="${SUBARCH}"
     fi
     
     # Type guest root password
@@ -351,8 +356,9 @@ create() {
 	    fi
 
 	    # check the mini distro was not already downloaded
-	    echo -n "Checking for pre-existing cache... "
-	    if [ ! -e "${CACHE}/rootfs" ]; then
+            TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_rootfs"
+	    echo -n "Checking for pre-existing cache in ${TEMPLATE}... "
+	    if [ ! -e "${TEMPLATE}" ]; then
 
 		echo "not found."
 
@@ -382,18 +388,18 @@ create() {
 		echo "complete."
 
 		# make sure we are operating on a clear rootfs cache
-		rm -Rf ${CACHE}/rootfs #1>/dev/null 2>/dev/null
-		mkdir -p ${CACHE}/rootfs #1>/dev/null 2>/dev/null
+		rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
+		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 		echo -n "Extracting stage3 archive... "
-		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C ${CACHE}/rootfs 1>/dev/null 2>/dev/null
+		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
 		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
 		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Extracting... "
-		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C ${CACHE}/rootfs/usr/ 1>/dev/null 2>/dev/null
+		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
 		echo "done."
 	    else
 		echo "found."
@@ -401,7 +407,7 @@ create() {
 
             # make a local copy of the mini
 	    echo -n "Copying filesystem... "
-	    cp -a ${CACHE}/rootfs ${ROOTFS} && echo "done." || exit
+	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
 	) 200> "/var/lock/subsys/lxc"
     fi
 
