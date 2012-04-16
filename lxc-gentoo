@@ -114,6 +114,10 @@ tmpfs  /dev/shm   tmpfs  defaults  0 0
 EOF
 }
 
+write_distro_timezone() {
+	cat /etc/timezone > ${ROOTFS}/etc/timezone
+}
+
 # custom inittab
 write_distro_inittab() {
 sed -i 's/^c[2-9]/#&/' ${ROOTFS}/${INITTAB} # disable spawning except on tty1
@@ -432,7 +436,7 @@ create() {
 
             # make a local copy of the mini
 	    echo -n "Copying filesystem... "
-	    cp -aT "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
+	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
 	) 200> "/var/lock/subsys/lxc"
     fi
 
@@ -445,6 +449,8 @@ write_distro_hostname
 populate_dev
 
 write_distro_fstab
+
+write_distro_timezone
 
 write_distro_network
 
