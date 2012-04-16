@@ -367,7 +367,7 @@ create() {
     ROOTFS="./${NAME}"
 
     # check if the rootfs does already exist
-    if [ ! -e "${ROOTFS}/etc" ]; then
+    if [ ! -e "${ROOTFS}" ]; then
 	    mkdir -p /var/lock/subsys/
 	(
 	    flock -n -x 200
