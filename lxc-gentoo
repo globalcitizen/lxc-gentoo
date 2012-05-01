@@ -76,11 +76,6 @@ FSTAB="/etc/fstab"
 
 #ENABLE_SSH, change to "Yes" to enable
 ENABLE_SSH="No" 
-
-if [ -d /usr/portage/profiles ] 
-then 
-	PORTAGETREE="/usr/portage"
-fi
 ################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
@@ -223,9 +218,7 @@ lxc.network.link = br0
 
 # root filesystem location
 lxc.rootfs = `readlink -f ${ROOTFS}`
-EOF
-[[ -n ${PORTAGETREE} ]] && echo "lxc.mount.entry = /usr/portage $(readlink -f ${ROOTFS})/usr/portage none bind 0 0" >> ${CONFFILE} 
-cat <<EOF >> ${CONFFILE}
+
 # console access
 lxc.tty = 1
 lxc.pts= 128
@@ -343,15 +336,6 @@ create() {
     fi
   fi
 
-    # choose whatever a common portage tree will be used
-    # your host
-    echo -n "Is there a common portage tree ? (if one type the path) [${PORTAGETREE}] "
-    read _PORTAGETREE_
-
-    if [ ! -z "${_PORTAGETREE_}" ]; then
-            PORTAGETREE=${_PORTAGETREE_}
-    fi
-
     CONFFILE="${UTSNAME}.conf"
     echo "Thanks!  Now sit back and relax while your gentoo brews...
 
@@ -418,18 +402,13 @@ create() {
 		echo -n "Extracting stage3 archive... "
 		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
 		echo "done."
-		if [[ -d ${PORTAGETREE}/profiles ]]
-		then
-			echo "We already have a portage tree, reusing it"
-		else
-			echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
-			rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-			echo "done."
-			echo -n "Extracting... "
-			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
-			echo "done."
-		fi
+		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
+		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+		echo "done."
+		echo -n "Extracting... "
+		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
+		echo "done."
 	    else
 		echo "found."
 	    fi
@@ -537,9 +516,6 @@ Usage: $0 {create|destroy|purge|help} [options]
 	-p GUESTROOTPASS : password for root account
 		Env. Var.: GUESTROOTPASS
 		Current/Default: ${GUESTROOTPASS}
-	-t PORTAGETREE : Common Portage tree (if not specified, or not exists will be copied)
-		Env. Var.: PORTAGETREE
-		Current/Default: ${PORTAGETREE}
 
 This script is a helper to create ${DISTRO} system containers.
 
