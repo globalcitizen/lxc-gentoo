@@ -124,6 +124,8 @@ echo "1:12345:respawn:/sbin/agetty -a root 38400 console linux" >> ${ROOTFS}/${I
 rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
 # we also disable the /etc/init.d/termencoding script which can cause errors
 sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
+# quiet login
+touch ${ROOTFS}/root/.hushlogin
 }
 
 # custom network configuration
