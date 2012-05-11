@@ -111,6 +111,7 @@ EOF
 
 write_distro_timezone() {
 	cat /etc/timezone > ${ROOTFS}/etc/timezone
+	cp /etc/localtime > ${ROOTFS}/etc/localtime
 }
 
 # custom inittab
