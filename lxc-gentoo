@@ -118,6 +118,9 @@ write_distro_inittab() {
 sed -i 's/^c[2-9]/#&/' ${ROOTFS}/${INITTAB} # disable spawning except on tty1
 echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
 echo "1:12345:respawn:/sbin/agetty 38400 console linux" >> ${ROOTFS}/${INITTAB}
+# we also blank out /etc/issue here in order to prevent delays spawning login
+# caused by attempts to determine domainname on disconnected containers
+rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
 }
 
 # custom network configuration
@@ -158,11 +161,11 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #
 # required to allow for the net.eth0 script to come up and resolve any
 # openrc init system dependencies on 'net'
-config_eth0=( "${IPV4}" )
+config_eth0="${IPV4}"
 #
 # this entry is required since lxc.* directives on the host's lxc.conf
 # cannot yet (2010/11) pre-initilise default routes for a guest
-routes_eth0=( "default via ${GATEWAY}" )
+routes_eth0="default via ${GATEWAY}"
 EOF
 (cd ${ROOTFS}/etc/init.d ; ln -s net.lo net.eth0)
 ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
@@ -455,13 +458,13 @@ echo "To enter your container for setup WITHOUT running it, try:"
 echo " # mount -t proc proc ${ROOTFS}/proc"
 echo " # mount -o bind /dev ${ROOTFS}/dev"
 echo " # chroot ${ROOTFS} /bin/bash"
-echo " # export PS1=\"(chroot) \$PS1\""
-echo " (chroot) #   <-- you are now in the guest"
+echo " # export PS1=\"(${NAME}) \$PS1\""
+echo " (${NAME}) #   <-- you are now in the guest"
 echo "... or, once the container is started with:"
 echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
-echo "    ... just use lxc-console -n ${NAME} to get a shell."
+echo "    ... either ssh in or use lxc-console -n ${NAME} to get a shell."
 echo ""
-echo "Please post feedback/questions @ http://lxc-gentoo.sf.net/"
+echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )\n";
 }
 
 destroy() {
@@ -523,7 +526,7 @@ To make a container, simply run:
  
  lxc-${DISTRO} create
 
-You can averride default by environnement variables or commandline options with this override sequence :
+You can override default by environnement variables or commandline options with this override sequence :
  default, env, cmdline option
  
  Example : 
