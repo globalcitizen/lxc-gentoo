@@ -1,13 +1,31 @@
-lxc-gentoo lxc guest template
-
-this project was originally hosted at...
- http://sourceforge.net/projects/lxc-gentoo/
- 
-it was moved to github by Julien Sanchez at:
- https://github.com/gentooboontoo/lxc-gentoo
- ("personal fixes and changes")
-
-this was then forked again by the original 
-author in order to move project hosting to 
-github, which seems cool.  now available at:
+[lxc-gentoo]
+  Linux Containers Gentoo Guest Template Script
+--------------------------------------------------
  https://github.com/globalcitizen/lxc-gentoo
+
+The script creates a root filesystem and config
+file suitable for initializing a Gentoo guest
+within an LXC (Linux Containers) environment.
+
+While normally run interactively, the script also
+accepts input from various environment variables.
+
+
+Requirements:
+ - Recent Linux kernel (>=3.2.x recommended)
+    http://www.kernel.org/
+ - lxc userspace utilities
+    (Gentoo: 'emerge lxc')
+
+
+History:
+ The project was originally hosted at...
+  http://sourceforge.net/projects/lxc-gentoo/
+ 
+ It was moved to github by Julien Sanchez at:
+  https://github.com/gentooboontoo/lxc-gentoo
+
+ This was then forked again by the original 
+ author in order to move project hosting to 
+ github.
+  https://github.com/globalcitizen/lxc-gentoo
