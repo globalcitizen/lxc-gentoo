@@ -349,8 +349,12 @@ create() {
 
 "
     if which fortune 1>/dev/null 2>/dev/null ; then
-     echo '-----------------------------------------------------------------'
-     fortune
+      echo '-----------------------------------------------------------------'
+      if which cowsay 1>/dev/null 2>/dev/null ; then
+	cowsay `fortune -s`
+      else
+	fortune
+      fi
      echo '-----------------------------------------------------------------'
      echo ''
     fi
