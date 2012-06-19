@@ -380,13 +380,18 @@ create() {
 
     # make unique variables for x86 and amd64 since stage3 url are different
     echo -n "Generating strings to run... "
-    if [ $ARCH == 'x86' ]; then
-      STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
-      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${SUBARCH}"
-    else
-      STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p"
-      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}"
-    fi
+	if [ x"$CUSTOMURL" = x"" ]; then
+	   if [ $ARCH == 'x86' ]; then
+	      STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
+	      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${SUBARCH}"
+	    else
+	      STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p"
+	      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}"
+	    fi
+	else
+	     STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.[xb]z[2].*/\1/p"
+	     STAGE3URL=$CUSTOMURL
+	fi
 
 		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
 		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
@@ -394,7 +399,12 @@ create() {
 		echo ${LATEST_STAGE3_TIMESTAMP}
 
 		echo -n "Downloading (~120MB), please wait... "
-		${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 "${STAGE3URL}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2" 1>/dev/null 2>/dev/null
+		if [ x"$CUSTOMURL" = x"" ]; then
+			${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 "${STAGE3URL}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2" 1>/dev/null 2>/dev/null
+		else
+			echo ${WGET} -O ${CACHE}/"${CUSTOMURL##*/}" "${CUSTOMURL}"
+			${WGET} -O ${CACHE}/"${CUSTOMURL##*/}" "${CUSTOMURL}" 1>/dev/null 2>/dev/null
+		fi
 
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
@@ -408,7 +418,16 @@ create() {
 		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 		echo -n "Extracting stage3 archive... "
-		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+		if [ x"$CUSTOMURL" = x"" ]; then
+			tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+		else
+			tar xvf ${CACHE}/"${CUSTOMURL##*/}" -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+		fi
+		RESULT=$?
+		if [ "${RESULT}" != "0" ]; then
+		    echo "failed!"
+		    exit 1
+		fi
 		echo "done."
 		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
 		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
@@ -524,6 +543,9 @@ Usage: $0 {create|destroy|purge|help} [options]
 	-p GUESTROOTPASS : password for root account
 		Env. Var.: GUESTROOTPASS
 		Current/Default: ${GUESTROOTPASS}
+	-C CUSTOMURL : URL for a custom tarball
+		Env. Var.: CUSTOMURL
+		Current/Default: ${CUSTOMURL}
 
 This script is a helper to create ${DISTRO} system containers.
 
@@ -587,18 +609,19 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:p:q" opt
+while getopts "i:g:n:u:a:C:p:q" opt
 do
-        case $opt in
-                i) IPV4=$OPTARG ;;
-                g) GATEWAY=$OPTARG ;;
-                n) NAME=$OPTARG ;;
-                u) UTSNAME=$OPTARG ;;
-                a) ARCH=$OPTARG ;;
-		p) GUESTROOTPASS=$OPTARG ;;
-		q) QUIET=Yes ;;
-                \?) ;;
-        esac
+		case $opt in
+			i) IPV4=$OPTARG ;;
+			g) GATEWAY=$OPTARG ;;
+			n) NAME=$OPTARG ;;
+			u) UTSNAME=$OPTARG ;;
+			a) ARCH=$OPTARG ;;
+			C) CUSTOMURL=$OPTARG;;
+			p) GUESTROOTPASS=$OPTARG ;;
+			q) QUIET=Yes ;;
+			\?) ;;
+		esac
 done
 
 case "$1" in
