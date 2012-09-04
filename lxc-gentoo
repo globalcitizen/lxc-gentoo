@@ -134,6 +134,7 @@ write_distro_network() {
 grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
 grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
 # gentoo network configuration
+if [ "${IPV4}" == "dhcp" ]; then
 cat <<EOF > ${ROOTFS}/etc/conf.d/net
 
 # eth0
@@ -166,14 +167,11 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #
 # required to allow for the net.eth0 script to come up and resolve any
 # openrc init system dependencies on 'net'
-config_eth0="${IPV4}"
-#
-# this entry is required since lxc.* directives on the host's lxc.conf
-# cannot yet (2010/11) pre-initilise default routes for a guest
-routes_eth0="default via ${GATEWAY}"
+config_eth0="dhcp"
 EOF
-(cd ${ROOTFS}/etc/init.d ; ln -s net.lo net.eth0)
-ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+  (cd ${ROOTFS}/etc/init.d ; ln -s net.lo net.eth0)
+  ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+fi
 }
 
 # custom hostname
@@ -220,9 +218,21 @@ lxc.utsname = ${UTSNAME}
 lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = br0
-# For now, lxc can't set default gateway,
-# so whole network config is set directly inside guest
-# lxc.network.ipv4 = 0.0.0.0
+EOF
+
+if [ "${IPV4}" == "dhcp" ]; then
+cat <<EOF >> ${CONFFILE}
+#lxc.network.ipv4 = X.X.X.X
+#lxc.network.ipv4.gateway = Y.Y.Y.Y
+EOF
+else
+cat <<EOF >> ${CONFFILE}
+lxc.network.ipv4 = ${IPV4}
+lxc.network.ipv4.gateway = ${GATEWAY}
+EOF
+fi
+
+cat <<EOF >> ${CONFFILE}
 
 # root filesystem location
 lxc.rootfs = `readlink -f ${ROOTFS}`
@@ -294,7 +304,7 @@ create() {
 
     # choose an ipv4 address, better to choose the same network than
     # your host
-    echo -n "What IP address do you wish for this container ? [${IPV4}] "
+    echo -n "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? [${IPV4}] "
     read _IPV4_
 
     if [ ! -z "${_IPV4_}" ]; then
@@ -302,11 +312,13 @@ create() {
     fi
 
     # choose the gateway ip address
-    echo -n "What is the gateway IP address ? [${GATEWAY}] "
-    read _GATEWAY_
+    if [ "${IPV4}" != "dhcp" ]; then
+      echo -n "What is the gateway IP address ? [${GATEWAY}] "
+      read _GATEWAY_
 
-    if [ ! -z "${_GATEWAY_}" ]; then
-	GATEWAY=${_GATEWAY_}
+      if [ ! -z "${_GATEWAY_}" ]; then
+        GATEWAY=${_GATEWAY_}
+      fi
     fi
 
     # choose the architecture
@@ -526,7 +538,7 @@ help() {
     cat <<EOF
 Usage: $0 {create|destroy|purge|help} [options]
 	-q : Quiet, use vars from env or options and do not ask me.
-	-i XX.XX.XX.XX/XX : IP/MASK of the container 	
+	-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
 		Env. Var.: IPV4
 		Current/Default: ${IPV4}
 	-g GATEWAY : IP address of its gateway 		
