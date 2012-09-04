@@ -19,6 +19,8 @@
 #       - veth is a virtual ethernet interface, assigned to the guest
 #       - bridge is like a software-switch interface on the host
 #       - requires some host configuration, eg:
+#          # if you choose DHCP, set up a DHCP server on the subnet
+#          # ... eg. emerge isc-dhcp ...
 #          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
 #          brctl addbr br0           # create bridge
 #          brctl setfd br0 0         # set forward delay to 0 seconds
@@ -29,17 +31,19 @@
 #   
 #   notes:
 #    - because lxc.network.* directives currently cannot set additional routes
-#      it may be necessary to set these in-guest... see /etc/conf.d/net.example
-#    - because the network interface is already 'up', the net.eth0 init 
-#      script is not used during system startup.  this may affect init scripts
-#      with 'need net' dependencies
+#      unless you use DHCP it may be necessary to set these in-guest... see 
+#      /etc/conf.d/net.example
 #    - dedicated to all fellow ethical unix hackers who do not work for 
 #      morally corrupt governments and corporations: use your powers for good!
 #
 #   todo:
-#    - support for 'hardened' and selinux
+#    - support for selinux/grsec
 #    - support for alternate network configurations
 #    - support for reading from -f file for config on create
+#    - better documentation for environment variables
+#    - CUSTOM_STAGE3_URL support
+#    - CUSTOM_PORTAGE_URL support
+#    - host-mounted portage support (+aufs/unionfs support, tmpfs distfiles...)
 #
 #   authors:
 #    - Anders Larsson / https://github.com/inbox/new/Wicla
