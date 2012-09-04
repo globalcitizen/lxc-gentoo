@@ -116,8 +116,14 @@ EOF
 }
 
 write_distro_timezone() {
-	cat /etc/timezone > ${ROOTFS}/etc/timezone
-	cp /etc/localtime ${ROOTFS}/etc/localtime
+	if [ -e /etc/localtime ]; then
+		# duplicate host timezone
+		cat /etc/localtime > ${ROOTFS}/etc/localtime
+	else
+		# otherwise set up UTC
+		rm ${ROOTFS}/etc/localtime 1>/dev/null 2>/dev/null
+		ln -s ../usr/share/zoneinfo/UTC ${ROOTFS}/etc/localtime
+	fi
 }
 
 # custom inittab
