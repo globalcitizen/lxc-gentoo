@@ -142,13 +142,12 @@ touch ${ROOTFS}/root/.hushlogin
 
 # custom network configuration
 write_distro_network() {
-# /etc/resolv.conf
-grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
-grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
-# gentoo network configuration
-if [ "${IPV4}" == "dhcp" ]; then
-cat <<EOF > ${ROOTFS}/etc/conf.d/net
-
+ # /etc/resolv.conf
+ grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
+ grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
+ # gentoo network configuration
+ if [ "${IPV4}" != "dhcp" ]; then
+  cat <<EOF > ${ROOTFS}/etc/conf.d/net
 # eth0
 #  - lxc virtualised network adapter of type 'veth'
 #  - the interface is bridged to the br0 'virtual switch' on the host machine.
@@ -179,11 +178,11 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #
 # required to allow for the net.eth0 script to come up and resolve any
 # openrc init system dependencies on 'net'
-config_eth0="dhcp"
+config_eth0="null"
 EOF
-  (cd ${ROOTFS}/etc/init.d ; ln -s net.lo net.eth0)
-  ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
-fi
+ fi
+ ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
+ ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
 }
 
 # custom hostname
