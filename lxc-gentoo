@@ -467,7 +467,7 @@ create() {
 	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
 	) 200> "/var/lock/subsys/lxc"
     else
-     echo "ERROR: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
+     echo "WARNING: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
     fi
 
 write_lxc_configuration
