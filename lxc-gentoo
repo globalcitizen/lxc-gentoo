@@ -72,6 +72,7 @@ else
  ARCH=${ARCH:-x86}
  SUBARCH=${SUBARCH:-$(uname -m)}
 fi
+ARCH_VARIANT=""
 CONFFILE="${UTSNAME}.conf"
 
 # These paths are within the container so do not need to obey configure prefixes
@@ -341,6 +342,13 @@ create() {
     	ARCH=${_ARCH_}
     fi
 
+    # choose architecture variant
+    echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCH_VARIANT}] "
+    read _ARCH_VARIANT_
+    if [ ! -z "${_ARCH_VARIANT_}" ]; then
+     ARCH_VARIANT=${_ARCH_VARIANT_}
+    fi
+
     LXC_ARCH="x86_64"
     # if x86 is given prompt for "subarch"
     if [ "${ARCH}" == 'x86' ]; then
@@ -357,38 +365,31 @@ create() {
     stty -echo
     read GUESTROOTPASS
     echo ""
-    echo -n "Confirm guest root password:"
-    read GUESTROOTPASS_CONFIRM
-    echo ""
     stty echo
     echo ""
-
-    if [ $GUESTROOTPASS != $GUESTROOTPASS_CONFIRM ]; then
-      echo "Guest root passwords do not match :( ... exiting."
-      exit 1
-    fi
   fi
 
-    CONFFILE="${UTSNAME}.conf"
-    echo "Thanks!  Now sit back and relax while your gentoo brews...
+  CONFFILE="${UTSNAME}.conf"
+  echo "Thanks!  Now sit back and relax while your gentoo brews...
 
 "
-    if which fortune 1>/dev/null 2>/dev/null ; then
-      echo '-----------------------------------------------------------------'
-      if which cowsay 1>/dev/null 2>/dev/null ; then
-	cowsay `fortune -s`
-      else
-	fortune
-      fi
-     echo '-----------------------------------------------------------------'
-     echo ''
-    fi
+  # nice pondering material
+  if which fortune 1>/dev/null 2>/dev/null ; then
+   echo '-----------------------------------------------------------------'
+   if which cowsay 1>/dev/null 2>/dev/null ; then
+    cowsay `fortune -s`
+   else
+    fortune
+   fi
+   echo '-----------------------------------------------------------------'
+   echo ''
+  fi
 
-    # the rootfs name will be built with the container name
-    ROOTFS="./${NAME}"
+  # the rootfs name will be built with the container name
+  ROOTFS="./${NAME}"
 
-    # check if the rootfs does already exist
-    if [ ! -e "${ROOTFS}" ]; then
+  # check if the rootfs does already exist
+  if [ ! -e "${ROOTFS}" ]; then
 	    mkdir -p /var/lock/subsys/
 	(
 	    flock -n -x 200
@@ -401,40 +402,36 @@ create() {
 	    fi
 
 	    # check the mini distro was not already downloaded
-            TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_rootfs"
+            TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
 	    echo -n "Checking for pre-existing cache in ${TEMPLATE}... "
 	    if [ ! -e "${TEMPLATE}" ]; then
 
 		echo "not found."
 
-    # make unique variables for x86 and amd64 since stage3 url are different
-    echo -n "Generating strings to run... "
-	if [ x"$CUSTOMURL" = x"" ]; then
-	   if [ $ARCH == 'x86' ]; then
-	      STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
-	      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${SUBARCH}"
-	    else
-	      STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p"
-	      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}"
-	    fi
-	else
-	     STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.[xb]z[2].*/\1/p"
-	     STAGE3URL=$CUSTOMURL
-	fi
+		# prepend '-' to nonblank ARCH_VARIANT for URL construction
+		if [ ! -z "${ARCH_VARIANT}" ]; then
+        	 ARCH_VARIANT="-${ARCH_VARIANT}"
+        	fi
 
-		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
+		# base stage3 URL
+		STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/"
+
+		# get latest-stage3....txt file for subpath
+		echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive... "
 		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "${STAGE3SED}" |sort -r |uniq |head -n 1`
-		echo ${LATEST_STAGE3_TIMESTAMP}
+		STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${ARCH}${ARCH_VARIANT}.txt"
+		LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+		echo ${LATEST_STAGE3_SUBPATH}
 
-		echo -n "Downloading (~120MB), please wait... "
-		if [ x"$CUSTOMURL" = x"" ]; then
-			${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 "${STAGE3URL}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2" 1>/dev/null 2>/dev/null
-		else
-			echo ${WGET} -O ${CACHE}/"${CUSTOMURL##*/}" "${CUSTOMURL}"
-			${WGET} -O ${CACHE}/"${CUSTOMURL##*/}" "${CUSTOMURL}" 1>/dev/null 2>/dev/null
-		fi
-
+		# download
+		echo -n "Downloading (~130MB), please wait... "
+		OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
+		#  - ensure output directory exists
+		OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
+		mkdir -p "${OUTPUT_DIR}" 1>/dev/null 2>/dev/null
+		#  - grab
+		INPUT_URL="${STAGE3URL}${LATEST_STAGE3_SUBPATH}"
+		${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} 1>/dev/null 2>/dev/null
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
 		    echo "failed!"
@@ -447,11 +444,7 @@ create() {
 		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 		echo -n "Extracting stage3 archive... "
-		if [ x"$CUSTOMURL" = x"" ]; then
-			tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
-		else
-			tar xvf ${CACHE}/"${CUSTOMURL##*/}" -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
-		fi
+		tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
 		    echo "failed!"
