@@ -251,9 +251,11 @@ cat <<EOF >> ${CONFFILE}
 # root filesystem location
 lxc.rootfs = `readlink -f ${ROOTFS}`
 
-# sys and proc
+# mounts that allow us to drop CAP_SYS_ADMIN
 lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
 lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
+lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
 # console access
 lxc.tty = 1
