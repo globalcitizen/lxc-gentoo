@@ -251,13 +251,19 @@ cat <<EOF >> ${CONFFILE}
 # root filesystem location
 lxc.rootfs = `readlink -f ${ROOTFS}`
 
+# sys and proc
+lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
+lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
+
 # console access
 lxc.tty = 1
 lxc.pts= 128
 
 # this part is based on 'linux capabilities', see: man 7 capabilities
 #  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
-lxc.cap.drop = sys_module mknod mac_override sys_boot
+# conservative: lxc.cap.drop = sys_module mknod mac_override sys_boot
+# aggressive follows. (leaves open: chown ipc_lock lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot)
+lxc.cap.drop = audit_control audit_write dac_override dac_read_search fowner fsetid ipc_owner kill linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_boot sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
 
 # deny access to all devices by default, explicitly grant some permissions
 #
