@@ -369,7 +369,7 @@ create() {
     fi
     
     # Type guest root password
-    echo -n "Type guest root password:"
+    echo -n "Type guest root password (enter for none):"
     stty -echo
     read GUESTROOTPASS
     echo ""
