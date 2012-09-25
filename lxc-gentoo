@@ -520,7 +520,7 @@ echo "... or, once the container is started with:"
 echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
 echo "    ... either ssh in or use lxc-console -n ${NAME} to get a shell."
 echo ""
-echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )\n";
+echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
 }
 
 destroy() {
