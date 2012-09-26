@@ -286,8 +286,6 @@ lxc.cgroup.devices.allow = c 1:8 r
 # /dev/pts/*
 lxc.cgroup.devices.allow = c 136:* rw
 lxc.cgroup.devices.allow = c 5:2 rw
-# /dev/rtc -- disabled as it seems to fail anyway
-#lxc.cgroup.devices.allow = c 254:0 r
 # /dev/tty{1,2}
 lxc.cgroup.devices.allow = c 4:1 rwm
 lxc.cgroup.devices.allow = c 4:0 rwm
