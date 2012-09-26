@@ -203,6 +203,8 @@ write_distro_init_fixes() {
 	rm ${ROOTFS}/etc/runlevels/boot/termencoding 1>/dev/null 2>/dev/null
 	# fix boot-time interface config wipe (openrc 0.9.8.4 ~sep 2012)
 	sed -i -e 's/#rc_nostop=""/rc_nostop="net.eth0"/' /etc/rc.conf
+	# remove netmount from startup (openrc leaves it in)
+	rm ${ROOTFS}/etc/runlevels/default/netmount
 }
 
 # custom sshd configuration file
