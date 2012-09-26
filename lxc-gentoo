@@ -197,10 +197,12 @@ EOF
 
 # fix init system
 write_distro_init_fixes() {
-	#thanks openrc, now it is simple :)
+	# short-circuit openrc's autodetection
 	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
 	# fix for error caused by openrc <0.10.2 (~may 2012)
 	rm ${ROOTFS}/etc/runlevels/boot/termencoding 1>/dev/null 2>/dev/null
+	# fix boot-time interface config wipe (openrc 0.9.8.4 ~sep 2012)
+	sed -i -e 's/#rc_nostop=""/rc_nostop="net.eth0"/' /etc/rc.conf
 }
 
 # custom sshd configuration file
