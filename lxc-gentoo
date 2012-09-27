@@ -223,8 +223,8 @@ lxc.arch = ${LXC_ARCH}
 lxc.utsname = ${UTSNAME}
 
 # network interface
-lxc.network.flags = up
 lxc.network.type = veth
+lxc.network.flags = up
 #  - name in host (else defaults to confusing 'tun'+random)
 lxc.network.veth.pair = lxc.${NAME}
 #  - name in guest
