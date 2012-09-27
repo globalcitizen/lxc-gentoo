@@ -211,18 +211,6 @@ write_distro_init_fixes() {
 	rm ${ROOTFS}/etc/runlevels/boot/urandom
 }
 
-# custom sshd configuration file
-write_distro_sshd_config() {
-
- # disabled...
- [[ $ENABLE_SSH == "Yes" ]] || return
-
- echo -n " - enabling sshd... "
- #ln -s /etc/init.d/sshd ${ROOTFS}/etc/runlevels/default/sshd
- chroot ${ROOTFS} rc-update add sshd
- echo "done."
-}
-
 ################################################################################
 #                        lxc configuration files
 ################################################################################
@@ -499,8 +487,6 @@ write_distro_timezone
 
 write_distro_network
 
-write_distro_sshd_config
-
 write_distro_init_fixes
 
 set_guest_root_password
@@ -523,9 +509,9 @@ echo " # mount -o bind /dev ${ROOTFS}/dev"
 echo " # chroot ${ROOTFS} /bin/bash"
 echo " # export PS1=\"(${NAME}) \$PS1\""
 echo " (${NAME}) #   <-- you are now in the guest"
-echo "... or, once the container is started with:"
+echo "... or, start it on the current console with:"
 echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
-echo "    ... either ssh in or use lxc-console -n ${NAME} to get a shell."
+echo "... or, start it elsewhere and use lxc-console -n ${NAME} to get a shell."
 echo ""
 echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
 }
