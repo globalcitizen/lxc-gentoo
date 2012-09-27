@@ -15,10 +15,12 @@
 #
 #   output environment description:
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
-#    - creates a veth/bridge-connected guest
-#       - veth is a virtual ethernet interface, assigned to the guest
-#       - bridge is like a software-switch interface on the host
-#       - requires some host configuration, eg:
+#    - creates a veth-connected guest
+#       - a virtual ethernet interface appears to the guest as 'eth0' and the
+#         host as 'lxc.<guestname>'
+#       - can optionally be bridged via bridge-utils
+#       - bridge is like a software-switch interface on the host and
+#         requires some host configuration, eg:
 #          # if you choose DHCP, set up a DHCP server on the subnet
 #          # ... eg. emerge isc-dhcp ...
 #          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
@@ -26,6 +28,7 @@
 #          brctl setfd br0 0         # set forward delay to 0 seconds
 #          ifconfig br0 172.20.0.1   # set an IP for the bridge
 #          # ...iptables SNAT stuff...
+#    - guests can be altered to otherwise use a physical interface, vlan, etc.
 #    - typical startup time is <2 seconds
 #    - very fast disk IO (unlike paravirtualised solutions)
 #   
@@ -38,12 +41,8 @@
 #
 #   todo:
 #    - support for selinux/grsec
-#    - support for alternate network configurations
-#    - support for reading from -f file for config on create
-#    - better documentation for environment variables
 #    - CUSTOM_STAGE3_URL support
 #    - CUSTOM_PORTAGE_URL support
-#    - host-mounted portage support (+aufs/unionfs support, tmpfs distfiles...)
 #
 #   authors:
 #    - Anders Larsson / https://github.com/inbox/new/Wicla
@@ -149,9 +148,8 @@ write_distro_network() {
  # gentoo network configuration
  if [ "${IPV4}" != "dhcp" ]; then
   cat <<EOF > ${ROOTFS}/etc/conf.d/net
-# eth0
-#  - lxc virtualised network adapter of type 'veth'
-#  - the interface is bridged to the br0 'virtual switch' on the host machine.
+# eth0 (lxc virtualised network adapter)
+#  optionally can be bridged.
 #     - host br0 is managed with the bridge-utils package, ie:
 #        brctl addbr br0
 #        brctl setfd br0 0
@@ -177,8 +175,8 @@ write_distro_network() {
 #             /etc/init.d/iptables save
 #             rc-update add iptables default
 #
-# required to allow for the net.eth0 script to come up and resolve any
-# openrc init system dependencies on 'net'
+# null config required to allow for the net.eth0 script to come up and 
+# resolve any openrc init system dependencies on 'net'
 config_eth0="null"
 EOF
  fi
@@ -225,13 +223,20 @@ lxc.arch = ${LXC_ARCH}
 lxc.utsname = ${UTSNAME}
 
 # network interface
-lxc.network.type = veth
 lxc.network.flags = up
-lxc.network.link = br0
+lxc.network.type = veth
+#  - name in host (else defaults to confusing 'tun'+random)
+lxc.network.veth.pair = lxc.${NAME}
+#  - name in guest
+lxc.network.name = eth0
+# enable for bridging
+#  (eg. 'brctl addbr br0; brctl setfd br0 0; brctl addif br0 eth0')
+#lxc.network.link = br0
 EOF
 
 if [ "${IPV4}" == "dhcp" ]; then
 cat <<EOF >> ${CONFFILE}
+# disabled (guest uses DHCP)
 #lxc.network.ipv4 = X.X.X.X
 #lxc.network.ipv4.gateway = Y.Y.Y.Y
 EOF
