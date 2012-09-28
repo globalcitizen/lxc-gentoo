@@ -17,7 +17,7 @@
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
 #    - creates a veth-connected guest
 #       - a virtual ethernet interface appears to the guest as 'eth0' and the
-#         host as 'lxc.<guestname>'
+#         host as '<guestname>' (max 15 characters)
 #       - can optionally be bridged via bridge-utils
 #       - bridge is like a software-switch interface on the host and
 #         requires some host configuration, eg:
@@ -225,8 +225,8 @@ lxc.utsname = ${UTSNAME}
 # network interface
 lxc.network.type = veth
 lxc.network.flags = up
-#  - name in host (else defaults to confusing 'tun'+random)
-lxc.network.veth.pair = lxc.${NAME}
+#  - name in host (max 15 chars; defaults to 'tun'+random)
+lxc.network.veth.pair = ${NAME}
 #  - name in guest
 lxc.network.name = eth0
 # enable for bridging
@@ -309,7 +309,7 @@ create() {
   if [[ -z ${QUIET} ]]
   then
     # choose a container name, default is already in shell NAME variable
-    echo -n "What is the name for the container ? [${NAME}] "
+    echo -n "What is the name for the container (recommended <=15 chars)? [${NAME}] "
     read _NAME_
 
     if [ ! -z "${_NAME_}" ]; then

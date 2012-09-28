@@ -25,7 +25,7 @@ September 2012 Updates
  - Default network config has changed. Instead
    of assuming a bridge setup, we use simpler 
    'veth' based tunnels direct to the host,
-   which now appear as 'lxc.<guestname>' in the
+   which now appear as '<guestname>' in the
    host's interface list.  (Also resolves an
    apparently outstanding bug related to random
    MAC assignment, see http://bit.ly/QWAkOy )
