@@ -21,21 +21,17 @@
 #       - can optionally be bridged via bridge-utils
 #       - bridge is like a software-switch interface on the host and
 #         requires some host configuration, eg:
-#          # if you choose DHCP, set up a DHCP server on the subnet
-#          # ... eg. emerge isc-dhcp ...
 #          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
-#          brctl addbr br0           # create bridge
-#          brctl setfd br0 0         # set forward delay to 0 seconds
-#          ifconfig br0 172.20.0.1   # set an IP for the bridge
+#          brctl addbr br0              # create bridge
+#          brctl setfd br0 0            # set forward delay to 0 seconds
+#          ifconfig br0 172.20.0.1      # set an IP for the bridge
+#          brctl addif br0 <guestname>  # add guest to bridge
 #          # ...iptables SNAT stuff...
 #    - guests can be altered to otherwise use a physical interface, vlan, etc.
 #    - typical startup time is <2 seconds
 #    - very fast disk IO (unlike paravirtualised solutions)
 #   
 #   notes:
-#    - because lxc.network.* directives currently cannot set additional routes
-#      unless you use DHCP it may be necessary to set these in-guest... see 
-#      /etc/conf.d/net.example
 #    - dedicated to all fellow ethical unix hackers who do not work for 
 #      morally corrupt governments and corporations: use your powers for good!
 #
@@ -61,7 +57,7 @@ WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 # Defaults only
 NAME=${NAME:-gentoo}
 UTSNAME=${UTSNAME:-gentoo}
-IPV4=${IPV4:-172.20.0.88/24}
+IPV4=${IPV4:-172.20.0.2/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
