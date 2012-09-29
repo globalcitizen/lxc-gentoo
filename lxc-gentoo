@@ -201,7 +201,7 @@ write_distro_init_fixes() {
 	rm ${ROOTFS}/etc/runlevels/boot/termencoding 1>/dev/null 2>/dev/null
 	# fix boot-time interface config wipe under aggressive cap drop
         # (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
-	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' /etc/rc.conf
+	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' ${ROOTFS}/etc/rc.conf
 	# remove netmount from default runlevel (openrc leaves it in)
 	rm ${ROOTFS}/etc/runlevels/default/netmount
 	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
