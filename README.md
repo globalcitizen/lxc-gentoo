@@ -1,7 +1,9 @@
-[lxc-gentoo]
-  Linux Containers Gentoo Guest Template Script
---------------------------------------------------
- https://github.com/globalcitizen/lxc-gentoo
+lxc-gentoo: Linux Containers Gentoo Guest Template Script
+=========================================================
+
+https://github.com/globalcitizen/lxc-gentoo
+
+-------------------------------------------------
 
 The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
@@ -12,7 +14,8 @@ accepts input from various environment variables.
 
 -------------------------------------------------
 
-Requirements:
+Requirements
+------------
  - Recent Linux kernel (>=3.2.x recommended)
     http://www.kernel.org/
  - lxc userspace utilities
@@ -21,11 +24,12 @@ Requirements:
 -------------------------------------------------
 
 September 2012 Updates
+----------------------
 
  - Default network config has changed. Instead
    of assuming a bridge setup, we use simpler 
    'veth' based tunnels direct to the host,
-   which now appear as '<guestname>' in the
+   which now appear as 'guestname' in the
    host's interface list.  (Also resolves an
    apparently outstanding bug related to random
    MAC assignment, see http://bit.ly/QWAkOy )
@@ -47,6 +51,7 @@ September 2012 Updates
 -------------------------------------------------
 
 History
+-------
 
  The project was originally hosted at...
   http://sourceforge.net/projects/lxc-gentoo/
