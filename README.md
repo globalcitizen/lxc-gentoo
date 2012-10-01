@@ -3,8 +3,6 @@ lxc-gentoo: Linux Containers Gentoo Guest Template Script
 
 https://github.com/globalcitizen/lxc-gentoo
 
--------------------------------------------------
-
 The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
 within an LXC (Linux Containers) environment.
@@ -12,7 +10,6 @@ within an LXC (Linux Containers) environment.
 While normally run interactively, the script also
 accepts input from various environment variables.
 
--------------------------------------------------
 
 Requirements
 ------------
@@ -21,7 +18,6 @@ Requirements
  - lxc userspace utilities
     (Gentoo: 'emerge lxc')
 
--------------------------------------------------
 
 September 2012 Updates
 ----------------------
@@ -48,7 +44,6 @@ September 2012 Updates
 
  - Various minor updates
 
--------------------------------------------------
 
 History
 -------
@@ -63,5 +58,3 @@ History
  author in order to move project hosting to 
  github.
   https://github.com/globalcitizen/lxc-gentoo
-
--------------------------------------------------
