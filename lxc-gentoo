@@ -423,7 +423,7 @@ create() {
 		# get latest-stage3....txt file for subpath
 		echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive... "
 		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${ARCH}${ARCH_VARIANT}.txt"
+		STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
 		LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
 		echo ${LATEST_STAGE3_SUBPATH}
 
