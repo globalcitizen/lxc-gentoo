@@ -19,6 +19,12 @@ Requirements
     (Gentoo: 'emerge lxc')
 
 
+October 2012 Updates
+--------------------
+ - Migrate stage3 URL from 'arch' to 'subarch'
+   basis, as per Gentoo Release Guidelines.
+
+
 September 2012 Updates
 ----------------------
 
@@ -58,3 +64,6 @@ History
  author in order to move project hosting to 
  github.
   https://github.com/globalcitizen/lxc-gentoo
+
+ Since then it has seen contributions from
+ many parties.
