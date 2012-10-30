@@ -362,8 +362,10 @@ create() {
         SUBARCH=${_SUBARCH_}
       fi
       LXC_ARCH="${SUBARCH}"
+    elif [ "${ARCH}" == "amd64" ]; then
+      SUBARCH=${ARCH}
     fi
-    
+
     # Type guest root password
     echo -n "Type guest root password (enter for none):"
     stty -echo
@@ -418,7 +420,7 @@ create() {
         	fi
 
 		# base stage3 URL
-		STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/"
+		STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
 
 		# get latest-stage3....txt file for subpath
 		echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive... "
@@ -434,7 +436,7 @@ create() {
 		OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
 		mkdir -p "${OUTPUT_DIR}" 1>/dev/null 2>/dev/null
 		#  - grab
-		INPUT_URL="${STAGE3URL}${LATEST_STAGE3_SUBPATH}"
+		INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
 		${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} 1>/dev/null 2>/dev/null
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
