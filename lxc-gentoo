@@ -391,7 +391,7 @@ create() {
 
 	# check if the rootfs does already exist
 	if [ ! -e "${ROOTFS}" ]; then
-		mkdir -p /var/lock/subsys/
+		[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
 	(
 		flock -n -x 200
 
@@ -602,6 +602,8 @@ purge() {
 	if [ ! -e ${CACHE} ]; then
 		exit 0
 	fi
+
+	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
 
 	# lock, so we won't purge while someone is creating a repository
 	(
