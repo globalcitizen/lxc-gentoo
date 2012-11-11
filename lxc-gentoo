@@ -183,7 +183,7 @@ write_distro_network() {
 # custom hostname
 write_distro_hostname() {
 	echo -n " - setting hostname..."
-	cat <<EOF > ${ROOTFS}/etc/conf.d/hostname
+	cat <<- EOF > ${ROOTFS}/etc/conf.d/hostname
 	HOSTNAME=${UTSNAME}
 	EOF
 	echo "done."
