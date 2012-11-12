@@ -61,11 +61,11 @@ IPV4=${IPV4:-172.20.0.2/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
- ARCH=${ARCH:-amd64}
- SUBARCH=${SUBARCH:-i686}
+	ARCH=${ARCH:-amd64}
+	SUBARCH=${SUBARCH:-i686}
 else
- ARCH=${ARCH:-x86}
- SUBARCH=${SUBARCH:-$(uname -m)}
+	ARCH=${ARCH:-x86}
+	SUBARCH=${SUBARCH:-$(uname -m)}
 fi
 ARCH_VARIANT=""
 CONFFILE="${UTSNAME}.conf"
@@ -104,11 +104,11 @@ populate_dev() {
 # custom fstab
 
 write_distro_fstab() {
-cat <<EOF > ${ROOTFS}/${FSTAB}
-# required to prevent boot-time error display
-none / none defaults 0 0
-tmpfs  /dev/shm   tmpfs  defaults  0 0
-EOF
+	cat <<- EOF > ${ROOTFS}/${FSTAB}
+	# required to prevent boot-time error display
+	none    /         none    defaults  0 0
+	tmpfs   /dev/shm  tmpfs   defaults  0 0
+	EOF
 }
 
 write_distro_timezone() {
@@ -124,69 +124,69 @@ write_distro_timezone() {
 
 # custom inittab
 write_distro_inittab() {
-sed -i 's/^c[1-9]/#&/' ${ROOTFS}/${INITTAB} # disable getty
-echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
-echo "1:12345:respawn:/sbin/agetty -a root 38400 console linux" >> ${ROOTFS}/${INITTAB}
-# we also blank out /etc/issue here in order to prevent delays spawning login
-# caused by attempts to determine domainname on disconnected containers
-rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
-# we also disable the /etc/init.d/termencoding script which can cause errors
-sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
-# quiet login
-touch ${ROOTFS}/root/.hushlogin
+	sed -i 's/^c[1-9]/#&/' ${ROOTFS}/${INITTAB} # disable getty
+	echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
+	echo "1:12345:respawn:/sbin/agetty -a root 38400 console linux" >> ${ROOTFS}/${INITTAB}
+	# we also blank out /etc/issue here in order to prevent delays spawning login
+	# caused by attempts to determine domainname on disconnected containers
+	rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
+	# we also disable the /etc/init.d/termencoding script which can cause errors
+	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
+	# quiet login
+	touch ${ROOTFS}/root/.hushlogin
 }
 
 # custom network configuration
 write_distro_network() {
- # /etc/resolv.conf
- grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
- grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
- # gentoo network configuration
- if [ "${IPV4}" != "dhcp" ]; then
-  cat <<EOF > ${ROOTFS}/etc/conf.d/net
-# eth0 (lxc virtualised network adapter)
-#  optionally can be bridged.
-#     - host br0 is managed with the bridge-utils package, ie:
-#        brctl addbr br0
-#        brctl setfd br0 0
-#        ifconfig br0 172.20.0.1
-#       ... or, on a gentoo host run:
-#        # create init script
-#        cd /etc/init.d && ln -s net.lo net.br0
-#        # specify configuration
-#        echo 'config_br0=( "172.20.0.1 netmask 255.255.0.0" )'>>/etc/conf.d/net
-#        echo 'brctl_br0=( "setfd 0" "sethello 10" "stp off" )'>>/etc/conf.d/net
-#        # bring up interface
-#        /etc/init.d/net.br0 up
-#        # set interface to start on boot
-#        rc-update add net.br0 default
-#
-#     - host grants connectivity using iptables, eg:
-#        EXTIF=eth0 # internet facing interface on the host
-#        IP=\`ifconfig \$EXTIF|grep 'inet addr'|cut -d':' -f2|cut -d' ' -f1\`
-#        iptables -t nat -A POSTROUTING -o \$EXTIF \\ 
-#         -j SNAT --to-source \$IP
-#       ... on a gentoo host, assuming external interface IP remains static
-#           between reboots, then after running the above execute:
-#             /etc/init.d/iptables save
-#             rc-update add iptables default
-#
-# null config required to allow for the net.eth0 script to come up and 
-# resolve any openrc init system dependencies on 'net'
-config_eth0="null"
-EOF
- fi
- ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
- ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+	# /etc/resolv.conf
+	grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
+	grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
+	# gentoo network configuration
+	if [ "${IPV4}" != "dhcp" ]; then
+		cat <<- EOF > ${ROOTFS}/etc/conf.d/net
+		# eth0 (lxc virtualised network adapter)
+		#  optionally can be bridged.
+		#     - host br0 is managed with the bridge-utils package, ie:
+		#        brctl addbr br0
+		#        brctl setfd br0 0
+		#        ifconfig br0 172.20.0.1
+		#       ... or, on a gentoo host run:
+		#        # create init script
+		#        cd /etc/init.d && ln -s net.lo net.br0
+		#        # specify configuration
+		#        echo 'config_br0=( "172.20.0.1 netmask 255.255.0.0" )'>>/etc/conf.d/net
+		#        echo 'brctl_br0=( "setfd 0" "sethello 10" "stp off" )'>>/etc/conf.d/net
+		#        # bring up interface
+		#        /etc/init.d/net.br0 up
+		#        # set interface to start on boot
+		#        rc-update add net.br0 default
+		#
+		#     - host grants connectivity using iptables, eg:
+		#        EXTIF=eth0 # internet facing interface on the host
+		#        IP=\`ifconfig \$EXTIF|grep 'inet addr'|cut -d':' -f2|cut -d' ' -f1\`
+		#        iptables -t nat -A POSTROUTING -o \$EXTIF \\ 
+		#         -j SNAT --to-source \$IP
+		#       ... on a gentoo host, assuming external interface IP remains static
+		#           between reboots, then after running the above execute:
+		#             /etc/init.d/iptables save
+		#             rc-update add iptables default
+		#
+		# null config required to allow for the net.eth0 script to come up and 
+		# resolve any openrc init system dependencies on 'net'
+		config_eth0="null"
+		EOF
+	fi
+	ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
+	ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
 }
 
 # custom hostname
 write_distro_hostname() {
- echo -n " - setting hostname... "
- cat <<EOF > ${ROOTFS}/etc/conf.d/hostname
-HOSTNAME=${UTSNAME}
-EOF
- echo "done."
+	echo -n " - setting hostname..."
+	cat <<- EOF > ${ROOTFS}/etc/conf.d/hostname
+	HOSTNAME=${UTSNAME}
+	EOF
+	echo "done."
 }
 
 # fix init system
@@ -196,12 +196,12 @@ write_distro_init_fixes() {
 	# fix for error caused by openrc <0.10.2 (~may 2012)
 	rm ${ROOTFS}/etc/runlevels/boot/termencoding 1>/dev/null 2>/dev/null
 	# fix boot-time interface config wipe under aggressive cap drop
-        # (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
+	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
 	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' ${ROOTFS}/etc/rc.conf
 	# remove netmount from default runlevel (openrc leaves it in)
 	rm ${ROOTFS}/etc/runlevels/default/netmount
 	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
-        #  https://bugs.gentoo.org/show_bug.cgi?id=436270
+	# https://bugs.gentoo.org/show_bug.cgi?id=436270
 	rm ${ROOTFS}/etc/runlevels/boot/urandom
 }
 
@@ -210,271 +210,266 @@ write_distro_init_fixes() {
 ################################################################################
 
 write_lxc_configuration() {
- echo -n " - writing LXC guest configuration... "
-cat <<EOF > ${CONFFILE}
-# set arch
-lxc.arch = ${LXC_ARCH}
+	echo -n " - writing LXC guest configuration..."
+	cat <<- EOF > ${CONFFILE}
+	# set arch
+	lxc.arch = ${LXC_ARCH}
 
-# set the hostname
-lxc.utsname = ${UTSNAME}
+	# set the hostname
+	lxc.utsname = ${UTSNAME}
 
-# network interface
-lxc.network.type = veth
-lxc.network.flags = up
-#  - name in host (max 15 chars; defaults to 'tun'+random)
-lxc.network.veth.pair = ${NAME}
-#  - name in guest
-lxc.network.name = eth0
-# enable for bridging
-#  (eg. 'brctl addbr br0; brctl setfd br0 0; brctl addif br0 eth0')
-#lxc.network.link = br0
-EOF
+	# network interface
+	lxc.network.type = veth
+	lxc.network.flags = up
+	# - name in host (max 15 chars; defaults to 'tun'+random)
+	lxc.network.veth.pair = ${NAME}
+	# - name in guest
+	lxc.network.name = eth0
+	# enable for bridging
+	# (eg. 'brctl addbr br0; brctl setfd br0 0; brctl addif br0 eth0')
+	#lxc.network.link = br0
+	EOF
 
-if [ "${IPV4}" == "dhcp" ]; then
-cat <<EOF >> ${CONFFILE}
-# disabled (guest uses DHCP)
-#lxc.network.ipv4 = X.X.X.X
-#lxc.network.ipv4.gateway = Y.Y.Y.Y
-EOF
-else
-cat <<EOF >> ${CONFFILE}
-lxc.network.ipv4 = ${IPV4}
-lxc.network.ipv4.gateway = ${GATEWAY}
-EOF
-fi
+	if [ "${IPV4}" == "dhcp" ]; then
+		cat <<- EOF >> ${CONFFILE}
+		# disabled (guest uses DHCP)
+		#lxc.network.ipv4 = X.X.X.X
+		#lxc.network.ipv4.gateway = Y.Y.Y.Y
+		EOF
+	else
+		cat <<- EOF >> ${CONFFILE}
+		lxc.network.ipv4 = ${IPV4}
+		lxc.network.ipv4.gateway = ${GATEWAY}
+		EOF
+	fi
 
-cat <<EOF >> ${CONFFILE}
+	cat <<- EOF >> ${CONFFILE}
 
-# root filesystem location
-lxc.rootfs = `readlink -f ${ROOTFS}`
+	# root filesystem location
+	lxc.rootfs = `readlink -f ${ROOTFS}`
 
-# mounts that allow us to drop CAP_SYS_ADMIN
-lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
-# disabled for security, see http://blog.bofh.it/debian/id_413
-#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
-lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
-lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+	# mounts that allow us to drop CAP_SYS_ADMIN
+	lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
+	# disabled for security, see http://blog.bofh.it/debian/id_413
+	#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
+	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
-# console access
-lxc.tty = 1
-lxc.pts= 128
+	# console access
+	lxc.tty = 1
+	lxc.pts= 128
 
-# this part is based on 'linux capabilities', see: man 7 capabilities
-#  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
-# conservative: lxc.cap.drop = sys_module mknod mac_override sys_boot
-# aggressive follows. (leaves open: chown dac_override ipc_lock kill lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot)
-lxc.cap.drop = audit_control audit_write dac_read_search fowner fsetid ipc_owner linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_boot sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
+	# this part is based on 'linux capabilities', see: man 7 capabilities
+	#  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
+	# conservative: lxc.cap.drop = sys_module mknod mac_override sys_boot
+	# aggressive follows. (leaves open: chown dac_override ipc_lock kill lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot)
+	lxc.cap.drop = audit_control audit_write dac_read_search fowner fsetid ipc_owner linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_boot sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
 
-# deny access to all devices by default, explicitly grant some permissions
-#
-#  format is [c|b] [major|*]:[minor|*] [r][w][m]
-#             ^     ^                   ^
-# char/block -'     \`- device number    \`-- read, write, mknod
-#
-# first deny all...
-lxc.cgroup.devices.deny = a
-# /dev/null and zero
-lxc.cgroup.devices.allow = c 1:3 rw
-lxc.cgroup.devices.allow = c 1:5 rw
-# /dev/{,u}random
-lxc.cgroup.devices.allow = c 1:9 rw
-lxc.cgroup.devices.allow = c 1:8 r
-# /dev/pts/*
-lxc.cgroup.devices.allow = c 136:* rw
-lxc.cgroup.devices.allow = c 5:2 rw
-# /dev/tty{1,2}
-lxc.cgroup.devices.allow = c 4:1 rwm
-lxc.cgroup.devices.allow = c 4:0 rwm
-lxc.cgroup.devices.allow = c 5:0 rwm
-lxc.cgroup.devices.allow = c 5:1 rwm
-# /dev/net/tun
-lxc.cgroup.devices.allow = c 10:200 rwm
+	# deny access to all devices by default, explicitly grant some permissions
+	#
+	# format is [c|b] [major|*]:[minor|*] [r][w][m]
+	#            ^     ^                   ^
+	# char/block -'     \`- device number    \`-- read, write, mknod
+	#
+	# first deny all...
+	lxc.cgroup.devices.deny = a
+	# /dev/null and zero
+	lxc.cgroup.devices.allow = c 1:3 rw
+	lxc.cgroup.devices.allow = c 1:5 rw
+	# /dev/{,u}random
+	lxc.cgroup.devices.allow = c 1:9 rw
+	lxc.cgroup.devices.allow = c 1:8 r
+	# /dev/pts/*
+	lxc.cgroup.devices.allow = c 136:* rw
+	lxc.cgroup.devices.allow = c 5:2 rw
+	# /dev/tty{1,2}
+	lxc.cgroup.devices.allow = c 4:1 rwm
+	lxc.cgroup.devices.allow = c 4:0 rwm
+	lxc.cgroup.devices.allow = c 5:0 rwm
+	lxc.cgroup.devices.allow = c 5:1 rwm
+	# /dev/net/tun
+	lxc.cgroup.devices.allow = c 10:200 rwm
 
-EOF
- echo "done."
+	EOF
+	echo "done."
 }
 
 set_guest_root_password() {
-  echo -n " - setting guest root password.. "
-  echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
-  echo "done."
+	echo -n " - setting guest root password.."
+	echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
+	echo "done."
 }
 
 create() {
+	if [[ -z ${QUIET} ]]; then
+		# choose a container name, default is already in shell NAME variable
+		echo -n "What is the name for the container (recommended <=15 chars)? [${NAME}]"
+		read _NAME_
 
-  if [[ -z ${QUIET} ]]
-  then
-    # choose a container name, default is already in shell NAME variable
-    echo -n "What is the name for the container (recommended <=15 chars)? [${NAME}] "
-    read _NAME_
+		if [ ! -z "${_NAME_}" ]; then
+			NAME=${_NAME_}
+		fi
 
-    if [ ! -z "${_NAME_}" ]; then
-	NAME=${_NAME_}
-    fi
+		# choose a hostname, default is the container name
+		echo -n "What hostname do you wish for this container ? [${UTSNAME}]"
+		read _UTSNAME_
 
-    # choose a hostname, default is the container name
-    echo -n "What hostname do you wish for this container ? [${UTSNAME}] "
-    read _UTSNAME_
+		if [ ! -z "${_UTSNAME_}" ]; then
+			UTSNAME=${_UTSNAME_}
+		fi
 
-    if [ ! -z "${_UTSNAME_}" ]; then
-	UTSNAME=${_UTSNAME_}
-    fi
+		# choose an ipv4 address, better to choose the same network than
+		# your host
+		echo -n "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? [${IPV4}]"
+		read _IPV4_
 
-    # choose an ipv4 address, better to choose the same network than
-    # your host
-    echo -n "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? [${IPV4}] "
-    read _IPV4_
+		if [ ! -z "${_IPV4_}" ]; then
+			IPV4=${_IPV4_}
+		fi
 
-    if [ ! -z "${_IPV4_}" ]; then
-	IPV4=${_IPV4_}
-    fi
+		# choose the gateway ip address
+		if [ "${IPV4}" != "dhcp" ]; then
+			echo -n "What is the gateway IP address ? [${GATEWAY}]"
+			read _GATEWAY_
 
-    # choose the gateway ip address
-    if [ "${IPV4}" != "dhcp" ]; then
-      echo -n "What is the gateway IP address ? [${GATEWAY}] "
-      read _GATEWAY_
+			if [ ! -z "${_GATEWAY_}" ]; then
+				GATEWAY=${_GATEWAY_}
+			fi
+		fi
 
-      if [ ! -z "${_GATEWAY_}" ]; then
-        GATEWAY=${_GATEWAY_}
-      fi
-    fi
+		# choose the architecture
+		echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
+		read _ARCH_
+		if [ ! -z "${_ARCH_}" ]; then
+			ARCH=${_ARCH_}
+		fi
 
-    # choose the architecture
-    echo -n "Which gentoo architecture should we use in this container ? [${ARCH}] "
-    read _ARCH_
-    if [ ! -z "${_ARCH_}" ]; then
-    	ARCH=${_ARCH_}
-    fi
+		# choose architecture variant
+		echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCH_VARIANT}]"
+		read _ARCH_VARIANT_
+		if [ ! -z "${_ARCH_VARIANT_}" ]; then
+			ARCH_VARIANT=${_ARCH_VARIANT_}
+		fi
 
-    # choose architecture variant
-    echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCH_VARIANT}] "
-    read _ARCH_VARIANT_
-    if [ ! -z "${_ARCH_VARIANT_}" ]; then
-     ARCH_VARIANT=${_ARCH_VARIANT_}
-    fi
+		LXC_ARCH="x86_64"
+		# if x86 is given prompt for "subarch"
+		if [ "${ARCH}" == 'x86' ]; then
+			echo -n "Sub architecture of x86 ? [${SUBARCH}]"
+			read _SUBARCH_
+			if [ ! -z "${_SUBARCH_}" ]; then
+				SUBARCH=${_SUBARCH_}
+			fi
+			LXC_ARCH="${SUBARCH}"
+		elif [ "${ARCH}" == "amd64" ]; then
+			SUBARCH=${ARCH}
+		fi
 
-    LXC_ARCH="x86_64"
-    # if x86 is given prompt for "subarch"
-    if [ "${ARCH}" == 'x86' ]; then
-      echo -n "Sub architecture of x86 ? [${SUBARCH}] "
-    	read _SUBARCH_
-      if [ ! -z "${_SUBARCH_}" ]; then
-        SUBARCH=${_SUBARCH_}
-      fi
-      LXC_ARCH="${SUBARCH}"
-    elif [ "${ARCH}" == "amd64" ]; then
-      SUBARCH=${ARCH}
-    fi
+		# Type guest root password
+		echo -n "Type guest root password (enter for none):"
+		stty -echo
+		read GUESTROOTPASS
+		echo ""
+		stty echo
+		echo ""
+	fi
 
-    # Type guest root password
-    echo -n "Type guest root password (enter for none):"
-    stty -echo
-    read GUESTROOTPASS
-    echo ""
-    stty echo
-    echo ""
-  fi
+	CONFFILE="${UTSNAME}.conf"
+	echo -e "Thanks! Now sit back and relax while your gentoo brews...\n\n"
+	# nice pondering material
+	if which fortune 1>/dev/null 2>/dev/null ; then
+		echo '-----------------------------------------------------------------'
+		if which cowsay 1>/dev/null 2>/dev/null ; then
+			cowsay `fortune -s`
+		else
+			fortune
+		fi
+		echo -e "-----------------------------------------------------------------\n"
+	fi
 
-  CONFFILE="${UTSNAME}.conf"
-  echo "Thanks!  Now sit back and relax while your gentoo brews...
+	# the rootfs name will be built with the container name
+	ROOTFS="./${NAME}"
 
-"
-  # nice pondering material
-  if which fortune 1>/dev/null 2>/dev/null ; then
-   echo '-----------------------------------------------------------------'
-   if which cowsay 1>/dev/null 2>/dev/null ; then
-    cowsay `fortune -s`
-   else
-    fortune
-   fi
-   echo '-----------------------------------------------------------------'
-   echo ''
-  fi
-
-  # the rootfs name will be built with the container name
-  ROOTFS="./${NAME}"
-
-  # check if the rootfs does already exist
-  if [ ! -e "${ROOTFS}" ]; then
-	    mkdir -p /var/lock/subsys/
+	# check if the rootfs does already exist
+	if [ ! -e "${ROOTFS}" ]; then
+		[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
 	(
-	    flock -n -x 200
+		flock -n -x 200
 
 
-	    RES=$?
-	    if [ "${RES}" != "0" ]; then
-		echo "Cache repository is busy."
-		break
-	    fi
-
-	    # check the mini distro was not already downloaded
-            TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
-	    echo -n "Checking for pre-existing cache in ${TEMPLATE}... "
-	    if [ ! -e "${TEMPLATE}" ]; then
-
-		echo "not found."
-
-		# prepend '-' to nonblank ARCH_VARIANT for URL construction
-		if [ ! -z "${ARCH_VARIANT}" ]; then
-        	 ARCH_VARIANT="-${ARCH_VARIANT}"
-        	fi
-
-		# base stage3 URL
-		STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
-
-		# get latest-stage3....txt file for subpath
-		echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive... "
-		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
-		LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
-		echo ${LATEST_STAGE3_SUBPATH}
-
-		# download
-		echo -n "Downloading (~130MB), please wait... "
-		OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
-		#  - ensure output directory exists
-		OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
-		mkdir -p "${OUTPUT_DIR}" 1>/dev/null 2>/dev/null
-		#  - grab
-		INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
-		${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} 1>/dev/null 2>/dev/null
-		RESULT=$?
-		if [ "${RESULT}" != "0" ]; then
-		    echo "failed!"
-		    exit 1
+		RES=$?
+		if [ "${RES}" != "0" ]; then
+			echo "Cache repository is busy."
+			break
 		fi
-		echo "complete."
 
-		# make sure we are operating on a clear rootfs cache
-		rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
-		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
+		# check the mini distro was not already downloaded
+		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
+		echo -n "Checking for pre-existing cache in ${TEMPLATE}..."
+		if [ ! -e "${TEMPLATE}" ]; then
 
-		echo -n "Extracting stage3 archive... "
-		tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
-		RESULT=$?
-		if [ "${RESULT}" != "0" ]; then
-		    echo "failed!"
-		    exit 1
+			echo "not found."
+
+			# prepend '-' to nonblank ARCH_VARIANT for URL construction
+			if [ ! -z "${ARCH_VARIANT}" ]; then
+				ARCH_VARIANT="-${ARCH_VARIANT}"
+			fi
+
+			# base stage3 URL
+			STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
+
+			# get latest-stage3....txt file for subpath
+			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive..."
+			mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
+			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
+			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+			echo ${LATEST_STAGE3_SUBPATH}
+
+			# download
+			echo -n "Downloading (~130MB), please wait..."
+			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
+			#  - ensure output directory exists
+			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
+			mkdir -p "${OUTPUT_DIR}" 1>/dev/null 2>/dev/null
+			#  - grab
+			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
+			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} 1>/dev/null 2>/dev/null
+			RESULT=$?
+			if [ "${RESULT}" != "0" ]; then
+				echo "failed!"
+				exit 1
+			fi
+			echo "complete."
+
+			# make sure we are operating on a clear rootfs cache
+			rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
+			mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
+
+			echo -n "Extracting stage3 archive..."
+			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+			RESULT=$?
+			if [ "${RESULT}" != "0" ]; then
+				echo "failed!"
+				exit 1
+			fi
+			echo "done."
+			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
+			rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+			echo "done."
+			echo -n "Extracting..."
+			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
+			echo "done."
+		else
+			echo "found."
 		fi
-		echo "done."
-		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
-		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-		echo "done."
-		echo -n "Extracting... "
-		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
-		echo "done."
-	    else
-		echo "found."
-	    fi
 
-            # make a local copy of the mini
-	    echo -n "Copying filesystem... "
-	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
-	) 200> "/var/lock/subsys/lxc"
-    else
-     echo "WARNING: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
-    fi
+		# make a local copy of the mini
+		echo -n "Copying filesystem..."
+		cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
+		) 200> "/var/lock/subsys/lxc"
+	else
+		echo "WARNING: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
+	fi
 
 write_lxc_configuration
 
@@ -498,8 +493,8 @@ set_guest_root_password
 RES=$?
 
 if [ "${RES}" != "0" ]; then
-    echo "Failed to create '${NAME}'"
-    exit 1
+	echo "Failed to create '${NAME}'"
+	exit 1
 fi
 
 echo "All done!"
@@ -520,112 +515,111 @@ echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
 }
 
 destroy() {
+	echo -n "What is the name for the container ? [${NAME}]"
+	read _NAME_
 
-    echo -n "What is the name for the container ? [${NAME}] "
-    read _NAME_
+	if [ ! -z "${_NAME_}" ]; then
+		NAME=${_NAME_}
+	fi
 
-    if [ ! -z "${_NAME_}" ]; then
-	NAME=${_NAME_}
-    fi
+	/usr/sbin/lxc-destroy -n ${NAME}
+	RETVAL=$?
+	if [ ! ${RETVAL} -eq 0 ]; then
+		echo "Failed to destroyed '${NAME}'"
+		return ${RETVAL}
+	fi
 
-    /usr/sbin/lxc-destroy -n ${NAME}
-    RETVAL=$?
-    if [ ! ${RETVAL} -eq 0 ]; then
-	echo "Failed to destroyed '${NAME}'"
-	return ${RETVAL}
-    fi
+	ROOTFS="./rootfs.${NAME}"
 
-    ROOTFS="./rootfs.${NAME}"
+	echo -n "Shall I remove the rootfs [y/n] ?"
+	read
+	if [ "${REPLY}" = "y" ]; then
+		rm -rf ${ROOTFS}
+	fi
 
-    echo -n "Shall I remove the rootfs [y/n] ? "
-    read
-    if [ "${REPLY}" = "y" ]; then
-	rm -rf ${ROOTFS}
-    fi
-
-    return 0
+	return 0
 }
 
 help() {
-    cat <<EOF
-Usage: $0 {create|destroy|purge|help} [options]
-	-q : Quiet, use vars from env or options and do not ask me.
-	-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
-		Env. Var.: IPV4
-		Current/Default: ${IPV4}
-	-g GATEWAY : IP address of its gateway 		
-		Env. Var.: GATEWAY
-		Current/Default: ${GATEWAY}
-	-n NAME : name of the container 		
-		Env. Var.: NAME
-		Current/Default: ${NAME}
-	-u UTSNAME : hostname of the container 		
-		Env. Var.: UTSNAME
-		Current/Default: ${UTSNAME}
-	-a ARCHITECTURE : for now x86 or amd64 	
-		Env. Var.: ARCH
-		Current/Default: ${ARCH}
-	-s SUBARCH : subarch for x86 		
-		Env. Var.: SUBARCH
-		Current/Default: ${SUBARCH}
-	-p GUESTROOTPASS : password for root account
-		Env. Var.: GUESTROOTPASS
-		Current/Default: ${GUESTROOTPASS}
-	-C CUSTOMURL : URL for a custom tarball
-		Env. Var.: CUSTOMURL
-		Current/Default: ${CUSTOMURL}
+	cat <<-EOF
+	Usage: $0 {create|destroy|purge|help} [options]
+		-q : Quiet, use vars from env or options and do not ask me.
+		-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
+			Env. Var.: IPV4
+			Current/Default: ${IPV4}
+		-g GATEWAY : IP address of its gateway
+			Env. Var.: GATEWAY
+			Current/Default: ${GATEWAY}
+		-n NAME : name of the container
+			Env. Var.: NAME
+			Current/Default: ${NAME}
+		-u UTSNAME : hostname of the container
+			Env. Var.: UTSNAME
+			Current/Default: ${UTSNAME}
+		-a ARCHITECTURE : for now x86 or amd64
+			Env. Var.: ARCH
+			Current/Default: ${ARCH}
+		-s SUBARCH : subarch for x86
+			Env. Var.: SUBARCH
+			Current/Default: ${SUBARCH}
+		-p GUESTROOTPASS : password for root account
+			Env. Var.: GUESTROOTPASS
+			Current/Default: ${GUESTROOTPASS}
+		-C CUSTOMURL : URL for a custom tarball
+			Env. Var.: CUSTOMURL
+			Current/Default: ${CUSTOMURL}
 
-This script is a helper to create ${DISTRO} system containers.
+	This script is a helper to create ${DISTRO} system containers.
 
-To make a container, simply run: 
- 
- lxc-${DISTRO} create
+	To make a container, simply run:
 
-You can override default by environnement variables or commandline options with this override sequence :
- default, env, cmdline option
- 
- Example : 
- $ GATEWAY=10.0.0.254 ./lxc-gentoo create -i 10.0.0.1/24 -n gentooserver -u gentooserver
+	lxc-${DISTRO} create
 
- An interactive script will ask you for various information.
+	You can override default by environnement variables or commandline options with this override sequence :
+	default, env, cmdline option
 
- The first creation will download a ${DISTRO} stage3 and portage
- snapshot and store it into a cache at ${CACHE}.
+	Example :
+	$ GATEWAY=10.0.0.254 ./lxc-gentoo create -i 10.0.0.1/24 -n gentooserver -u gentooserver
 
-Updating your cache:
- At any time you can purge the ${DISTRO} cache download by calling
- 'lxc-${DISTRO} purge'.  This will cause a new stage3/portage snapshot
- to be downloaded on the next 'lxc-${DISTRO} create'.
+	An interactive script will ask you for various information.
 
-Have fun :)
+	The first creation will download a ${DISTRO} stage3 and portage
+	snapshot and store it into a cache at ${CACHE}.
 
-(PS: Unix hackers with a conscience do not work for morally corrupt 
-     corporations or governments.  Use your powers for good!)
+	Updating your cache:
+	At any time you can purge the ${DISTRO} cache download by calling
+	'lxc-${DISTRO} purge'. This will cause a new stage3/portage snapshot
+	to be downloaded on the next 'lxc-${DISTRO} create'.
 
-EOF
+	Have fun :)
+
+	(PS: Unix hackers with a conscience do not work for morally corrupt
+		corporations or governments. Use your powers for good!)
+	EOF
 }
 
 purge() {
+	if [ ! -e ${CACHE} ]; then
+		exit 0
+	fi
 
-    if [ ! -e ${CACHE} ]; then
-	exit 0
-    fi
+	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
 
-    # lock, so we won't purge while someone is creating a repository
-    (
+	# lock, so we won't purge while someone is creating a repository
+	(
 	flock -n -x 200
 
 	RES=$?
 	if [ "${RES}" != "0" ]; then
-	    echo "Cache repository is busy."
-	    exit 1
+		echo "Cache repository is busy."
+		exit 1
 	fi
 
-	echo -n "Purging the download cache... "
+	echo -n "Purging the download cache..."
 	rm --preserve-root --one-file-system -rf ${CACHE} && echo "done" || exit 1
 	exit 0
 
-    ) 200> "/var/lock/subsys/lxc"
+	) 200> "/var/lock/subsys/lxc"
 }
 
 # Note: assuming uid==0 is root -- might break with userns??
@@ -637,32 +631,31 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:q" opt
-do
-		case $opt in
-			i) IPV4=$OPTARG ;;
-			g) GATEWAY=$OPTARG ;;
-			n) NAME=$OPTARG ;;
-			u) UTSNAME=$OPTARG ;;
-			a) ARCH=$OPTARG ;;
-			C) CUSTOMURL=$OPTARG;;
-			p) GUESTROOTPASS=$OPTARG ;;
-			q) QUIET=Yes ;;
-			\?) ;;
-		esac
+while getopts "i:g:n:u:a:C:p:q" opt; do
+	case $opt in
+		i) IPV4=$OPTARG ;;
+		g) GATEWAY=$OPTARG ;;
+		n) NAME=$OPTARG ;;
+		u) UTSNAME=$OPTARG ;;
+		a) ARCH=$OPTARG ;;
+		C) CUSTOMURL=$OPTARG;;
+		p) GUESTROOTPASS=$OPTARG ;;
+		q) QUIET=Yes ;;
+		\?) ;;
+	esac
 done
 
 case "$1" in
-    create)
-	create;;
-    destroy)
-	destroy;;
-    help)
-	help;;
-    purge)
-	purge;;
-    *)
-	help	
-	exit 1;;
+	create)
+		create;;
+	destroy)
+		destroy;;
+	help)
+		help;;
+	purge)
+		purge;;
+	*)
+		help
+		exit 1;;
 esac
 
