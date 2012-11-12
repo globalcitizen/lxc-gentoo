@@ -19,6 +19,12 @@ Requirements
     (Gentoo: 'emerge lxc')
 
 
+November 2012 Updates
+---------------------
+ - Various contributed minor improvements around
+   locking, indentation, shell syntax, etc.
+
+
 October 2012 Updates
 --------------------
  - Migrate stage3 URL from 'arch' to 'subarch'
