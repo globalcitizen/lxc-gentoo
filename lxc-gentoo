@@ -176,8 +176,12 @@ write_distro_network() {
 		config_eth0="null"
 		EOF
 	fi
-	ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
-	ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+	# only link for dchp, since static options render it unnecessary
+	# https://github.com/globalcitizen/lxc-gentoo/issues/33
+	if [ "${IPV4}" == "dhcp" ]; then
+	 ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
+	 ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+	fi
 }
 
 # custom hostname
