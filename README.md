@@ -25,7 +25,8 @@ November 2012 Updates
    locking, indentation, shell syntax, etc.
  - Don't drop 'fowner' capability, as it breaks
    portage's ability to chown.
-
+ - Don't create /etc/init.d/net.eth0 unless DHCP
+   is specified.
 
 October 2012 Updates
 --------------------
