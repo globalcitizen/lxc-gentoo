@@ -23,6 +23,8 @@ November 2012 Updates
 ---------------------
  - Various contributed minor improvements around
    locking, indentation, shell syntax, etc.
+ - Don't drop 'fowner' capability, as it breaks
+   portage's ability to chown.
 
 
 October 2012 Updates
