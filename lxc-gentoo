@@ -117,7 +117,7 @@ write_distro_timezone() {
 		cat /etc/localtime > ${ROOTFS}/etc/localtime
 	else
 		# otherwise set up UTC
-		rm ${ROOTFS}/etc/localtime 1>/dev/null 2>/dev/null
+		rm ${ROOTFS}/etc/localtime > /dev/null 2>&1
 		ln -s ../usr/share/zoneinfo/UTC ${ROOTFS}/etc/localtime
 	fi
 }
@@ -198,7 +198,7 @@ write_distro_init_fixes() {
 	# short-circuit openrc's autodetection
 	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
 	# fix for error caused by openrc <0.10.2 (~may 2012)
-	rm ${ROOTFS}/etc/runlevels/boot/termencoding 1>/dev/null 2>/dev/null
+	rm ${ROOTFS}/etc/runlevels/boot/termencoding >/dev/null 2>&1
 	# fix boot-time interface config wipe under aggressive cap drop
 	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
 	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' ${ROOTFS}/etc/rc.conf
@@ -380,9 +380,9 @@ create() {
 	CONFFILE="${UTSNAME}.conf"
 	echo -e "Thanks! Now sit back and relax while your gentoo brews...\n\n"
 	# nice pondering material
-	if which fortune 1>/dev/null 2>/dev/null ; then
+	if which fortune > /dev/null 2>&1 ; then
 		echo '-----------------------------------------------------------------'
-		if which cowsay 1>/dev/null 2>/dev/null ; then
+		if which cowsay > /dev/null 2>&1 ; then
 			cowsay `fortune -s`
 		else
 			fortune
@@ -423,7 +423,7 @@ create() {
 
 			# get latest-stage3....txt file for subpath
 			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive..."
-			mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
+			mkdir -p ${CACHE} > /dev/null 2>&1
 			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
 			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
 			echo ${LATEST_STAGE3_SUBPATH}
@@ -433,10 +433,10 @@ create() {
 			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
 			#  - ensure output directory exists
 			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
-			mkdir -p "${OUTPUT_DIR}" 1>/dev/null 2>/dev/null
+			mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
 			#  - grab
 			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
-			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} 1>/dev/null 2>/dev/null
+			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
 			RESULT=$?
 			if [ "${RESULT}" != "0" ]; then
 				echo "failed!"
@@ -449,7 +449,7 @@ create() {
 			mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 			echo -n "Extracting stage3 archive..."
-			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
 			RESULT=$?
 			if [ "${RESULT}" != "0" ]; then
 				echo "failed!"
@@ -457,11 +457,11 @@ create() {
 			fi
 			echo "done."
 			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
-			rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
+			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
 			echo "done."
 			echo -n "Extracting..."
-			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
+			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
 			echo "done."
 		else
 			echo "found."
