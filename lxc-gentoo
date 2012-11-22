@@ -286,10 +286,12 @@ write_lxc_configuration() {
 	# /dev/pts/*
 	lxc.cgroup.devices.allow = c 136:* rw
 	lxc.cgroup.devices.allow = c 5:2 rw
-	# /dev/tty{1,2}
+	# /dev/tty{0,1}
 	lxc.cgroup.devices.allow = c 4:1 rwm
 	lxc.cgroup.devices.allow = c 4:0 rwm
+	# /dev/tty
 	lxc.cgroup.devices.allow = c 5:0 rwm
+	# /dev/console
 	lxc.cgroup.devices.allow = c 5:1 rwm
 	# /dev/net/tun
 	lxc.cgroup.devices.allow = c 10:200 rwm
