@@ -270,7 +270,7 @@ write_lxc_configuration() {
 	# http://mainisusuallyafunction.blogspot.com/2012/11/attacking-hardened-linux-systems-with.html
 	# via JIT spraying (the BPF JIT module disabled on most systems was used
 	# in the example, but others are suggested vulnerable) meant that users
-	# with root in a container, that capability and kernel module may escape.
+	# with root in a container, that capability and kernel module may escape
 	# the container. ALWAYS be extremely careful granting any process root
 	# within a container, use a minimal configuration at all levels -
 	# including the kernel - and multiple layers of security on any system
