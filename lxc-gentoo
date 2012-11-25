@@ -261,10 +261,22 @@ write_lxc_configuration() {
 
 	# console access
 	lxc.tty = 1
-	lxc.pts= 128
+	lxc.pts = 128
 
 	# this part is based on 'linux capabilities', see: man 7 capabilities
 	#  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
+	#
+	# WARNING: the security vulnerability reported for 'cap_net_admin' at
+	# http://mainisusuallyafunction.blogspot.com/2012/11/attacking-hardened-linux-systems-with.html
+	# via JIT spraying (the BPF JIT module disabled on most systems was used
+	# in the example, but others are suggested vulnerable) meant that users
+	# with root in a container, that capability and kernel module may escape.
+	# the container. ALWAYS be extremely careful granting any process root
+	# within a container, use a minimal configuration at all levels -
+	# including the kernel - and multiple layers of security on any system
+	# where security is a priority.  note that not only LXC but PAX (and 
+	# others?) were vulnerable to this issue.
+	# 
 	# conservative: lxc.cap.drop = sys_module mknod mac_override sys_boot
 	# aggressive follows. (leaves open: chown dac_override fowner ipc_lock kill lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot)
 	lxc.cap.drop = audit_control audit_write dac_read_search fsetid ipc_owner linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_boot sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
