@@ -21,6 +21,8 @@ Requirements
 
 November 2012 Updates
 ---------------------
+ - Comments regarding recent kernel JIT spraying
+   vulnerability: http://bit.ly/T9CkqJ
  - Various contributed minor improvements around
    locking, indentation, shell syntax, etc.
  - Don't drop 'fowner' capability, as it breaks
