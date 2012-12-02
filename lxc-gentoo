@@ -318,7 +318,80 @@ set_guest_root_password() {
 	echo "done."
 }
 
-create() {
+fetch_template() {
+	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
+
+	(
+		flock -n -x 200
+
+		RES=$?
+		if [ "${RES}" != "0" ]; then
+			echo "Cache repository is busy."
+			break
+		fi
+
+		echo -n "Checking for pre-existing cache in ${TEMPLATE}..."
+		if [ ! -e "${TEMPLATE}" ]; then
+
+			echo "not found."
+
+			# prepend '-' to nonblank ARCH_VARIANT for URL construction
+			if [ ! -z "${ARCH_VARIANT}" ]; then
+				ARCH_VARIANT="-${ARCH_VARIANT}"
+			fi
+
+			# base stage3 URL
+			STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
+
+			# get latest-stage3....txt file for subpath
+			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive..."
+			mkdir -p ${CACHE} > /dev/null 2>&1
+			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
+			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+			echo ${LATEST_STAGE3_SUBPATH}
+
+			# download
+			echo -n "Downloading (~130MB), please wait..."
+			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
+			#  - ensure output directory exists
+			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
+			mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
+			#  - grab
+			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
+			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
+			RESULT=$?
+			if [ "${RESULT}" != "0" ]; then
+				echo "failed!"
+				exit 1
+			fi
+			echo "complete."
+
+			# make sure we are operating on a clear rootfs cache
+			rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
+			mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
+
+			echo -n "Extracting stage3 archive..."
+			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
+			RESULT=$?
+			if [ "${RESULT}" != "0" ]; then
+				echo "failed!"
+				exit 1
+			fi
+			echo "done."
+			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
+			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
+			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
+			echo "done."
+			echo -n "Extracting..."
+			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
+			echo "done."
+		else
+			echo "found."
+		fi
+	) 200> "/var/lock/subsys/lxc_template"
+}
+
+configure() {
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
 		echo -n "What is the name for the container (recommended <=15 chars)? [${NAME}]"
@@ -403,88 +476,23 @@ create() {
 		fi
 		echo -e "-----------------------------------------------------------------\n"
 	fi
+}
+
+create() {
+	configure
 
 	# the rootfs name will be built with the container name
 	ROOTFS="./${NAME}"
 
+	# check the mini distro was not already downloaded
+        TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
+	fetch_template
+
 	# check if the rootfs does already exist
 	if [ ! -e "${ROOTFS}" ]; then
-		[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
-	(
-		flock -n -x 200
-
-
-		RES=$?
-		if [ "${RES}" != "0" ]; then
-			echo "Cache repository is busy."
-			break
-		fi
-
-		# check the mini distro was not already downloaded
-		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
-		echo -n "Checking for pre-existing cache in ${TEMPLATE}..."
-		if [ ! -e "${TEMPLATE}" ]; then
-
-			echo "not found."
-
-			# prepend '-' to nonblank ARCH_VARIANT for URL construction
-			if [ ! -z "${ARCH_VARIANT}" ]; then
-				ARCH_VARIANT="-${ARCH_VARIANT}"
-			fi
-
-			# base stage3 URL
-			STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
-
-			# get latest-stage3....txt file for subpath
-			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive..."
-			mkdir -p ${CACHE} > /dev/null 2>&1
-			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
-			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
-			echo ${LATEST_STAGE3_SUBPATH}
-
-			# download
-			echo -n "Downloading (~130MB), please wait..."
-			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
-			#  - ensure output directory exists
-			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
-			mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
-			#  - grab
-			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
-			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
-			RESULT=$?
-			if [ "${RESULT}" != "0" ]; then
-				echo "failed!"
-				exit 1
-			fi
-			echo "complete."
-
-			# make sure we are operating on a clear rootfs cache
-			rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
-			mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
-
-			echo -n "Extracting stage3 archive..."
-			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
-			RESULT=$?
-			if [ "${RESULT}" != "0" ]; then
-				echo "failed!"
-				exit 1
-			fi
-			echo "done."
-			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
-			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
-			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
-			echo "done."
-			echo -n "Extracting..."
-			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
-			echo "done."
-		else
-			echo "found."
-		fi
-
 		# make a local copy of the mini
 		echo -n "Copying filesystem..."
 		cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
-		) 200> "/var/lock/subsys/lxc"
 	else
 		echo "WARNING: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
 	fi
@@ -640,6 +648,14 @@ purge() {
 	) 200> "/var/lock/subsys/lxc"
 }
 
+fetch() {
+	configure
+        # check the mini distro was not already downloaded
+	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
+	fetch_template
+
+}
+
 # Note: assuming uid==0 is root -- might break with userns??
 if [ "$(id -u)" != "0" ]; then
 	echo "This script should be run as 'root'"
@@ -668,6 +684,8 @@ case "$1" in
 		create;;
 	destroy)
 		destroy;;
+	fetch)
+		fetch;;
 	help)
 		help;;
 	purge)
