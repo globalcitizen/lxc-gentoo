@@ -94,7 +94,7 @@ populate_dev() {
 	mknod -m 666 ${DEV}/tty c 5 0 > /dev/null 2>&1
 	mknod -m 666 ${DEV}/tty0 c 4 0 > /dev/null 2>&1
 	mknod -m 666 ${DEV}/tty1 c 4 1 > /dev/null 2>&1
-	mknod -m 600 ${DEV}/console c 5 1 >/ dev/null 2>&1
+	mknod -m 600 ${DEV}/console c 5 1 > /dev/null 2>&1
 	mknod -m 666 ${DEV}/full c 1 7 > /dev/null 2>&1
 	mknod -m 600 ${DEV}/initctl p > /dev/null 2>&1
 	mknod -m 666 ${DEV}/ptmx c 5 2 > /dev/null 2>&1
