@@ -62,7 +62,7 @@ GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
 	ARCH=${ARCH:-amd64}
-	SUBARCH=${SUBARCH:-i686}
+	SUBARCH=${SUBARCH:-amd64}
 else
 	ARCH=${ARCH:-x86}
 	SUBARCH=${SUBARCH:-$(uname -m)}
