@@ -74,8 +74,6 @@ CONFFILE="${UTSNAME}.conf"
 INITTAB="/etc/inittab"
 FSTAB="/etc/fstab"
 
-#ENABLE_SSH, change to "Yes" to enable
-ENABLE_SSH="No" 
 ################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
