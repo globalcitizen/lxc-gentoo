@@ -19,6 +19,15 @@ Requirements
     (Gentoo: 'emerge lxc')
 
 
+January 2013 Updates
+--------------------
+ - Development of this script will soon be moving
+   to the main lxc utils repository, which has
+   recently moved to github.  While it has not
+   yet been committed (a style review is pending
+   vs. other scripts), you can find that repo
+   over here: https://github.com/lxc/lxc
+
 November 2012 Updates
 ---------------------
  - Comments regarding recent kernel JIT spraying
