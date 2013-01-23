@@ -67,7 +67,7 @@ else
 	ARCH=${ARCH:-x86}
 	SUBARCH=${SUBARCH:-$(uname -m)}
 fi
-ARCH_VARIANT=${ARCHVARIANT:-}
+ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
 
 # These paths are within the container so do not need to obey configure prefixes
@@ -333,18 +333,18 @@ fetch_template() {
 
 			echo "not found."
 
-			# prepend '-' to nonblank ARCH_VARIANT for URL construction
-			if [ ! -z "${ARCH_VARIANT}" ]; then
-				ARCH_VARIANT="-${ARCH_VARIANT}"
+			# prepend '-' to nonblank ARCHVARIANT for URL construction
+			if [ ! -z "${ARCHVARIANT}" ]; then
+				ARCHVARIANT="-${ARCHVARIANT}"
 			fi
 
 			# base stage3 URL
 			STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds"
 
 			# get latest-stage3....txt file for subpath
-			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCH_VARIANT} stage3 archive..."
+			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCHVARIANT} stage3 archive..."
 			mkdir -p ${CACHE} > /dev/null 2>&1
-			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCH_VARIANT}.txt"
+			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
 			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
 			echo ${LATEST_STAGE3_SUBPATH}
 
@@ -434,10 +434,10 @@ configure() {
 		fi
 
 		# choose architecture variant
-		echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCH_VARIANT}]"
-		read _ARCH_VARIANT_
-		if [ ! -z "${_ARCH_VARIANT_}" ]; then
-			ARCH_VARIANT=${_ARCH_VARIANT_}
+		echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
+		read _ARCHVARIANT_
+		if [ ! -z "${_ARCHVARIANT_}" ]; then
+			ARCHVARIANT=${_ARCHVARIANT_}
 		fi
 
 		LXC_ARCH="x86_64"
@@ -483,7 +483,7 @@ create() {
 	ROOTFS="./${NAME}"
 
 	# check the mini distro was not already downloaded
-        TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
+        TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
 	fetch_template
 
 	# check if the rootfs does already exist
@@ -649,7 +649,7 @@ purge() {
 fetch() {
 	configure
         # check the mini distro was not already downloaded
-	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCH_VARIANT}_rootfs"
+	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
 	fetch_template
 
 }
