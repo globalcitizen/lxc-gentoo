@@ -541,7 +541,7 @@ create() {
 
 	write_distro_hostname
 	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Faied to write hostname."
+		echo "ERROR: Failed to write hostname."
 		return 1
 	fi
 
