@@ -38,7 +38,7 @@
 #          brctl addif br0 <guestname>  # add guest to bridge
 #          # ...iptables SNAT stuff...
 #    - guests can be altered to otherwise use a physical interface, vlan, etc.
-#    - typical startup time is <2 seconds
+#    - typical startup time is 0.2-2 seconds
 #    - very fast disk IO (unlike paravirtualised solutions)
 #   
 #   notes:
