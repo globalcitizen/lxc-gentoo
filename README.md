@@ -7,6 +7,13 @@ The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
 within an LXC (Linux Containers) environment.
 
+Typical startup time on modern hardware (even
+without an SSD) is under half a second, and 
+as hardware detection and kernel bootstrapping
+is not required, the init process is largely 
+IO bound.
+
+
 Usage
 -----
 While normally run interactively, the script also
@@ -28,6 +35,10 @@ Requirements
 
 January 2013 Updates
 --------------------
+ - Fairly significant updates to error handling,
+   which should now be relatively reliable.
+ - Improved internal and external documentation.
+ - Explicit inclusion of GPLv3 license text
  - Cancel the following point; we have a fairly
    large stylistic mismatch in addition to our
    use of GPLv3 and their use of LGPL.  I guess
