@@ -8,18 +8,17 @@
 #    - GPLv3 (you know the deal...)
 #
 #   requires:
-#    - kernel with relevant options enabled (see lxc-checkconfig)
+#    - lxc-utils package
+#    - linux kernel with relevant options enabled (see lxc-checkconfig)
 #    - wget and a working internet connection for HTTP fetches
-#    - iptables
-#    - bridge-utils
 #
 #   output environment description:
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
 #    - creates a veth-connected guest
 #       - a virtual ethernet interface appears to the guest as 'eth0' and the
 #         host as '<guestname>' (max 15 characters; less show on 'ifconfig')
-#       - can optionally be bridged via bridge-utils
-#       - bridge is like a software-switch interface on the host and
+#       - can optionally be bridged via bridge-utils 
+#       - a bridge is like a software-switch interface on the host and
 #         requires some host configuration, eg:
 #          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
 #          brctl addbr br0              # create bridge
