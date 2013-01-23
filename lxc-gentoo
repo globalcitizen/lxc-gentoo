@@ -484,58 +484,107 @@ create() {
 
 	# check the mini distro was not already downloaded
         TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-	fetch_template
-
-	# check if the rootfs does already exist
-	if [ ! -e "${ROOTFS}" ]; then
-		# make a local copy of the mini
-		echo -n "Copying filesystem..."
-		cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
-	else
-		echo "WARNING: ROOTFS NOT CREATED - ${ROOTFS} ALREADY EXISTS!!!"
+	fetch_template 
+	RETVAL=$?
+	if [ ! ${RETVAL} -eq 0 ]; then
+		echo "ERROR: Failed to fetch template."
+		return ${RETVAL}
 	fi
 
-write_lxc_configuration
+	# check if the conffile already exists
+	if [ -e "${CONFFILE}" ]; then
+		echo "ERROR: ${CONFFILE} already exists!"
+		return 1
+	fi
 
-write_distro_inittab
+	# check if the rootfs already exists
+	if [ ! -e "${ROOTFS}" ]; then
+		# make a local copy of the mini
+		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
+		cp -a "${TEMPLATE}" ${ROOTFS}
+		if [ ! $? -eq 0 ]; then
+			echo "FAILED."
+			return 1
+		else
+			echo "done."
+		fi
+	else
+		echo "ERROR: ${ROOTFS} already exists!"
+		return 1
+	fi
 
-write_distro_hostname
+	write_lxc_configuration
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write LXC configuration."
+		return 1
+	fi
 
-populate_dev
+	write_distro_inittab
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write changes to inittab."
+		return 1
+	fi
 
-write_distro_fstab
+	write_distro_hostname
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Faied to write hostname."
+		return 1
+	fi
 
-write_distro_timezone
+	populate_dev
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to populate /dev"
+		return 1
+	fi
 
-write_distro_network
+	write_distro_fstab
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write fstab"
+		return 1
+	fi
 
-write_distro_init_fixes
+	write_distro_timezone
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write timezone"
+		return 1
+	fi
 
-set_guest_root_password
+	write_distro_network
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write network configuration"
+		return 1
+	fi
 
-#/usr/sbin/lxc-create -n ${NAME} -f ${CONFFILE} 1>/dev/null 2>/dev/null
-RES=$?
+	write_distro_init_fixes
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to write init fixes"
+		return 1
+	fi
 
-if [ "${RES}" != "0" ]; then
-	echo "Failed to create '${NAME}'"
-	exit 1
-fi
+	set_guest_root_password
+	if [ ! $? -eq 0 ]; then
+		echo "ERROR: Failed to set guest root password"
+		return 1
+	fi
 
-echo "All done!"
-echo -e "\nYou can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'\n - For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net\n"
-echo "Note that container startup will show some errors, these do not matter."
-echo 
-echo "To enter your container for setup WITHOUT running it, try:"
-echo " # mount -t proc proc ${ROOTFS}/proc"
-echo " # mount -o bind /dev ${ROOTFS}/dev"
-echo " # chroot ${ROOTFS} /bin/bash"
-echo " # export PS1=\"(${NAME}) \$PS1\""
-echo " (${NAME}) #   <-- you are now in the guest"
-echo "... or, start it on the current console with:"
-echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
-echo "... or, start it elsewhere and use lxc-console -n ${NAME} to get a shell."
-echo ""
-echo "(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
+	cat <<-EOF
+	All done!
+
+	You can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'
+	For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net
+
+	To enter your container for setup WITHOUT running it, try:
+	 # mount -t proc proc ${ROOTFS}/proc
+	 # mount -o bind /dev ${ROOTFS}/dev
+	 # chroot ${ROOTFS} /bin/bash
+	 # export PS1="(${NAME}) \$PS1"
+	 (${NAME}) #   <-- you are now in the guest
+	... or, start it on the current console with:
+	    'lxc-start -f ${CONFFILE} -n ${NAME}'
+	... or, start it elsewhere then use 'lxc-console -n ${NAME}' for a shell
+	
+	(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
+	EOF
 }
 
 destroy() {
