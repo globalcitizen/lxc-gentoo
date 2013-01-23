@@ -21,6 +21,12 @@ Requirements
 
 January 2013 Updates
 --------------------
+ - Cancel the following point; we have a fairly
+   large stylistic mismatch in addition to our
+   use of GPLv3 and their use of LGPL.  I guess
+   that's a good thing in some ways because we
+   can continue to hack freely without being
+   stylistically constrained ;)
  - Development of this script will soon be moving
    to the main lxc utils repository, which has
    recently moved to github.  While it has not
