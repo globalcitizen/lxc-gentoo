@@ -17,7 +17,7 @@
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
 #    - creates a veth-connected guest
 #       - a virtual ethernet interface appears to the guest as 'eth0' and the
-#         host as '<guestname>' (max 15 characters)
+#         host as '<guestname>' (max 15 characters; less show on 'ifconfig')
 #       - can optionally be bridged via bridge-utils
 #       - bridge is like a software-switch interface on the host and
 #         requires some host configuration, eg:
