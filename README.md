@@ -7,8 +7,15 @@ The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
 within an LXC (Linux Containers) environment.
 
+Usage
+-----
 While normally run interactively, the script also
 accepts input from various environment variables.
+
+ - interactive: `lxc-gentoo`
+ - interactive (with environment): `CACHE=/cache lxc-gentoo`
+ - automated: `lxc-gentoo -q`
+ - automated (with environment): `CACHE=/cache lxc-gentoo -q`
 
 
 Requirements
