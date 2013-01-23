@@ -360,9 +360,9 @@ fetch_template() {
 			RESULT=$?
 			if [ "${RESULT}" != "0" ]; then
 				echo "failed!"
-				exit 1
+				return 1
 			fi
-			echo "complete."
+			echo "done."
 
 			# make sure we are operating on a clear rootfs cache
 			rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
