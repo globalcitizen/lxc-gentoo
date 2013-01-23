@@ -48,9 +48,7 @@
 ###############################################################################
 
 DISTRO="gentoo"
-CACHE="/var/cache/lxc/${DISTRO}"
-
-# Static defines
+CACHE=${CACHE:-/var/cache/lxc/$DISTRO}
 WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
