@@ -365,8 +365,8 @@ fetch_template() {
 			echo "done."
 
 			# make sure we are operating on a clear rootfs cache
-			rm -Rf "${TEMPLATE}" #1>/dev/null 2>/dev/null
-			mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
+			rm -Rf "${TEMPLATE}"
+			mkdir -p "${TEMPLATE}"
 
 			echo -n "Extracting stage3 archive..."
 			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
