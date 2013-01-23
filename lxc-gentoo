@@ -354,6 +354,10 @@ fetch_template() {
 			mkdir -p ${CACHE} > /dev/null 2>&1
 			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
 			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+			if [ ! $? -eq 0 ]; then
+				echo "failed!"
+				return 1
+			fi
 			echo ${LATEST_STAGE3_SUBPATH}
 
 			# download
@@ -365,8 +369,7 @@ fetch_template() {
 			#  - grab
 			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
 			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
-			RESULT=$?
-			if [ "${RESULT}" != "0" ]; then
+			if [ ! $? -eq 0 ]; then
 				echo "failed!"
 				return 1
 			fi
@@ -387,6 +390,10 @@ fetch_template() {
 			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
 			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
 			${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
+			if [ ! $? -eq 0 ]; then
+				echo "failed."
+				return 1
+			fi
 			echo "done."
 			echo -n "Extracting..."
 			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
@@ -493,8 +500,7 @@ create() {
 	# check the mini distro was not already downloaded
         TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
 	fetch_template 
-	RETVAL=$?
-	if [ ! ${RETVAL} -eq 0 ]; then
+	if [ ! $? -eq 0 ]; then
 		echo "ERROR: Failed to fetch template."
 		return ${RETVAL}
 	fi
@@ -604,8 +610,7 @@ destroy() {
 	fi
 
 	/usr/sbin/lxc-destroy -n ${NAME}
-	RETVAL=$?
-	if [ ! ${RETVAL} -eq 0 ]; then
+	if [ ! $? -eq 0 ]; then
 		echo "Failed to destroyed '${NAME}'"
 		return ${RETVAL}
 	fi
