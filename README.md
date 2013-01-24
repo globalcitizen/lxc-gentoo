@@ -37,6 +37,7 @@ Requirements
 
 January 2013 Updates
 --------------------
+ - Deployment of whizz-bang screenshot eyecandy.
  - Up to date OpenRC fixes for fast and minimalist
    boot (eg. newer OpenRC 'net' dep behaviour)
  - Additional boot verbosity with agetty --noclear
