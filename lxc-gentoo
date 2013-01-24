@@ -213,7 +213,7 @@ write_distro_init_fixes() {
 	# many daemon start issues such as failed binds / bad connectivity
 	# (~jan 2013)
 	if [ "${IPV4}" != "dhcp" ]; then
-		echo 'rc_provide="net"' >>/etc/rc.conf
+		echo 'rc_provide="net"' >>${ROOTFS}/etc/rc.conf
 	fi
 }
 
