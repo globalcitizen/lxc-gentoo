@@ -28,6 +28,7 @@ accepts input from various environment variables.
 
 Available environment variables are as follows:
 
+<style>td.r{text-align:right};td.r,thead.td{font-weight:bold}</style>
 <table>
  <thead>
   <tr>
@@ -39,55 +40,55 @@ Available environment variables are as follows:
  </thead>
  <tbody>
   <tr>
-   <td>LXC Container Name</td>
+   <td class="r">LXC Container Name</td>
    <td><pre>NAME</pre></td>
    <td><i>gentoo</i></td>
    <td>Used by <i>lxc-start</i>, <i>lxc-stop</i>, etc.</td>
   </tr>
   <tr>
-   <td>Hostname</td>
+   <td class="r">Hostname</td>
    <td><pre>UTSNAME</pre></td>
    <td><i>gentoo</i></td>
    <td>May be altered by DHCP.</td>
   </tr>
   <tr>
-   <td>IPv4 Address</td>
+   <td class="r">IPv4 Address</td>
    <td><pre>IPV4</pre></td>
    <td><i>172.20.0.2/24</i></td>
    <td>The special value <i>dhcp</i> may also be used.</td>
   </tr>
   <tr>
-   <td>IPv4 Gateway</td>
+   <td class="r">IPv4 Gateway</td>
    <td><pre>GATEWAY</pre></td>
    <td><i>172.20.0.1</i></td>
    <td>Ignored if <i>IPV4</i> is <i>dhcp</i>.</td>
   </tr>
   <tr>
-   <td>Guest Root Password</td>
+   <td class="r">Guest Root Password</td>
    <td><pre>GUESTROOTPASS</pre></td>
    <td><i>toor</i></td>
    <td>Will be phased out soon.</td>
   </tr>
   <tr>
-   <td>Gentoo Architecture</td>
+   <td class="r">Gentoo Architecture</td>
    <td><pre>ARCH</pre></td>
    <td><i>amd64</i></td>
    <td>Gentoo architecture code.</td>
   </tr>
   <tr>
-   <td>Gentoo Subarchitecture</td>
+   <td class="r">Gentoo Subarchitecture</td>
    <td><pre>SUBARCH</pre></td>
    <td><i>amd64</i></td>
    <td>Gentoo subarchitecture code.</td>
   </tr>
   <tr>
-   <td>Gentoo Architecture Variant</td>
+   <td class="r">Gentoo Architecture Variant</td>
    <td><pre>ARCHVARIANT</pre></td>
    <td>(none)</td>
    <td>Usually none, <i>hardened</i> or <i>hardened+nomultilib</i></td>
   </tr>
   <tr>
-   <td>lxc.conf Location</td>
+   <td class="r">lxc.conf Location</td>
    <td><pre>CONFFILE</pre></td>
    <td><i>${UTSNAME}.conf</i></td>
    <td>Path at which to generate the <i>lxc.conf</i> file.</td>
