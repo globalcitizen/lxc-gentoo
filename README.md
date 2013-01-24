@@ -40,55 +40,55 @@ Available environment variables are as follows:
  <tbody>
   <tr>
    <td><b>LXC Container Name</b></td>
-   <td><pre>NAME</pre></td>
+   <td><pre>$NAME</pre></td>
    <td><i>gentoo</i></td>
    <td>Used by <i>lxc-start</i>, <i>lxc-stop</i>, etc.</td>
   </tr>
   <tr>
    <td><b>Hostname</b></td>
-   <td><pre>UTSNAME</pre></td>
+   <td><pre>$UTSNAME</pre></td>
    <td><i>gentoo</i></td>
    <td>May be altered by DHCP.</td>
   </tr>
   <tr>
    <td><b>IPv4 Address</b></td>
-   <td><pre>IPV4</pre></td>
+   <td><pre>$IPV4</pre></td>
    <td><i>172.20.0.2/24</i></td>
    <td>The special value <i>dhcp</i> may also be used.</td>
   </tr>
   <tr>
    <td><b>IPv4 Gateway</b></td>
-   <td><pre>GATEWAY</pre></td>
+   <td><pre>$GATEWAY</pre></td>
    <td><i>172.20.0.1</i></td>
-   <td>Ignored if <i>IPV4</i> is <i>dhcp</i>.</td>
+   <td>Ignored if <i>$IPV4</i> is <i>dhcp</i>.</td>
   </tr>
   <tr>
    <td><b>Guest Root Password</b></td>
-   <td><pre>GUESTROOTPASS</pre></td>
+   <td><pre>$GUESTROOTPASS</pre></td>
    <td><i>toor</i></td>
    <td>Will be phased out soon.</td>
   </tr>
   <tr>
    <td><b>Gentoo Architecture</b></td>
-   <td><pre>ARCH</pre></td>
+   <td><pre>$ARCH</pre></td>
    <td><i>amd64</i></td>
    <td>Gentoo architecture code.</td>
   </tr>
   <tr>
    <td><b>Gentoo Subarchitecture</b></td>
-   <td><pre>SUBARCH</pre></td>
+   <td><pre>$SUBARCH</pre></td>
    <td><i>amd64</i></td>
    <td>Gentoo subarchitecture code.</td>
   </tr>
   <tr>
    <td><b>Gentoo Architecture Variant</b></td>
-   <td><pre>ARCHVARIANT</pre></td>
+   <td><pre>$ARCHVARIANT</pre></td>
    <td>(none)</td>
    <td>Usually none, <i>hardened</i> or <i>hardened+nomultilib</i></td>
   </tr>
   <tr>
    <td><b>lxc.conf Location</b></td>
-   <td><pre>CONFFILE</pre></td>
+   <td><pre>$CONFFILE</pre></td>
    <td><i>${UTSNAME}.conf</i></td>
    <td>Path at which to generate the <i>lxc.conf</i> file.</td>
   </tr>
