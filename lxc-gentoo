@@ -171,10 +171,6 @@ write_distro_network() {
 		#           between reboots, then after running the above execute:
 		#             /etc/init.d/iptables save
 		#             rc-update add iptables default
-		#
-		# null config required to allow for the net.eth0 script to come up and 
-		# resolve any openrc init system dependencies on 'net'
-		config_eth0="null"
 		EOF
 	fi
 	# only link for dchp, since static options render it unnecessary
@@ -210,8 +206,15 @@ write_distro_init_fixes() {
 	rm ${ROOTFS}/etc/runlevels/boot/urandom
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
 	rm ${ROOTFS}/etc/runlevels/boot/net.lo
-	# force local provision of 'net' (~jan 2013)
-	echo 'rc_provide="net"' >>/etc/rc.conf
+	# unless we are using DHCP to configure the container, we now
+	# force openrc to automatic provision of the 'net' dep. this is
+	# avoided for DHCP as it would prohibit service start from waiting
+	# until the interface has been provided with an IP address, causing
+	# many daemon start issues such as failed binds / bad connectivity
+	# (~jan 2013)
+	if [ "${IPV4}" != "dhcp" ]; then
+		echo 'rc_provide="net"' >>/etc/rc.conf
+	fi
 }
 
 ################################################################################
