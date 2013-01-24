@@ -21,7 +21,7 @@ Requirements
     http://www.kernel.org/
      - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://en.gentoo-wiki.com/wiki/LXC)
  - Recent lxc userspace utilities
-    (Gentoo: 'emerge lxc')
+    (Gentoo: `emerge lxc`)
 
 Usage
 -----
@@ -33,7 +33,7 @@ accepts input from various environment variables.
  - automated: `lxc-gentoo create -q`
  - automated (with environment): `CACHE=/cache lxc-gentoo create -q`
 
-Available environment variables are as follows:
+Available environment variables are as follows.
 
 <table>
  <thead>
@@ -108,8 +108,10 @@ Available environment variables are as follows:
  </tbody>
 </table>
 
-January 2013 Updates
---------------------
+Updates
+-------
+
+___January 2013___
  - Deployment of whizz-bang screenshot eyecandy.
  - Up to date OpenRC fixes for fast and minimalist
    boot (eg. newer OpenRC 'net' dep behaviour)
@@ -131,8 +133,7 @@ January 2013 Updates
    vs. other scripts), you can find that repo
    over here: https://github.com/lxc/lxc
 
-November 2012 Updates
----------------------
+___November 2012___
  - Comments regarding recent kernel JIT spraying
    vulnerability: http://bit.ly/T9CkqJ
  - Various contributed minor improvements around
@@ -142,15 +143,11 @@ November 2012 Updates
  - Don't create /etc/init.d/net.eth0 unless DHCP
    is specified.
 
-October 2012 Updates
---------------------
+___October 2012___
  - Migrate stage3 URL from 'arch' to 'subarch'
    basis, as per Gentoo Release Guidelines.
 
-
-September 2012 Updates
-----------------------
-
+___September 2012___
  - Default network config has changed. Instead
    of assuming a bridge setup, we use simpler 
    'veth' based tunnels direct to the host,
@@ -158,21 +155,15 @@ September 2012 Updates
    host's interface list.  (Also resolves an
    apparently outstanding bug related to random
    MAC assignment, see http://bit.ly/QWAkOy )
-
  - Generated guests now attempt to aggressively 
    drop capabilities ('man 7 capabilities') in
    a bid to plug known security issues, also to
    pre-mount /proc and remove /sys for the same
    purpose.  (See also: http://bit.ly/SSDbY0 )
-
  - Add DHCP support
-
  - SSH setup code dropped as out of scope
-
  - More OpenRC related fixes for faster startup.
-
  - Various minor updates
-
 
 History
 -------
