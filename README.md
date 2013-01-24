@@ -18,7 +18,7 @@ IO bound.
 Requirements
 ------------
  - Recent Linux kernel (>=3.2.x recommended, >=3.7.x actively tested)
-    http://www.kernel.org/
+    http://www.kernel.org/ (Gentoo: `emerge hardened-sources` / `emerge gentoo-sources` / `emerge vanilla-sources`)
      - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://en.gentoo-wiki.com/wiki/LXC)
  - Recent lxc userspace utilities
     (Gentoo: `emerge lxc`)
@@ -114,8 +114,8 @@ Updates
 ___January 2013___
  - Deployment of whizz-bang screenshot eyecandy.
  - Up to date OpenRC fixes for fast and minimalist
-   boot (eg. newer OpenRC 'net' dep behaviour)
- - Additional boot verbosity with agetty --noclear
+   boot (eg. newer OpenRC `net` dependency handling)
+ - Additional boot verbosity with `agetty --noclear`
  - Fairly significant updates to error handling,
    which should now be relatively reliable.
  - Improved internal and external documentation.
@@ -138,30 +138,30 @@ ___November 2012___
    vulnerability: http://bit.ly/T9CkqJ
  - Various contributed minor improvements around
    locking, indentation, shell syntax, etc.
- - Don't drop 'fowner' capability, as it breaks
+ - Don't drop `CAP_FOWNER` capability, as it breaks
    portage's ability to chown.
- - Don't create /etc/init.d/net.eth0 unless DHCP
+ - Don't create `/etc/init.d/net.eth0` unless DHCP
    is specified.
 
 ___October 2012___
- - Migrate stage3 URL from 'arch' to 'subarch'
+ - Migrate stage3 URL from `ARCH` to `SUBARCH`
    basis, as per Gentoo Release Guidelines.
 
 ___September 2012___
  - Default network config has changed. Instead
    of assuming a bridge setup, we use simpler 
-   'veth' based tunnels direct to the host,
-   which now appear as 'guestname' in the
+   `veth` based tunnels direct to the host,
+   which now appear as ''guestname'' in the
    host's interface list.  (Also resolves an
    apparently outstanding bug related to random
    MAC assignment, see http://bit.ly/QWAkOy )
  - Generated guests now attempt to aggressively 
-   drop capabilities ('man 7 capabilities') in
+   drop capabilities (`man 7 capabilities`) in
    a bid to plug known security issues, also to
-   pre-mount /proc and remove /sys for the same
+   pre-mount `/proc` and remove `/sys` for the same
    purpose.  (See also: http://bit.ly/SSDbY0 )
  - Add DHCP support
- - SSH setup code dropped as out of scope
+ - `sshd` setup code dropped as out of scope
  - More OpenRC related fixes for faster startup.
  - Various minor updates
 
