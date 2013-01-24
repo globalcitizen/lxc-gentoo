@@ -208,6 +208,10 @@ write_distro_init_fixes() {
 	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
 	# https://bugs.gentoo.org/show_bug.cgi?id=436270
 	rm ${ROOTFS}/etc/runlevels/boot/urandom
+	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
+	rm ${ROOTFS}/etc/runlevels/boot/net.lo
+	# disable net dependency in sshd as workaround for no 'net' (~jan 2013)
+	echo 'rc_need="!net"' >>${ROOTFS}/etc/conf.d/sshd
 }
 
 ################################################################################
