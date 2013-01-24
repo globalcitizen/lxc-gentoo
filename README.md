@@ -7,6 +7,8 @@ The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
 within an LXC (Linux Containers) environment.
 
+![LXC Boot Time Screenshot](https://github.com/globalcitizen/lxc-gentoo/raw/master/screenshot.jpg)
+
 Typical startup time on modern hardware (even
 without an SSD) is under half a second, and 
 as hardware detection and kernel bootstrapping
