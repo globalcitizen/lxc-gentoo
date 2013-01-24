@@ -35,6 +35,9 @@ Requirements
 
 January 2013 Updates
 --------------------
+ - Up to date OpenRC fixes for fast and minimalist
+   boot (eg. newer OpenRC 'net' dep behaviour)
+ - Additional boot verbosity with agetty --noclear
  - Fairly significant updates to error handling,
    which should now be relatively reliable.
  - Improved internal and external documentation.
