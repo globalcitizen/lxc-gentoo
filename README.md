@@ -33,7 +33,8 @@ Available environment variables are as follows:
   <tr>
    <td>Property</td>
    <td>Environment<br>Variable</td>
-   <td>
+   <td>Default<br>Value</td>
+   <td>Notes</td>
   </tr>
  </thead>
  <tbody>
@@ -41,7 +42,7 @@ Available environment variables are as follows:
    <td>LXC Container Name</td>
    <td><pre>NAME</pre></td>
    <td><i>gentoo</i></td>
-   <td>Used by <pre>lxc-start</pre>, <pre>lxc-stop</pre>, etc.</td>
+   <td>Used by <i>lxc-start</i>, <i>lxc-stop</i>, etc.</td>
   </tr>
   <tr>
    <td>Hostname</td>
@@ -89,7 +90,7 @@ Available environment variables are as follows:
    <td>lxc.conf Location</td>
    <td><pre>CONFFILE</pre></td>
    <td><i>${UTSNAME}.conf</i></td>
-   <td>Path to generate lxc.conf file.</td>
+   <td>Path at which to generate the <i>lxc.conf</i> file.</td>
   </tr>
  </tbody>
 </table>
