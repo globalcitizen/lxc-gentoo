@@ -19,10 +19,10 @@ Usage
 While normally run interactively, the script also
 accepts input from various environment variables.
 
- - interactive: `lxc-gentoo`
- - interactive (with environment): `CACHE=/cache lxc-gentoo`
- - automated: `lxc-gentoo -q`
- - automated (with environment): `CACHE=/cache lxc-gentoo -q`
+ - interactive: `lxc-gentoo create`
+ - interactive (with environment): `CACHE=/cache lxc-gentoo create`
+ - automated: `lxc-gentoo create -q`
+ - automated (with environment): `CACHE=/cache lxc-gentoo create -q`
 
 
 Requirements
