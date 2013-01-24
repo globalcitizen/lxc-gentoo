@@ -39,6 +39,12 @@ Available environment variables are as follows:
  </thead>
  <tbody>
   <tr>
+   <td><b>Cache</b></td>
+   <td><pre>$CACHE</pre></td>
+   <td><i>/var/cache/lxc/gentoo</i></td>
+   <td>Stores architecture/subarchitecture/architecture variant combination-specific stage3 tarballs and extracted root filesystems, plus the latest portage snapshot.</td>
+  </tr>
+  <tr>
    <td><b>LXC Container Name</b></td>
    <td><pre>$NAME</pre></td>
    <td><i>gentoo</i></td>
