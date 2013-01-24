@@ -7,7 +7,7 @@ The script creates a root filesystem and config
 file suitable for initializing a Gentoo guest
 within an LXC (Linux Containers) environment.
 
-![LXC Boot Time Screenshot](https://github.com/globalcitizen/lxc-gentoo/raw/master/screenshot.jpg)
+<img alt="LXC Boot Time Screenshot" src="https://github.com/globalcitizen/lxc-gentoo/raw/master/screenshot.jpg">
 
 Typical startup time on modern hardware (even
 without an SSD) is under half a second, and 
@@ -15,6 +15,13 @@ as hardware detection and kernel bootstrapping
 is not required, the init process is largely 
 IO bound.
 
+Requirements
+------------
+ - Recent Linux kernel (>=3.2.x recommended, >=3.7.x actively tested)
+    http://www.kernel.org/
+     - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://en.gentoo-wiki.com/wiki/LXC)
+ - Recent lxc userspace utilities
+    (Gentoo: 'emerge lxc')
 
 Usage
 -----
@@ -100,14 +107,6 @@ Available environment variables are as follows:
   </tr>
  </tbody>
 </table>
-
-Requirements
-------------
- - Recent Linux kernel (>=3.2.x recommended)
-    http://www.kernel.org/
- - lxc userspace utilities
-    (Gentoo: 'emerge lxc')
-
 
 January 2013 Updates
 --------------------
