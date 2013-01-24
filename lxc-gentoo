@@ -45,11 +45,6 @@
 #    - dedicated to all fellow ethical unix hackers who do not work for 
 #      morally corrupt governments and corporations: use your powers for good!
 #
-#   todo:
-#    - support for selinux/grsec
-#    - CUSTOM_STAGE3_URL support
-#    - CUSTOM_PORTAGE_URL support
-#
 #   authors:
 #    - Anders Larsson / https://github.com/inbox/new/Wicla
 #    - Julien Sanchez / julien.sanchez at gmail.com
