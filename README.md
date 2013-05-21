@@ -52,6 +52,12 @@ Available environment variables are as follows.
    <td>Stores arch/subarch/variant combo specific stage3 tarballs + extracted root filesystem images, plus the latest portage snapshot.</td>
   </tr>
   <tr>
+   <td><b>Mirror</b></td>
+   <td><pre>$MIRROR</pre></td>
+   <td><i>http://distfiles.gentoo.org</i>
+   <td>Specifies the location from which the stage3 tarball and portage snapshot should be fetched.</td>
+  </tr>
+  <tr>
    <td><b>LXC Container Name</b></td>
    <td><pre>$NAME</pre></td>
    <td><i>gentoo</i></td>
