@@ -364,7 +364,7 @@ fetch_template() {
 			echo ${LATEST_STAGE3_SUBPATH}
 
 			# download
-			echo -n "Downloading (~130MB), please wait..."
+			echo -n "Downloading (~180MB), please wait..."
 			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
 			#  - ensure output directory exists
 			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
