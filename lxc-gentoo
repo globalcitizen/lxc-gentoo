@@ -85,7 +85,6 @@ umask 022
 #                    DISTRO custom configuration files
 ################################################################################
 
-# populate /dev
 populate_dev() {
 	# we silence errors as newer stage3s appear to include device files
 	DEV="${ROOTFS}/dev"
