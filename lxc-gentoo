@@ -78,6 +78,9 @@ MIRROR=${MIRROR:-http://distfiles.gentoo.org}
 INITTAB="/etc/inittab"
 FSTAB="/etc/fstab"
 
+# Ensure strict root's umask doesen't render the VM unusable
+umask 022
+
 ################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
