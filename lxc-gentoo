@@ -560,10 +560,6 @@ create() {
 	fi
 
 	populate_dev
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to populate /dev"
-		return 1
-	fi
 
 	write_distro_fstab
 	if [ ! $? -eq 0 ]; then
