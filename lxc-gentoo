@@ -511,14 +511,6 @@ create() {
 	# the rootfs name will be built with the container name
 	ROOTFS="./${NAME}"
 
-	# check the mini distro was not already downloaded
-        TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-	fetch_template 
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to fetch template."
-		return ${RETVAL}
-	fi
-
 	# check if the conffile already exists
 	if [ -e "${CONFFILE}" ]; then
 		echo "ERROR: ${CONFFILE} already exists!"
@@ -545,6 +537,14 @@ create() {
 			echo "done."
 		fi
 	else
+		# check the mini distro was not already downloaded
+		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
+		fetch_template 
+		if [ ! $? -eq 0 ]; then
+			echo "ERROR: Failed to fetch template."
+			return ${RETVAL}
+		fi
+
 		# make a local copy of the mini
 		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
 		cp -a "${TEMPLATE}" ${ROOTFS}
