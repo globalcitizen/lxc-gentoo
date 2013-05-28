@@ -73,6 +73,7 @@ fi
 ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
 MIRROR=${MIRROR:-http://distfiles.gentoo.org}
+STAGE3_TARBALL="${STAGE3_TARBALL}"
 
 # These paths are within the container so do not need to obey configure prefixes
 INITTAB="/etc/inittab"
@@ -663,6 +664,10 @@ help() {
 		-m MIRROR : mirror for stage3 and Portage archive
 			Env. Var.: MIRROR
 			Current/Default: ${MIRROR}
+		-t STAGE3_TARBALL : path to a stage3 archive to use
+			specifiying this option will override fetching and asking you for arch, variant and mirror
+			Env. Var.: STAGE3_TARBALL
+			Cyrrent: ${STAGE3_TARBALL} Default: null
 		-C CUSTOMURL : URL for a custom tarball
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
@@ -737,7 +742,7 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:q" opt; do
+while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
 	case $opt in
 		i) IPV4=$OPTARG ;;
 		g) GATEWAY=$OPTARG ;;
@@ -747,6 +752,7 @@ while getopts "i:g:n:u:a:C:p:m:q" opt; do
 		C) CUSTOMURL=$OPTARG;;
 		p) GUESTROOTPASS=$OPTARG ;;
 		m) MIRROR=$OPTARG ;;
+		t) STAGE3_TARBALL="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
