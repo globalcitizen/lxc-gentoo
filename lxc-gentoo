@@ -85,7 +85,6 @@ umask 022
 #                    DISTRO custom configuration files
 ################################################################################
 
-# populate /dev
 populate_dev() {
 	# we silence errors as newer stage3s appear to include device files
 	DEV="${ROOTFS}/dev"
@@ -560,10 +559,6 @@ create() {
 	fi
 
 	populate_dev
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to populate /dev"
-		return 1
-	fi
 
 	write_distro_fstab
 	if [ ! $? -eq 0 ]; then
