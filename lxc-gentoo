@@ -531,14 +531,29 @@ create() {
 		return 1
 	fi
 	
-	# make a local copy of the mini
-	echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
-	cp -a "${TEMPLATE}" ${ROOTFS}
-	if [ ! $? -eq 0 ]; then
-		echo "FAILED."
-		return 1
+	if [[ -n ${STAGE3_TARBALL} ]]; then
+		# variable is nonzero, try to unpack
+		printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
+		mkdir -p "${ROOTFS}"
+
+		# also exclude redundant .keep files
+		tar --exclude .keep -xpf "${STAGE3_TARBALL}" -C "${ROOTFS}"
+		if [ $? -ne 0 ]; then
+			echo "FAILED."
+			return 1
+		else
+			echo "done."
+		fi
 	else
-		echo "done."
+		# make a local copy of the mini
+		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
+		cp -a "${TEMPLATE}" ${ROOTFS}
+		if [ ! $? -eq 0 ]; then
+			echo "FAILED."
+			return 1
+		else
+			echo "done."
+		fi
 	fi
 
 	write_lxc_configuration
