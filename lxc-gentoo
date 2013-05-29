@@ -446,7 +446,7 @@ configure() {
 				GATEWAY=${_GATEWAY_}
 			fi
 		fi
-		
+
 		# Type guest root password
 		echo -n "Type guest root password (enter for none):"
 		stty -echo
@@ -455,38 +455,40 @@ configure() {
 		stty echo
 		echo ""
 
-		# choose the architecture
-		echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
-		read _ARCH_
-		if [ ! -z "${_ARCH_}" ]; then
-			ARCH=${_ARCH_}
-		fi
-
-		# choose architecture variant
-		echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
-		read _ARCHVARIANT_
-		if [ ! -z "${_ARCHVARIANT_}" ]; then
-			ARCHVARIANT=${_ARCHVARIANT_}
-		fi
-
-		LXC_ARCH="x86_64"
-		# if x86 is given prompt for "subarch"
-		if [ "${ARCH}" == 'x86' ]; then
-			echo -n "Sub architecture of x86 ? [${SUBARCH}]"
-			read _SUBARCH_
-			if [ ! -z "${_SUBARCH_}" ]; then
-				SUBARCH=${_SUBARCH_}
+		if [[ -z ${STAGE3_TARBALL} ]]; then
+			# choose the architecture
+			echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
+			read _ARCH_
+			if [ ! -z "${_ARCH_}" ]; then
+				ARCH=${_ARCH_}
 			fi
-			LXC_ARCH="${SUBARCH}"
-		elif [ "${ARCH}" == "amd64" ]; then
-			SUBARCH=${ARCH}
-		fi
 
-		# choose the mirror
-		echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
-		read _MIRROR_
-		if [ ! -z "${_MIRROR_}" ]; then
-			MIRROR=${_MIRROR_}
+			# choose architecture variant
+			echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
+			read _ARCHVARIANT_
+			if [ ! -z "${_ARCHVARIANT_}" ]; then
+				ARCHVARIANT=${_ARCHVARIANT_}
+			fi
+
+			LXC_ARCH="x86_64"
+			# if x86 is given prompt for "subarch"
+			if [ "${ARCH}" == 'x86' ]; then
+				echo -n "Sub architecture of x86 ? [${SUBARCH}]"
+				read _SUBARCH_
+				if [ ! -z "${_SUBARCH_}" ]; then
+					SUBARCH=${_SUBARCH_}
+				fi
+				LXC_ARCH="${SUBARCH}"
+			elif [ "${ARCH}" == "amd64" ]; then
+				SUBARCH=${ARCH}
+			fi
+
+			# choose the mirror
+			echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
+			read _MIRROR_
+			if [ ! -z "${_MIRROR_}" ]; then
+				MIRROR=${_MIRROR_}
+			fi
 		fi
 
 	fi
