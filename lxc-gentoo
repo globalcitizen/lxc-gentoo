@@ -446,6 +446,14 @@ configure() {
 				GATEWAY=${_GATEWAY_}
 			fi
 		fi
+		
+		# Type guest root password
+		echo -n "Type guest root password (enter for none):"
+		stty -echo
+		read GUESTROOTPASS
+		echo ""
+		stty echo
+		echo ""
 
 		# choose the architecture
 		echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
@@ -473,14 +481,6 @@ configure() {
 		elif [ "${ARCH}" == "amd64" ]; then
 			SUBARCH=${ARCH}
 		fi
-
-		# Type guest root password
-		echo -n "Type guest root password (enter for none):"
-		stty -echo
-		read GUESTROOTPASS
-		echo ""
-		stty echo
-		echo ""
 
 		# choose the mirror
 		echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
