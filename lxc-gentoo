@@ -455,7 +455,7 @@ configure() {
 		stty echo
 		echo ""
 
-		if [[ -z ${STAGE3_TARBALL} ]]; then
+		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
 			echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
 			read _ARCH_
@@ -525,7 +525,7 @@ create() {
 		return 1
 	fi
 	
-	if [[ -n ${STAGE3_TARBALL} ]]; then
+	if [[ -n "${STAGE3_TARBALL}" ]]; then
 		# variable is nonzero, try to unpack
 		printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
 		mkdir -p "${ROOTFS}"
