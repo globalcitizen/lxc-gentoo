@@ -444,12 +444,7 @@ configure() {
 		fi
 
 		# Type guest root password
-		echo -n "Type guest root password (enter for none):"
-		stty -echo
-		read GUESTROOTPASS
-		echo ""
-		stty echo
-		echo ""
+		read -s -p "Type guest root password (enter for none): " GUESTROOTPASS
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
