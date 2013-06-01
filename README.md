@@ -58,6 +58,12 @@ Available environment variables are as follows.
    <td>Specifies the location from which the stage3 tarball and portage snapshot should be fetched.</td>
   </tr>
   <tr>
+   <td><b>Stage 3 tarball</b></td>
+   <td><pre>$STAGE3\_TARBALL</pre></td>
+   <td><i></i>
+   <td>Specifies the location of a custom stage3 tarball. When this option is present, fetching will be skipped</td>
+  </tr>
+  <tr>
    <td><b>LXC Container Name</b></td>
    <td><pre>$NAME</pre></td>
    <td><i>gentoo</i></td>

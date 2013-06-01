@@ -73,6 +73,7 @@ fi
 ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
 MIRROR=${MIRROR:-http://distfiles.gentoo.org}
+STAGE3_TARBALL="${STAGE3_TARBALL}"
 
 # These paths are within the container so do not need to obey configure prefixes
 INITTAB="/etc/inittab"
@@ -446,33 +447,6 @@ configure() {
 			fi
 		fi
 
-		# choose the architecture
-		echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
-		read _ARCH_
-		if [ ! -z "${_ARCH_}" ]; then
-			ARCH=${_ARCH_}
-		fi
-
-		# choose architecture variant
-		echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
-		read _ARCHVARIANT_
-		if [ ! -z "${_ARCHVARIANT_}" ]; then
-			ARCHVARIANT=${_ARCHVARIANT_}
-		fi
-
-		LXC_ARCH="x86_64"
-		# if x86 is given prompt for "subarch"
-		if [ "${ARCH}" == 'x86' ]; then
-			echo -n "Sub architecture of x86 ? [${SUBARCH}]"
-			read _SUBARCH_
-			if [ ! -z "${_SUBARCH_}" ]; then
-				SUBARCH=${_SUBARCH_}
-			fi
-			LXC_ARCH="${SUBARCH}"
-		elif [ "${ARCH}" == "amd64" ]; then
-			SUBARCH=${ARCH}
-		fi
-
 		# Type guest root password
 		echo -n "Type guest root password (enter for none):"
 		stty -echo
@@ -481,11 +455,40 @@ configure() {
 		stty echo
 		echo ""
 
-		# choose the mirror
-		echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
-		read _MIRROR_
-		if [ ! -z "${_MIRROR_}" ]; then
-			MIRROR=${_MIRROR_}
+		if [[ -z "${STAGE3_TARBALL}" ]]; then
+			# choose the architecture
+			echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
+			read _ARCH_
+			if [ ! -z "${_ARCH_}" ]; then
+				ARCH=${_ARCH_}
+			fi
+
+			# choose architecture variant
+			echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
+			read _ARCHVARIANT_
+			if [ ! -z "${_ARCHVARIANT_}" ]; then
+				ARCHVARIANT=${_ARCHVARIANT_}
+			fi
+
+			LXC_ARCH="x86_64"
+			# if x86 is given prompt for "subarch"
+			if [ "${ARCH}" == 'x86' ]; then
+				echo -n "Sub architecture of x86 ? [${SUBARCH}]"
+				read _SUBARCH_
+				if [ ! -z "${_SUBARCH_}" ]; then
+					SUBARCH=${_SUBARCH_}
+				fi
+				LXC_ARCH="${SUBARCH}"
+			elif [ "${ARCH}" == "amd64" ]; then
+				SUBARCH=${ARCH}
+			fi
+
+			# choose the mirror
+			echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
+			read _MIRROR_
+			if [ ! -z "${_MIRROR_}" ]; then
+				MIRROR=${_MIRROR_}
+			fi
 		fi
 
 	fi
@@ -510,14 +513,6 @@ create() {
 	# the rootfs name will be built with the container name
 	ROOTFS="./${NAME}"
 
-	# check the mini distro was not already downloaded
-        TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-	fetch_template 
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to fetch template."
-		return ${RETVAL}
-	fi
-
 	# check if the conffile already exists
 	if [ -e "${CONFFILE}" ]; then
 		echo "ERROR: ${CONFFILE} already exists!"
@@ -525,7 +520,33 @@ create() {
 	fi
 
 	# check if the rootfs already exists
-	if [ ! -e "${ROOTFS}" ]; then
+	if [ -e "${ROOTFS}" ]; then
+		echo "ERROR: ${ROOTFS} already exists!"
+		return 1
+	fi
+	
+	if [[ -n "${STAGE3_TARBALL}" ]]; then
+		# variable is nonzero, try to unpack
+		printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
+		mkdir -p "${ROOTFS}"
+
+		# also exclude redundant .keep files
+		tar --exclude .keep -xpf "${STAGE3_TARBALL}" -C "${ROOTFS}"
+		if [ $? -ne 0 ]; then
+			echo "FAILED."
+			return 1
+		else
+			echo "done."
+		fi
+	else
+		# check the mini distro was not already downloaded
+		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
+		fetch_template 
+		if [ ! $? -eq 0 ]; then
+			echo "ERROR: Failed to fetch template."
+			return ${RETVAL}
+		fi
+
 		# make a local copy of the mini
 		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
 		cp -a "${TEMPLATE}" ${ROOTFS}
@@ -535,9 +556,6 @@ create() {
 		else
 			echo "done."
 		fi
-	else
-		echo "ERROR: ${ROOTFS} already exists!"
-		return 1
 	fi
 
 	write_lxc_configuration
@@ -663,6 +681,10 @@ help() {
 		-m MIRROR : mirror for stage3 and Portage archive
 			Env. Var.: MIRROR
 			Current/Default: ${MIRROR}
+		-t STAGE3_TARBALL : path to a stage3 archive to use
+			specifiying this option will override fetching and asking you for arch, variant and mirror
+			Env. Var.: STAGE3_TARBALL
+			Cyrrent: ${STAGE3_TARBALL} Default: null
 		-C CUSTOMURL : URL for a custom tarball
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
@@ -737,7 +759,7 @@ fi
 CACHE="/var/cache/lxc/${DISTRO}"
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:q" opt; do
+while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
 	case $opt in
 		i) IPV4=$OPTARG ;;
 		g) GATEWAY=$OPTARG ;;
@@ -747,6 +769,7 @@ while getopts "i:g:n:u:a:C:p:m:q" opt; do
 		C) CUSTOMURL=$OPTARG;;
 		p) GUESTROOTPASS=$OPTARG ;;
 		m) MIRROR=$OPTARG ;;
+		t) STAGE3_TARBALL="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
