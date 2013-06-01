@@ -269,6 +269,7 @@ write_lxc_configuration() {
 	# disabled for security, see http://blog.bofh.it/debian/id_413
 	#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
 	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
 	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
 	# console access
