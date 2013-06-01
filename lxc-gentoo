@@ -616,25 +616,8 @@ create() {
 }
 
 destroy() {
-	read -p "What is the name for the container ? " -ei "$NAME"
-	if [ -n "$REPLY" ]; then
-		NAME="$REPLY"
-	fi
-
-	/usr/sbin/lxc-destroy -n ${NAME}
-	if [ ! $? -eq 0 ]; then
-		echo "Failed to destroyed '${NAME}'"
-		return ${RETVAL}
-	fi
-
-	ROOTFS="./rootfs.${NAME}"
-
-	read -p "Shall I remove the rootfs [y/n] ? "
-	if [ "$REPLY" = "y" ]; then
-		rm -rf ${ROOTFS}
-	fi
-
-	return 0
+	printf "To destroy the container, just remove <container_name>* wherever you created it.\n"
+	printf "Are you sure it is not running at the moment? (use lxc-kill -n <container_name> to stop/kill it.\n"
 }
 
 help() {
