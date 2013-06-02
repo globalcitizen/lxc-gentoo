@@ -269,6 +269,7 @@ write_lxc_configuration() {
 	# disabled for security, see http://blog.bofh.it/debian/id_413
 	#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
 	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
 	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
 	# console access
@@ -413,70 +414,58 @@ fetch_template() {
 configure() {
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
-		echo -n "What is the name for the container (recommended <=15 chars)? [${NAME}]"
-		read _NAME_
+		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME"
 
-		if [ ! -z "${_NAME_}" ]; then
-			NAME=${_NAME_}
+		if [ -n "$REPLY" ]; then
+			NAME="$REPLY"
 		fi
 
 		# choose a hostname, default is the container name
-		echo -n "What hostname do you wish for this container ? [${UTSNAME}]"
-		read _UTSNAME_
+		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME"
 
-		if [ ! -z "${_UTSNAME_}" ]; then
-			UTSNAME=${_UTSNAME_}
+		if [ -n "$REPLY" ]; then
+			UTSNAME="$REPLY"
 		fi
 
 		# choose an ipv4 address, better to choose the same network than
 		# your host
-		echo -n "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? [${IPV4}]"
-		read _IPV4_
+		read -p "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? " -ei "$IPV4"
 
-		if [ ! -z "${_IPV4_}" ]; then
-			IPV4=${_IPV4_}
+		if [ -n "$REPLY" ]; then
+			IPV4="$REPLY"
 		fi
 
 		# choose the gateway ip address
 		if [ "${IPV4}" != "dhcp" ]; then
-			echo -n "What is the gateway IP address ? [${GATEWAY}]"
-			read _GATEWAY_
+			read -p "What is the gateway IP address ? " -ei "$GATEWAY"
 
-			if [ ! -z "${_GATEWAY_}" ]; then
-				GATEWAY=${_GATEWAY_}
+			if [ -n "$REPLY" ]; then
+				GATEWAY="$REPLY"
 			fi
 		fi
 
 		# Type guest root password
-		echo -n "Type guest root password (enter for none):"
-		stty -echo
-		read GUESTROOTPASS
-		echo ""
-		stty echo
-		echo ""
+		read -s -p "Type guest root password (enter for none): " GUESTROOTPASS
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
-			echo -n "Which gentoo architecture should we use in this container ? [${ARCH}]"
-			read _ARCH_
-			if [ ! -z "${_ARCH_}" ]; then
-				ARCH=${_ARCH_}
+			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH"
+			if [ -n "$REPLY" ]; then
+				ARCH="$REPLY"
 			fi
 
 			# choose architecture variant
-			echo -n "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib') ? [${ARCHVARIANT}]"
-			read _ARCHVARIANT_
-			if [ ! -z "${_ARCHVARIANT_}" ]; then
-				ARCHVARIANT=${_ARCHVARIANT_}
+			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT"
+			if [ -n "$REPLY" ]; then
+				ARCHVARIANT="$REPLY"
 			fi
 
 			LXC_ARCH="x86_64"
 			# if x86 is given prompt for "subarch"
 			if [ "${ARCH}" == 'x86' ]; then
-				echo -n "Sub architecture of x86 ? [${SUBARCH}]"
-				read _SUBARCH_
-				if [ ! -z "${_SUBARCH_}" ]; then
-					SUBARCH=${_SUBARCH_}
+				read -p "Sub architecture of x86 ? " -ei "$SUBARCH"
+				if [ -n "$REPLY" ]; then
+					SUBARCH="$REPLY"
 				fi
 				LXC_ARCH="${SUBARCH}"
 			elif [ "${ARCH}" == "amd64" ]; then
@@ -484,10 +473,9 @@ configure() {
 			fi
 
 			# choose the mirror
-			echo -n "Which mirror to use for stage3 and Portage archive ? [${MIRROR}]"
-			read _MIRROR_
-			if [ ! -z "${_MIRROR_}" ]; then
-				MIRROR=${_MIRROR_}
+			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR"
+			if [ -n "$REPLY" ]; then
+				MIRROR="$REPLY"
 			fi
 		fi
 
@@ -629,28 +617,8 @@ create() {
 }
 
 destroy() {
-	echo -n "What is the name for the container ? [${NAME}]"
-	read _NAME_
-
-	if [ ! -z "${_NAME_}" ]; then
-		NAME=${_NAME_}
-	fi
-
-	/usr/sbin/lxc-destroy -n ${NAME}
-	if [ ! $? -eq 0 ]; then
-		echo "Failed to destroyed '${NAME}'"
-		return ${RETVAL}
-	fi
-
-	ROOTFS="./rootfs.${NAME}"
-
-	echo -n "Shall I remove the rootfs [y/n] ?"
-	read
-	if [ "${REPLY}" = "y" ]; then
-		rm -rf ${ROOTFS}
-	fi
-
-	return 0
+	printf "To destroy the container, just remove <container_name>* wherever you created it.\n"
+	printf "Are you sure it is not running at the moment? (use lxc-kill -n <container_name> to stop/kill it.\n"
 }
 
 help() {
