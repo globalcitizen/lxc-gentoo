@@ -362,8 +362,8 @@ fetch_stage3()
 	mkdir -p "$output_dir"
 
 	#  - grab
-	INPUT_URL="$stage3url/${latest_stage3_subpath}"
-	$WGET -O "$output_file" "$INPUT_URL" > /dev/null 2>&1
+	local input_url="$stage3url/$latest_stage3_subpath"
+	$WGET -O "$output_file" "$input_url" > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
 		return 1
