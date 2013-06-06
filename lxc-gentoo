@@ -55,7 +55,7 @@
 
 DISTRO="gentoo"
 CACHE=${CACHE:-/var/cache/lxc/$DISTRO}
-WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
 NAME=${NAME:-gentoo}
@@ -346,7 +346,7 @@ fetch_stage3()
 	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
-	local latest_stage3_subpath="$( $WGET -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
+	local latest_stage3_subpath="$(wget -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
 	if [[ $? -ne 0 ]]; then
 		printf " => failed!\n"
 		exit 1
@@ -366,7 +366,7 @@ fetch_stage3()
 	local input_url="$stage3url/$latest_stage3_subpath"
 	printf " => %s ...\n" "$input_url"
 
-	$WGET -O "$output_file" "$input_url" > /dev/null 2>&1
+	wget -O "$output_file" "$input_url" > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		printf " => failed!\n"
 		exit 1
@@ -390,7 +390,7 @@ fetch_portage()
 {
 	echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
 	rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
-	${WGET} -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
+	wget -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed."
 		return 1
