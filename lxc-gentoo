@@ -340,24 +340,27 @@ fetch_stage3()
 	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
 	# get latest-stage3....txt file for subpath
-	echo -n "Determining path to latest ${DISTRO} ${ARCH}${archvariant} stage3 archive..."
 	mkdir -p ${CACHE} > /dev/null 2>&1
 	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
-	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${stage3latestSubPathUrl}"|tail -n 1`
+	
+	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
+	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
+
+	local latest_stage3_subpath="$( $WGET -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
 	if [[ $? -ne 0 ]]; then
-		echo "failed!"
-		return 1
+		printf " => failed!\n"
+		exit 1
 	fi
-	echo ${LATEST_STAGE3_SUBPATH}
+	printf " => Got: %s\n" "$latest_stage3_subpath"
 
 	# download
 	echo -n "Downloading (~180MB), please wait..."
-	OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
+	OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${latest_stage3_subpath}"
 	#  - ensure output directory exists
 	OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
 	mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
 	#  - grab
-	INPUT_URL="$stage3url/${LATEST_STAGE3_SUBPATH}"
+	INPUT_URL="$stage3url/${latest_stage3_subpath}"
 	${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
