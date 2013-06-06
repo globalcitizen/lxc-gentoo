@@ -452,6 +452,7 @@ configure() {
 
 		# Type guest root password
 		read -s -p "Type guest root password (enter for none): " GUESTROOTPASS
+		printf "\n" # \n eaten by noecho
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
