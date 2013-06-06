@@ -342,8 +342,8 @@ fetch_stage3()
 	# get latest-stage3....txt file for subpath
 	echo -n "Determining path to latest ${DISTRO} ${ARCH}${archvariant} stage3 archive..."
 	mkdir -p ${CACHE} > /dev/null 2>&1
-	STAGE3LATESTSUBPATHURL="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
-	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
+	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${stage3latestSubPathUrl}"|tail -n 1`
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
 		return 1
