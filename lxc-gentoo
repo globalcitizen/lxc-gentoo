@@ -337,12 +337,12 @@ fetch_stage3()
 	local archvariant="${ARCHVARIANT:+-$ARCHVARIANT}"
 
 	# base stage3 URL
-	STAGE3URL="${MIRROR}/releases/${ARCH}/autobuilds"
+	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
 	# get latest-stage3....txt file for subpath
 	echo -n "Determining path to latest ${DISTRO} ${ARCH}${archvariant} stage3 archive..."
 	mkdir -p ${CACHE} > /dev/null 2>&1
-	STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${archvariant}.txt"
+	STAGE3LATESTSUBPATHURL="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
 	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
@@ -357,7 +357,7 @@ fetch_stage3()
 	OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
 	mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
 	#  - grab
-	INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
+	INPUT_URL="$stage3url/${LATEST_STAGE3_SUBPATH}"
 	${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
