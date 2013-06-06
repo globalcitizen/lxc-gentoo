@@ -334,17 +334,15 @@ set_guest_root_password() {
 fetch_stage3()
 {
 	# prepend '-' to nonblank ARCHVARIANT for URL construction
-	if [ ! -z "${ARCHVARIANT}" ]; then
-		ARCHVARIANT="-${ARCHVARIANT}"
-	fi
+	local archvariant="${ARCHVARIANT:+-$ARCHVARIANT}"
 
 	# base stage3 URL
 	STAGE3URL="${MIRROR}/releases/${ARCH}/autobuilds"
 
 	# get latest-stage3....txt file for subpath
-	echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCHVARIANT} stage3 archive..."
+	echo -n "Determining path to latest ${DISTRO} ${ARCH}${archvariant} stage3 archive..."
 	mkdir -p ${CACHE} > /dev/null 2>&1
-	STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
+	STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${archvariant}.txt"
 	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
