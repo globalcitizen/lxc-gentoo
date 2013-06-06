@@ -331,6 +331,70 @@ set_guest_root_password() {
 	echo "done."
 }
 
+fetch_stage3()
+{
+	# prepend '-' to nonblank ARCHVARIANT for URL construction
+	if [ ! -z "${ARCHVARIANT}" ]; then
+		ARCHVARIANT="-${ARCHVARIANT}"
+	fi
+
+	# base stage3 URL
+	STAGE3URL="${MIRROR}/releases/${ARCH}/autobuilds"
+
+	# get latest-stage3....txt file for subpath
+	echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCHVARIANT} stage3 archive..."
+	mkdir -p ${CACHE} > /dev/null 2>&1
+	STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
+	LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
+	if [[ $? -ne 0 ]]; then
+		echo "failed!"
+		return 1
+	fi
+	echo ${LATEST_STAGE3_SUBPATH}
+
+	# download
+	echo -n "Downloading (~180MB), please wait..."
+	OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
+	#  - ensure output directory exists
+	OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
+	mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
+	#  - grab
+	INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
+	${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo "failed!"
+		return 1
+	fi
+	echo "done."
+
+	# make sure we are operating on a clear rootfs cache
+	rm -Rf "${TEMPLATE}"
+	mkdir -p "${TEMPLATE}"
+
+	echo -n "Extracting stage3 archive..."
+	tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo "failed!"
+		exit 1
+	fi
+	echo "done."
+}
+
+fetch_portage()
+{
+	echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
+	rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
+	${WGET} -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
+	if [[ $? -ne 0 ]]; then
+		echo "failed."
+		return 1
+	fi
+	echo "done."
+	echo -n "Extracting..."
+	tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
+	echo "done."
+}
+
 fetch_template() {
 	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
 
@@ -347,62 +411,8 @@ fetch_template() {
 
 			echo "not found."
 
-			# prepend '-' to nonblank ARCHVARIANT for URL construction
-			if [ ! -z "${ARCHVARIANT}" ]; then
-				ARCHVARIANT="-${ARCHVARIANT}"
-			fi
-
-			# base stage3 URL
-			STAGE3URL="${MIRROR}/releases/${ARCH}/autobuilds"
-
-			# get latest-stage3....txt file for subpath
-			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCHVARIANT} stage3 archive..."
-			mkdir -p ${CACHE} > /dev/null 2>&1
-			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
-			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
-			if [[ $? -ne 0 ]]; then
-				echo "failed!"
-				return 1
-			fi
-			echo ${LATEST_STAGE3_SUBPATH}
-
-			# download
-			echo -n "Downloading (~180MB), please wait..."
-			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
-			#  - ensure output directory exists
-			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
-			mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
-			#  - grab
-			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
-			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
-			if [[ $? -ne 0 ]]; then
-				echo "failed!"
-				return 1
-			fi
-			echo "done."
-
-			# make sure we are operating on a clear rootfs cache
-			rm -Rf "${TEMPLATE}"
-			mkdir -p "${TEMPLATE}"
-
-			echo -n "Extracting stage3 archive..."
-			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
-			if [[ $? -ne 0 ]]; then
-				echo "failed!"
-				exit 1
-			fi
-			echo "done."
-			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
-			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
-			${WGET} -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
-			if [[ $? -ne 0 ]]; then
-				echo "failed."
-				return 1
-			fi
-			echo "done."
-			echo -n "Extracting..."
-			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
-			echo "done."
+			fetch_stage3
+			fetch_portage
 		else
 			echo "found."
 		fi
