@@ -353,8 +353,9 @@ fetch_stage3()
 	fi
 	printf " => Got: %s\n" "$latest_stage3_subpath"
 
-	# download
-	echo -n "Downloading (~180MB), please wait..."
+
+	# Download the actual stage3
+	printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
 	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
 
 	#  - ensure output directory exists
@@ -363,12 +364,14 @@ fetch_stage3()
 
 	#  - grab
 	local input_url="$stage3url/$latest_stage3_subpath"
+	printf " => %s ...\n" "$input_url"
+
 	$WGET -O "$output_file" "$input_url" > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
-		echo "failed!"
-		return 1
+		printf " => failed!\n"
+		exit 1
 	fi
-	echo "done."
+	printf " => saved to: %s\n" "$output_file"
 
 	# make sure we are operating on a clear rootfs cache
 	rm -Rf "${TEMPLATE}"
