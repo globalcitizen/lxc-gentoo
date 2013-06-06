@@ -356,9 +356,11 @@ fetch_stage3()
 	# download
 	echo -n "Downloading (~180MB), please wait..."
 	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
+
 	#  - ensure output directory exists
-	OUTPUT_DIR="$(dirname "$output_file")"
-	mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
+	local output_dir="${output_file%/*}"
+	mkdir -p "$output_dir"
+
 	#  - grab
 	INPUT_URL="$stage3url/${latest_stage3_subpath}"
 	$WGET -O "$output_file" "$INPUT_URL" > /dev/null 2>&1
