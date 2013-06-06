@@ -355,13 +355,13 @@ fetch_stage3()
 
 	# download
 	echo -n "Downloading (~180MB), please wait..."
-	OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${latest_stage3_subpath}"
+	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
 	#  - ensure output directory exists
-	OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
+	OUTPUT_DIR="$(dirname "$output_file")"
 	mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
 	#  - grab
 	INPUT_URL="$stage3url/${latest_stage3_subpath}"
-	${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
+	$WGET -O "$output_file" "$INPUT_URL" > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
 		return 1
@@ -373,7 +373,7 @@ fetch_stage3()
 	mkdir -p "${TEMPLATE}"
 
 	echo -n "Extracting stage3 archive..."
-	tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
+	tar -xf "$output_file" -C "$TEMPLATE" > /dev/null 2>&1
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
 		exit 1
