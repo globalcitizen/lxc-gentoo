@@ -337,8 +337,7 @@ fetch_template() {
 	(
 		flock -n -x 200
 
-		RES=$?
-		if [ "${RES}" != "0" ]; then
+		if [[ $? -ne 0 ]]; then
 			echo "Cache repository is busy."
 			break
 		fi
@@ -361,7 +360,7 @@ fetch_template() {
 			mkdir -p ${CACHE} > /dev/null 2>&1
 			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
 			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
-			if [ ! $? -eq 0 ]; then
+			if [[ $? -ne 0 ]]; then
 				echo "failed!"
 				return 1
 			fi
@@ -376,7 +375,7 @@ fetch_template() {
 			#  - grab
 			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
 			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
+			if [[ $? -ne 0 ]]; then
 				echo "failed!"
 				return 1
 			fi
@@ -388,8 +387,7 @@ fetch_template() {
 
 			echo -n "Extracting stage3 archive..."
 			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
-			RESULT=$?
-			if [ "${RESULT}" != "0" ]; then
+			if [[ $? -ne 0 ]]; then
 				echo "failed!"
 				exit 1
 			fi
@@ -397,7 +395,7 @@ fetch_template() {
 			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
 			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
 			${WGET} -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
+			if [[ $? -ne 0 ]]; then
 				echo "failed."
 				return 1
 			fi
