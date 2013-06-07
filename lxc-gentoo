@@ -398,7 +398,7 @@ fetch_stage3()
 	local input_url="$stage3url/$latest_stage3_subpath"
 	printf " => %s ...\n" "$input_url"
 
-	wget -O "$output_file" "$input_url" > /dev/null 2>&1
+	wget -O "$output_file" "$input_url"
 	if [[ $? -ne 0 ]]; then
 		printf " => failed!\n"
 		exit 1
