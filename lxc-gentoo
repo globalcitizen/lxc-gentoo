@@ -739,8 +739,6 @@ if [ "$(id -u)" != "0" ]; then
 	exit 1
 fi
 
-CACHE="/var/cache/lxc/${DISTRO}"
-
 OPTIND=2
 while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
 	case $opt in
