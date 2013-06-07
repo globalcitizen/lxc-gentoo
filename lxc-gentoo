@@ -95,7 +95,7 @@ execute_exclusively()
 	local lock_name="$1"
 	shift 1
 
-	(
+	{
 		printf "Attempting to obtain an exclusive lock (timeout: 30 min) named \"%s\"...\n" "$lock_name"
 
 		printf -v time_started "%(%s)T" "-1"
@@ -111,7 +111,7 @@ execute_exclusively()
 		printf " => Executing \"%s\"\n" "$*"
 		"$@"
 
-	) 50> "/var/lock/subsys/$lock_name"
+	} 50> "/var/lock/subsys/$lock_name"
 }
 
 ################################################################################
