@@ -372,9 +372,9 @@ fetch_stage3()
 	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
 	# get latest-stage3....txt file for subpath
-	mkdir -p ${CACHE} > /dev/null 2>&1
+	mkdir -p "$CACHE"
 	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
-	
+
 	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
