@@ -83,6 +83,38 @@ FSTAB="/etc/fstab"
 umask 022
 
 ################################################################################
+#                        Various helper functions
+################################################################################
+
+# param: $1: the name of the lock
+# The rest contain the command to execute and its parameters
+execute_exclusively()
+{
+	mkdir -p /var/lock/subsys
+
+	local lock_name="$1"
+	shift 1
+
+	(
+		printf "Attempting to obtain an exclusive lock (timeout: 30 min) named \"%s\"...\n" "$lock_name"
+
+		printf -v time_started "%(%s)T" "-1"
+		flock -x -w 1800  50
+
+		if [[ $? -ne 0 ]]; then
+			printf " => unable to obtain after %s seconds, aborting.\n" "$(($(printf "%(%s)T" "-1") - $time_started))"
+			return 2
+		else
+			printf " => done, took %s seconds.\n" "$(($(printf "%(%s)T" "-1") - $time_started))"
+		fi
+
+		printf " => Executing \"%s\"\n" "$*"
+		"$@"
+
+	) 50> "/var/lock/subsys/$lock_name"
+}
+
+################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
 
