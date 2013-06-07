@@ -378,7 +378,7 @@ fetch_stage3()
 	mkdir -p "${TEMPLATE}"
 
 	echo -n "Extracting stage3 archive..."
-	tar -xf "$output_file" -C "$TEMPLATE" > /dev/null 2>&1
+	tar -xpf "$output_file" -C "$TEMPLATE"
 	if [[ $? -ne 0 ]]; then
 		echo "failed!"
 		exit 1
@@ -397,7 +397,7 @@ fetch_portage()
 	fi
 	echo "done."
 	echo -n "Extracting..."
-	tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
+	tar -xpf "${CACHE}/portage-latest.tar.bz2" -C "${TEMPLATE}/usr/"
 	echo "done."
 }
 
