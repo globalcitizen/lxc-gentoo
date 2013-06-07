@@ -358,6 +358,8 @@ write_lxc_configuration() {
 }
 
 set_guest_root_password() {
+	[[ -z "$GUESTROOTPASS" ]] && return # pass is empty, abort
+
 	echo -n " - setting guest root password.."
 	echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
 	echo "done."
