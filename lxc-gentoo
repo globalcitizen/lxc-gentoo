@@ -703,6 +703,11 @@ help() {
 			specifiying this option will override fetching and asking you for arch, variant and mirror
 			Env. Var.: STAGE3_TARBALL
 			Cyrrent: ${STAGE3_TARBALL} Default: null
+		-P PORTAGE_SOURCE : path to a custom portage to use
+			can be either a tarball (will be extracted) or a directory (will be bind mounted read-only).
+			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
+			Env. Var.: PORTAGE_SOURCE
+			Current: "$PORTAGE_SOURCE" Default: ""
 		-C CUSTOMURL : URL for a custom tarball
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
@@ -775,7 +780,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
+while getopts "i:g:n:u:a:C:p:m:t:P:q" opt; do
 	case $opt in
 		i) IPV4=$OPTARG ;;
 		g) GATEWAY=$OPTARG ;;
@@ -786,6 +791,7 @@ while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
 		p) GUESTROOTPASS=$OPTARG ;;
 		m) MIRROR=$OPTARG ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
+		P) PORTAGE_SOURCE="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
