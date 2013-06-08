@@ -775,10 +775,11 @@ purge() {
 
 fetch() {
 	configure
-        # check the mini distro was not already downloaded
 	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-	fetch_template
 
+	# download
+	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+	execute_exclusively "portage" fetch_portage
 }
 
 # Note: assuming uid==0 is root -- might break with userns??
