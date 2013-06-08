@@ -542,8 +542,6 @@ create() {
 	
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
-		TEMPLATE="$CACHE/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-
 		execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 		if [[ $? -ne 0 ]]; then
 			printf "ERROR: Failed to fetch stage3.\n"
@@ -751,8 +749,6 @@ purge() {
 
 fetch() {
 	configure
-	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-
 	# download
 	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 	execute_exclusively "portage" fetch_portage
