@@ -423,17 +423,24 @@ fetch_stage3()
 
 fetch_portage()
 {
-	echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
-	rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
-	wget -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
-	if [[ $? -ne 0 ]]; then
-		echo "failed."
-		return 1
+	local url="$MIRROR/snapshots/portage-latest.tar.bz2"
+	local dest="$CACHE/portage-latest.tar.bz2"
+
+	mkdir -p "$CACHE"
+	if [[ ! -f "$dest" ]]; then
+		# don't update
+		printf "Downloading Gentoo portage (software build database) snapshot...\n"
+
+		wget -O "$dest" "$url"
+		if [[ $? -ne 0 ]]; then
+			printf " => failed.\n"
+			return 1
+		fi
+		printf " => done.\n"
 	fi
-	echo "done."
-	echo -n "Extracting..."
-	tar -xpf "${CACHE}/portage-latest.tar.bz2" -C "${TEMPLATE}/usr/"
-	echo "done."
+
+	# used by calling function
+	PORTAGE_SOURCE="$dest"
 }
 
 fetch_template() {
@@ -593,6 +600,21 @@ create() {
 			return 1
 		else
 			echo "done."
+		fi
+	fi
+
+	if [[ ! -d "$ROOTFS/usr/portage" ]]; then
+		# The portage tree is not present, get and unpack it (temporary solution)
+
+		if [[ -z "$PORTAGE_SOURCE" ]]; then
+			execute_exclusively "portage" fetch_portage
+		fi
+
+		# PORTAGE_SOURCE will be set by fetch_portage.
+		if [[ -f "$PORTAGE_SOURCE" ]]; then
+			printf "Extracting the portage tree into %s/usr/portage...\n" "$ROOTFS"
+			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/"
+			printf " => done.\n"
 		fi
 	fi
 
