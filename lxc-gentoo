@@ -585,7 +585,7 @@ create() {
 		printf "done.\n"
 	fi
 
-	if [[ ! -d "$ROOTFS/usr/portage" ]]; then
+	if [[ ! -d "$ROOTFS/usr/portage" && "$PORTAGE_SOURCE" != "none" ]]; then
 		# The portage tree is not present, get and unpack it (temporary solution)
 
 		if [[ -z "$PORTAGE_SOURCE" ]]; then
@@ -709,6 +709,7 @@ help() {
 			Cyrrent: ${STAGE3_TARBALL} Default: null
 		-P PORTAGE_SOURCE : path to a custom portage to use
 			can be either a tarball (will be extracted) or a directory (will be bind mounted read-only).
+			You can use the special value "none" to tell the script not to set up a portage tree.
 			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
 			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
