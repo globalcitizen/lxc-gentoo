@@ -64,6 +64,16 @@ Available environment variables are as follows.
    <td>Specifies the location of a custom stage3 tarball. When this option is present, fetching will be skipped</td>
   </tr>
   <tr>
+   <td><b>Portage source</b></td>
+   <td><pre>$PORTAGE_SOURCE</pre></td>
+   <td><i></i>
+   <td>path to a custom portage to use. Can be one of:
+    <li> a tarball -- will be extracted</li>
+    <li> "none" -- do not set up a portage tree</li>
+    <li> undefined -- a portage snapshot will be downloaded</li>
+   </td>
+  </tr>
+  <tr>
    <td><b>LXC Container Name</b></td>
    <td><pre>$NAME</pre></td>
    <td><i>gentoo</i></td>
