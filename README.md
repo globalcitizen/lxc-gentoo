@@ -59,7 +59,7 @@ Available environment variables are as follows.
   </tr>
   <tr>
    <td><b>Stage 3 tarball</b></td>
-   <td><pre>$STAGE3\_TARBALL</pre></td>
+   <td><pre>$STAGE3_TARBALL</pre></td>
    <td><i></i>
    <td>Specifies the location of a custom stage3 tarball. When this option is present, fetching will be skipped</td>
   </tr>
