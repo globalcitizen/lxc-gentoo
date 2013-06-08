@@ -408,17 +408,8 @@ fetch_stage3()
 	fi
 	printf " => saved to: %s\n" "$output_file"
 
-	# make sure we are operating on a clear rootfs cache
-	rm -Rf "${TEMPLATE}"
-	mkdir -p "${TEMPLATE}"
-
-	echo -n "Extracting stage3 archive..."
-	tar -xpf "$output_file" -C "$TEMPLATE"
-	if [[ $? -ne 0 ]]; then
-		echo "failed!"
-		exit 1
-	fi
-	echo "done."
+	# used by calling function
+	STAGE3_TARBALL="$output_file"
 }
 
 fetch_portage()
@@ -570,37 +561,28 @@ create() {
 		return 1
 	fi
 	
-	if [[ -n "${STAGE3_TARBALL}" ]]; then
-		# variable is nonzero, try to unpack
-		printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
-		mkdir -p "${ROOTFS}"
+	if [[ -z "$STAGE3_TARBALL" ]]; then
+		# Fetch us a stage3
+		TEMPLATE="$CACHE/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
 
-		# also exclude redundant .keep files
-		tar --exclude .keep -xpf "${STAGE3_TARBALL}" -C "${ROOTFS}"
-		if [ $? -ne 0 ]; then
-			echo "FAILED."
+		execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+		if [[ $? -ne 0 ]]; then
+			printf "ERROR: Failed to fetch stage3.\n"
 			return 1
-		else
-			echo "done."
 		fi
+	fi
+
+	# variable is nonzero, try to unpack
+	printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
+	mkdir -p "$ROOTFS"
+
+	# also exclude redundant .keep files
+	tar --exclude .keep -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
+	if [[ $? -ne 0 ]]; then
+		printf "FAILED.\n"
+		return 1
 	else
-		# check the mini distro was not already downloaded
-		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-		fetch_template 
-		if [ ! $? -eq 0 ]; then
-			echo "ERROR: Failed to fetch template."
-			return ${RETVAL}
-		fi
-
-		# make a local copy of the mini
-		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
-		cp -a "${TEMPLATE}" ${ROOTFS}
-		if [ ! $? -eq 0 ]; then
-			echo "FAILED."
-			return 1
-		else
-			echo "done."
-		fi
+		printf "done.\n"
 	fi
 
 	if [[ ! -d "$ROOTFS/usr/portage" ]]; then
