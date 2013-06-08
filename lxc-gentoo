@@ -492,7 +492,10 @@ configure() {
 		fi
 
 		# Type guest root password
-		read -s -p "Type guest root password (enter for none): " GUESTROOTPASS
+		read -s -p "Type guest root password (enter for none/use already defined): "
+		if [[ -n "$REPLY" ]]; then
+			GUESTROOTPASS="$REPLY"
+		fi
 		printf "\n" # \n eaten by noecho
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
