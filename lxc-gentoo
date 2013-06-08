@@ -434,30 +434,6 @@ fetch_portage()
 	PORTAGE_SOURCE="$dest"
 }
 
-fetch_template() {
-	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
-
-	(
-		flock -n -x 200
-
-		if [[ $? -ne 0 ]]; then
-			echo "Cache repository is busy."
-			break
-		fi
-
-		echo -n "Checking for pre-existing cache in ${TEMPLATE}..."
-		if [ ! -e "${TEMPLATE}" ]; then
-
-			echo "not found."
-
-			fetch_stage3
-			fetch_portage
-		else
-			echo "found."
-		fi
-	) 200> "/var/lock/subsys/lxc_template"
-}
-
 configure() {
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
