@@ -55,14 +55,14 @@
 
 DISTRO="gentoo"
 CACHE=${CACHE:-/var/cache/lxc/$DISTRO}
-WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
 NAME=${NAME:-gentoo}
 UTSNAME=${UTSNAME:-gentoo}
 IPV4=${IPV4:-172.20.0.2/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
-GUESTROOTPASS=${GUESTROOTPASS:-toor}
+GUESTROOTPASS="$GUESTROOTPASS"
 if [ `uname -m` == "x86_64" ]; then
 	ARCH=${ARCH:-amd64}
 	SUBARCH=${SUBARCH:-amd64}
@@ -74,6 +74,7 @@ ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
 MIRROR=${MIRROR:-http://distfiles.gentoo.org}
 STAGE3_TARBALL="${STAGE3_TARBALL}"
+PORTAGE_SOURCE="$PORTAGE_SOURCE"
 
 # These paths are within the container so do not need to obey configure prefixes
 INITTAB="/etc/inittab"
@@ -81,6 +82,38 @@ FSTAB="/etc/fstab"
 
 # Ensure strict root's umask doesen't render the VM unusable
 umask 022
+
+################################################################################
+#                        Various helper functions
+################################################################################
+
+# param: $1: the name of the lock
+# The rest contain the command to execute and its parameters
+execute_exclusively()
+{
+	mkdir -p /var/lock/subsys
+
+	local lock_name="$1"
+	shift 1
+
+	{
+		printf "Attempting to obtain an exclusive lock (timeout: 30 min) named \"%s\"...\n" "$lock_name"
+
+		printf -v time_started "%(%s)T" "-1"
+		flock -x -w 1800  50
+
+		if [[ $? -ne 0 ]]; then
+			printf " => unable to obtain after %s seconds, aborting.\n" "$(($(printf "%(%s)T" "-1") - $time_started))"
+			return 2
+		else
+			printf " => done, took %s seconds.\n" "$(($(printf "%(%s)T" "-1") - $time_started))"
+		fi
+
+		printf " => Executing \"%s\"\n" "$*"
+		"$@"
+
+	} 50> "/var/lock/subsys/$lock_name"
+}
 
 ################################################################################
 #                    DISTRO custom configuration files
@@ -326,89 +359,79 @@ write_lxc_configuration() {
 }
 
 set_guest_root_password() {
+	[[ -z "$GUESTROOTPASS" ]] && return # pass is empty, abort
+
 	echo -n " - setting guest root password.."
 	echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
 	echo "done."
 }
 
-fetch_template() {
-	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
+fetch_stage3()
+{
+	# prepend '-' to nonblank ARCHVARIANT for URL construction
+	local archvariant="${ARCHVARIANT:+-$ARCHVARIANT}"
 
-	(
-		flock -n -x 200
+	# base stage3 URL
+	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
-		RES=$?
-		if [ "${RES}" != "0" ]; then
-			echo "Cache repository is busy."
-			break
+	# get latest-stage3....txt file for subpath
+	mkdir -p "$CACHE"
+	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
+
+	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
+	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
+
+	local latest_stage3_subpath="$(wget -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
+	if [[ $? -ne 0 ]]; then
+		printf " => failed!\n"
+		exit 1
+	fi
+	printf " => Got: %s\n" "$latest_stage3_subpath"
+
+
+	# Download the actual stage3
+	printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
+	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
+
+	#  - ensure output directory exists
+	local output_dir="${output_file%/*}"
+	mkdir -p "$output_dir"
+
+	#  - grab
+	local input_url="$stage3url/$latest_stage3_subpath"
+	printf " => %s ...\n" "$input_url"
+
+	wget -O "$output_file" "$input_url"
+	if [[ $? -ne 0 ]]; then
+		printf " => failed!\n"
+		exit 1
+	fi
+	printf " => saved to: %s\n" "$output_file"
+
+	# used by calling function
+	STAGE3_TARBALL="$output_file"
+}
+
+fetch_portage()
+{
+	local url="$MIRROR/snapshots/portage-latest.tar.bz2"
+	local dest="$CACHE/portage-latest.tar.bz2"
+
+	mkdir -p "$CACHE"
+	if [[ ! -f "$dest" ]]; then
+		# don't update
+		printf "Downloading Gentoo portage (software build database) snapshot...\n"
+
+		wget -O "$dest" "$url"
+		if [[ $? -ne 0 ]]; then
+			printf " => failed.\n"
+			return 1
 		fi
+		printf " => done.\n"
+	fi
 
-		echo -n "Checking for pre-existing cache in ${TEMPLATE}..."
-		if [ ! -e "${TEMPLATE}" ]; then
-
-			echo "not found."
-
-			# prepend '-' to nonblank ARCHVARIANT for URL construction
-			if [ ! -z "${ARCHVARIANT}" ]; then
-				ARCHVARIANT="-${ARCHVARIANT}"
-			fi
-
-			# base stage3 URL
-			STAGE3URL="${MIRROR}/releases/${ARCH}/autobuilds"
-
-			# get latest-stage3....txt file for subpath
-			echo -n "Determining path to latest ${DISTRO} ${ARCH}${ARCHVARIANT} stage3 archive..."
-			mkdir -p ${CACHE} > /dev/null 2>&1
-			STAGE3LATESTSUBPATHURL="${STAGE3URL}/latest-stage3-${SUBARCH}${ARCHVARIANT}.txt"
-			LATEST_STAGE3_SUBPATH=`${WGET} -q -O - "${STAGE3LATESTSUBPATHURL}"|tail -n 1`
-			if [ ! $? -eq 0 ]; then
-				echo "failed!"
-				return 1
-			fi
-			echo ${LATEST_STAGE3_SUBPATH}
-
-			# download
-			echo -n "Downloading (~180MB), please wait..."
-			OUTPUT_FILE="${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_SUBPATH}"
-			#  - ensure output directory exists
-			OUTPUT_DIR=`dirname ${OUTPUT_FILE}`
-			mkdir -p "${OUTPUT_DIR}" > /dev/null 2>&1
-			#  - grab
-			INPUT_URL="${STAGE3URL}/${LATEST_STAGE3_SUBPATH}"
-			${WGET} -O ${OUTPUT_FILE} ${INPUT_URL} > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
-				echo "failed!"
-				return 1
-			fi
-			echo "done."
-
-			# make sure we are operating on a clear rootfs cache
-			rm -Rf "${TEMPLATE}"
-			mkdir -p "${TEMPLATE}"
-
-			echo -n "Extracting stage3 archive..."
-			tar -jxf ${OUTPUT_FILE} -C "${TEMPLATE}" > /dev/null 2>&1
-			RESULT=$?
-			if [ "${RESULT}" != "0" ]; then
-				echo "failed!"
-				exit 1
-			fi
-			echo "done."
-			echo -n "Downloading ${DISTRO} portage (software database) snapshot..."
-			rm -f ${CACHE}/portage-latest.tar.bz2 > /dev/null 2>&1
-			${WGET} -O ${CACHE}/portage-latest.tar.bz2 ${MIRROR}/snapshots/portage-latest.tar.bz2 > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
-				echo "failed."
-				return 1
-			fi
-			echo "done."
-			echo -n "Extracting..."
-			tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" > /dev/null 2>&1
-			echo "done."
-		else
-			echo "found."
-		fi
-	) 200> "/var/lock/subsys/lxc_template"
+	# used by calling function
+	PORTAGE_SOURCE="$dest"
 }
 
 configure() {
@@ -445,7 +468,11 @@ configure() {
 		fi
 
 		# Type guest root password
-		read -s -p "Type guest root password (enter for none): " GUESTROOTPASS
+		read -s -p "Type guest root password (enter for none/use already defined): "
+		if [[ -n "$REPLY" ]]; then
+			GUESTROOTPASS="$REPLY"
+		fi
+		printf "\n" # \n eaten by noecho
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
@@ -513,36 +540,40 @@ create() {
 		return 1
 	fi
 	
-	if [[ -n "${STAGE3_TARBALL}" ]]; then
-		# variable is nonzero, try to unpack
-		printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
-		mkdir -p "${ROOTFS}"
-
-		# also exclude redundant .keep files
-		tar --exclude .keep -xpf "${STAGE3_TARBALL}" -C "${ROOTFS}"
-		if [ $? -ne 0 ]; then
-			echo "FAILED."
+	if [[ -z "$STAGE3_TARBALL" ]]; then
+		# Fetch us a stage3
+		execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+		if [[ $? -ne 0 ]]; then
+			printf "ERROR: Failed to fetch stage3.\n"
 			return 1
-		else
-			echo "done."
 		fi
+	fi
+
+	# variable is nonzero, try to unpack
+	printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
+	mkdir -p "$ROOTFS"
+
+	# also exclude redundant .keep files
+	tar --exclude .keep -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
+	if [[ $? -ne 0 ]]; then
+		printf "FAILED.\n"
+		return 1
 	else
-		# check the mini distro was not already downloaded
-		TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-		fetch_template 
-		if [ ! $? -eq 0 ]; then
-			echo "ERROR: Failed to fetch template."
-			return ${RETVAL}
+		printf "done.\n"
+	fi
+
+	if [[ ! -d "$ROOTFS/usr/portage" && "$PORTAGE_SOURCE" != "none" ]]; then
+		# The portage tree is not present, get and unpack it (temporary solution)
+
+		if [[ -z "$PORTAGE_SOURCE" ]]; then
+			execute_exclusively "portage" fetch_portage
 		fi
 
-		# make a local copy of the mini
-		echo -n "Copying filesystem from ${TEMPLATE} to ${ROOTFS}..."
-		cp -a "${TEMPLATE}" ${ROOTFS}
-		if [ ! $? -eq 0 ]; then
-			echo "FAILED."
-			return 1
-		else
-			echo "done."
+		# PORTAGE_SOURCE will be set by fetch_portage.
+		if [[ -f "$PORTAGE_SOURCE" ]]; then
+			printf "Extracting the portage tree into %s/usr/portage...\n" "$ROOTFS"
+			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/"
+			printf " => done.\n"
 		fi
 	fi
 
@@ -653,6 +684,12 @@ help() {
 			specifiying this option will override fetching and asking you for arch, variant and mirror
 			Env. Var.: STAGE3_TARBALL
 			Cyrrent: ${STAGE3_TARBALL} Default: null
+		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
+			 - tarball -- will be extracted
+			 - "none" -- do not set up a portage tree
+			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
+			Env. Var.: PORTAGE_SOURCE
+			Current: "$PORTAGE_SOURCE" Default: ""
 		-C CUSTOMURL : URL for a custom tarball
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
@@ -712,10 +749,9 @@ purge() {
 
 fetch() {
 	configure
-        # check the mini distro was not already downloaded
-	TEMPLATE="${CACHE}/${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs"
-	fetch_template
-
+	# download
+	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+	execute_exclusively "portage" fetch_portage
 }
 
 # Note: assuming uid==0 is root -- might break with userns??
@@ -724,10 +760,8 @@ if [ "$(id -u)" != "0" ]; then
 	exit 1
 fi
 
-CACHE="/var/cache/lxc/${DISTRO}"
-
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
+while getopts "i:g:n:u:a:C:p:m:t:P:q" opt; do
 	case $opt in
 		i) IPV4=$OPTARG ;;
 		g) GATEWAY=$OPTARG ;;
@@ -738,6 +772,7 @@ while getopts "i:g:n:u:a:C:p:m:t:q" opt; do
 		p) GUESTROOTPASS=$OPTARG ;;
 		m) MIRROR=$OPTARG ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
+		P) PORTAGE_SOURCE="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
