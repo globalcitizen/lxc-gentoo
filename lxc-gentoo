@@ -358,6 +358,11 @@ write_lxc_configuration() {
 	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
 	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
 	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+
+	# if you are unable to emerge something due to low ram, tell emerge to build somewhere else:
+	# e.g. # PORTAGE_TMPDIR=/path/to/some/directory/on/disk emerge -avu htop
+	lxc.mount.entry=portagetmp $(readlink -f "$ROOTFS/var/portage/tmp") tmpfs rw,nosuid,nodev 0 0
+
 	EOF
 
 	if [[ -d "$PORTAGE_SOURCE" ]]; then
