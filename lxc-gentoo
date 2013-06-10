@@ -186,6 +186,7 @@ setup_portage()
 {
 	# do a primitive portage setup
 	mkdir -p "$ROOTFS/etc/portage" && \
+	mkdir -p "$ROOTFS/var/portage/tmp" && \
 	mkdir -p "$ROOTFS/var/portage/tree" && \
 	mkdir -p "$ROOTFS/var/portage/distfiles" \
 		|| die 2 "Error: unable to create needed portage directories.\n"
@@ -200,6 +201,7 @@ setup_portage()
 		|| die 2 "Error: unable to relocate portage symlink:\n%s -> %s\n" "$src" "$dest"
 
 	cat <<- EOF >> "$ROOTFS/etc/portage/make.conf"
+	PORTAGE_TMPDIR="/var/portage/tmp"
 	PORTDIR="/var/portage/tree"
 	DISTDIR="/var/portage/distfiles"
 	EOF
