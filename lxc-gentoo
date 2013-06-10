@@ -218,6 +218,8 @@ setup_portage()
 			printf "Extracting the portage tree into %s/var/portage/tree...\n" "$ROOTFS"
 			tar -xp --strip-components 1 -C "$ROOTFS/var/portage/tree/" -f "$PORTAGE_SOURCE" \
 				|| die 2 "Error: unable to extract the portage tree.\n"
+		elif [[ -d "$PORTAGE_SOURCE" ]]; then
+			printf "Will bind mount the portage tree from the host (%s).\n" "$PORTAGE_SOURCE"
 		else
 			printf "Warning: I don't know what to do with this portage source (%s)\n" "$PORTAGE_SOURCE"
 		fi
@@ -354,6 +356,13 @@ write_lxc_configuration() {
 	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
 	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
 	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+	EOF
+
+	if [[ -d "$PORTAGE_SOURCE" ]]; then
+		printf "lxc.mount.entry=%s var/portage/tree none ro,bind 0 0\n" "$PORTAGE_SOURCE" >> "$CONFFILE"
+	fi
+
+	cat <<- EOF >> "$CONFFILE"
 
 	# console access
 	lxc.tty = 1
