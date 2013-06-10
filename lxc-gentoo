@@ -732,6 +732,7 @@ help() {
 			Cyrrent: ${STAGE3_TARBALL} Default: null
 		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
 			 - tarball -- will be extracted
+			 - directory -- will be bind-mounted read-only
 			 - "none" -- do not set up a portage tree
 			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
 			Env. Var.: PORTAGE_SOURCE

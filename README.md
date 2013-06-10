@@ -69,6 +69,7 @@ Available environment variables are as follows.
    <td><i></i>
    <td>path to a custom portage to use. Can be one of:
     <li> a tarball -- will be extracted</li>
+    <li> a directory -- will be bind-mounted read-only</li>
     <li> "none" -- do not set up a portage tree</li>
     <li> undefined -- a portage snapshot will be downloaded</li>
    </td>
