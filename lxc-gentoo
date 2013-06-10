@@ -182,6 +182,24 @@ write_distro_inittab() {
 	touch ${ROOTFS}/root/.hushlogin
 }
 
+setup_portage()
+{
+	if [[ ! -d "$ROOTFS/usr/portage" && "$PORTAGE_SOURCE" != "none" ]]; then
+		# The portage tree is not present, get and unpack it (temporary solution)
+
+		if [[ -z "$PORTAGE_SOURCE" ]]; then
+			execute_exclusively "portage" fetch_portage
+		fi
+
+		# PORTAGE_SOURCE will be set by fetch_portage.
+		if [[ -f "$PORTAGE_SOURCE" ]]; then
+			printf "Extracting the portage tree into %s/usr/portage...\n" "$ROOTFS"
+			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/"
+			printf " => done.\n"
+		fi
+	fi
+}
+
 # custom network configuration
 write_distro_network() {
 	# /etc/resolv.conf
@@ -570,20 +588,7 @@ create() {
 		printf "done.\n"
 	fi
 
-	if [[ ! -d "$ROOTFS/usr/portage" && "$PORTAGE_SOURCE" != "none" ]]; then
-		# The portage tree is not present, get and unpack it (temporary solution)
-
-		if [[ -z "$PORTAGE_SOURCE" ]]; then
-			execute_exclusively "portage" fetch_portage
-		fi
-
-		# PORTAGE_SOURCE will be set by fetch_portage.
-		if [[ -f "$PORTAGE_SOURCE" ]]; then
-			printf "Extracting the portage tree into %s/usr/portage...\n" "$ROOTFS"
-			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/"
-			printf " => done.\n"
-		fi
-	fi
+	setup_portage
 
 	write_lxc_configuration
 	if [ ! $? -eq 0 ]; then
