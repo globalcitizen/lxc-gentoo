@@ -184,18 +184,22 @@ write_distro_inittab() {
 
 setup_portage()
 {
-	if [[ ! -d "$ROOTFS/usr/portage" && "$PORTAGE_SOURCE" != "none" ]]; then
-		# The portage tree is not present, get and unpack it (temporary solution)
-
+	if [[ "$PORTAGE_SOURCE" == "none" ]]; then
+		printf "Skipping portage tree setup\n"
+	else
+		# We need to set up the portage tree
 		if [[ -z "$PORTAGE_SOURCE" ]]; then
-			execute_exclusively "portage" fetch_portage
+			execute_exclusively "portage" fetch_portage \
+				|| die 1 "Error: unable to fetch a portage snapshot.\n"
 		fi
 
 		# PORTAGE_SOURCE will be set by fetch_portage.
 		if [[ -f "$PORTAGE_SOURCE" ]]; then
 			printf "Extracting the portage tree into %s/usr/portage...\n" "$ROOTFS"
-			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/"
-			printf " => done.\n"
+			tar -xpf "$PORTAGE_SOURCE" -C "$ROOTFS/usr/" \
+				|| die 2 "Error: unable to extract the portage tree.\n"
+		else
+			printf "Warning: I don't know what to do with this portage source (%s)\n" "$PORTAGE_SOURCE"
 		fi
 	fi
 }
