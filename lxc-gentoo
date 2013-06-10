@@ -115,6 +115,14 @@ execute_exclusively()
 	} 50> "/var/lock/subsys/$lock_name"
 }
 
+die()
+{
+	local retval="$1"
+	shift 1
+	printf "$@"
+	exit "$retval"
+}
+
 ################################################################################
 #                    DISTRO custom configuration files
 ################################################################################
