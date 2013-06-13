@@ -254,9 +254,12 @@ write_distro_network()
 	# /etc/resolv.conf
 	grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
 	grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
-	# gentoo network configuration
-	if [ "${IPV4}" != "dhcp" ]; then
-		cat <<- EOF > ${ROOTFS}/etc/conf.d/net
+	# Append LXC-specific gentoo network configuration instructions
+	cat <<- EOF >> "$ROOTFS/etc/conf.d/net"
+
+		# =================
+		# LXC CONFIGURATION
+		# =================
 		# eth0 (lxc virtualised network adapter)
 		#  optionally can be bridged.
 		#     - host br0 is managed with the bridge-utils package, ie:
@@ -283,8 +286,7 @@ write_distro_network()
 		#           between reboots, then after running the above execute:
 		#             /etc/init.d/iptables save
 		#             rc-update add iptables default
-		EOF
-	fi
+	EOF
 	# only link for dchp, since static options render it unnecessary
 	# https://github.com/globalcitizen/lxc-gentoo/issues/33
 	if [ "${IPV4}" == "dhcp" ]; then
