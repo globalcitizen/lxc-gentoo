@@ -127,7 +127,8 @@ die()
 #                    DISTRO custom configuration files
 ################################################################################
 
-populate_dev() {
+populate_dev()
+{
 	# we silence errors as newer stage3s appear to include device files
 	DEV="${ROOTFS}/dev"
 	rm -f ${DEV}/null > /dev/null 2>&1
@@ -149,7 +150,8 @@ populate_dev() {
 }
 # custom fstab
 
-write_distro_fstab() {
+write_distro_fstab()
+{
 	cat <<- EOF > ${ROOTFS}/${FSTAB}
 	# required to prevent boot-time error display
 	none    /         none    defaults  0 0
@@ -157,7 +159,8 @@ write_distro_fstab() {
 	EOF
 }
 
-write_distro_timezone() {
+write_distro_timezone()
+{
 	if [ -e /etc/localtime ]; then
 		# duplicate host timezone
 		cat /etc/localtime > ${ROOTFS}/etc/localtime
@@ -169,7 +172,8 @@ write_distro_timezone() {
 }
 
 # custom inittab
-write_distro_inittab() {
+write_distro_inittab()
+{
 	sed -i 's/^c[1-9]/#&/' ${ROOTFS}/${INITTAB} # disable getty
 	echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
 	echo "1:12345:respawn:/sbin/agetty -a root --noclear 38400 console linux" >> ${ROOTFS}/${INITTAB}
@@ -229,7 +233,8 @@ setup_portage()
 }
 
 # custom network configuration
-write_distro_network() {
+write_distro_network()
+{
 	# /etc/resolv.conf
 	grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
 	grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
@@ -273,7 +278,8 @@ write_distro_network() {
 }
 
 # custom hostname
-write_distro_hostname() {
+write_distro_hostname()
+{
 	echo -n " - setting hostname..."
 	cat <<- EOF > ${ROOTFS}/etc/conf.d/hostname
 	HOSTNAME=${UTSNAME}
@@ -282,7 +288,8 @@ write_distro_hostname() {
 }
 
 # fix init system
-write_distro_init_fixes() {
+write_distro_init_fixes()
+{
 	# short-circuit openrc's autodetection
 	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
 	# fix for error caused by openrc <0.10.2 (~may 2012)
@@ -312,7 +319,8 @@ write_distro_init_fixes() {
 #                        lxc configuration files
 ################################################################################
 
-write_lxc_configuration() {
+write_lxc_configuration()
+{
 	echo -n " - writing LXC guest configuration..."
 	cat <<- EOF > ${CONFFILE}
 	# set arch
@@ -424,7 +432,8 @@ write_lxc_configuration() {
 	echo "done."
 }
 
-set_guest_root_password() {
+set_guest_root_password()
+{
 	[[ -z "$GUESTROOTPASS" ]] && return # pass is empty, abort
 
 	echo -n " - setting guest root password.."
@@ -500,7 +509,8 @@ fetch_portage()
 	PORTAGE_SOURCE="$dest"
 }
 
-configure() {
+configure()
+{
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
 		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME"
@@ -588,7 +598,8 @@ configure() {
 	fi
 }
 
-create() {
+create()
+{
 	configure
 
 	# the rootfs name will be built with the container name
@@ -700,12 +711,14 @@ create() {
 	EOF
 }
 
-destroy() {
+destroy()
+{
 	printf "To destroy the container, just remove <container_name>* wherever you created it.\n"
 	printf "Are you sure it is not running at the moment? (use lxc-kill -n <container_name> to stop/kill it.\n"
 }
 
-help() {
+help()
+{
 	cat <<-EOF
 	Usage: $0 {create|destroy|purge|help} [options]
 		-q : Quiet, use vars from env or options and do not ask me.
@@ -777,7 +790,8 @@ help() {
 	EOF
 }
 
-purge() {
+purge()
+{
 	if [ ! -e ${CACHE} ]; then
 		exit 0
 	fi
@@ -801,7 +815,8 @@ purge() {
 	) 200> "/var/lock/subsys/lxc"
 }
 
-fetch() {
+fetch()
+{
 	configure
 	# download
 	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
