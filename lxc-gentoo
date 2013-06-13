@@ -776,27 +776,10 @@ help()
 
 purge()
 {
-	if [ ! -e ${CACHE} ]; then
-		exit 0
-	fi
-
-	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
-
-	# lock, so we won't purge while someone is creating a repository
-	(
-	flock -n -x 200
-
-	RES=$?
-	if [ "${RES}" != "0" ]; then
-		echo "Cache repository is busy."
-		exit 1
-	fi
-
-	echo -n "Purging the download cache..."
-	rm --preserve-root --one-file-system -rf ${CACHE} && echo "done" || exit 1
-	exit 0
-
-	) 200> "/var/lock/subsys/lxc"
+	cat <<- EOF
+	If you wish to remove the cache, point your file manager/shell into
+	"$CACHE" and remove the files you consider unneeded.
+	EOF
 }
 
 fetch()
