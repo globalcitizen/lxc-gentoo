@@ -115,6 +115,14 @@ execute_exclusively()
 	} 50> "/var/lock/subsys/$lock_name"
 }
 
+# Please use these suggested error codes:
+# die 1 ... -- general/unspecified failure
+# die 2 ... -- filesystem error (e.g. tar unpacking failed)
+# die 4 ... -- network error
+# die 8 ... -- error in program logic
+# die 16 .. -- erroneous (user) input
+# or any combination of these.
+
 die()
 {
 	local retval="$1"
