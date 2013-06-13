@@ -649,55 +649,31 @@ create()
 
 	setup_portage
 
-	write_lxc_configuration
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write LXC configuration."
-		return 1
-	fi
+	write_lxc_configuration \
+		|| die 1 "Error: Failed to write LXC configuration.\n"
 
-	write_distro_inittab
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write changes to inittab."
-		return 1
-	fi
+	write_distro_inittab \
+		|| die 1 "Error: Failed to write changes to inittab.\n"
 
-	write_distro_hostname
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write hostname."
-		return 1
-	fi
+	write_distro_hostname \
+		|| die 1 "Error: Failed to write hostname.\n"
 
 	populate_dev
 
-	write_distro_fstab
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write fstab"
-		return 1
-	fi
+	write_distro_fstab \
+		|| die 1 "Error: Failed to write fstab\n"
 
-	write_distro_timezone
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write timezone"
-		return 1
-	fi
+	write_distro_timezone \
+		|| die 1 "Error: Failed to write timezone\n"
 
-	write_distro_network
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write network configuration"
-		return 1
-	fi
+	write_distro_network \
+		|| die 1 "Error: Failed to write network configuration\n"
 
-	write_distro_init_fixes
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write init fixes"
-		return 1
-	fi
+	write_distro_init_fixes \
+		|| die 1 "Error: Failed to write init fixes\n"
 
-	set_guest_root_password
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to set guest root password"
-		return 1
-	fi
+	set_guest_root_password \
+		|| die 1 "Error: Failed to set guest root password\n"
 
 	cat <<-EOF
 	All done!
