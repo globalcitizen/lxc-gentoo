@@ -53,8 +53,7 @@
 #
 ###############################################################################
 
-DISTRO="gentoo"
-CACHE=${CACHE:-/var/cache/lxc/$DISTRO}
+CACHE=${CACHE:-/var/cache/lxc/gentoo}
 alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
@@ -745,11 +744,11 @@ help()
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
 
-	This script is a helper to create ${DISTRO} system containers.
+	This script is a helper to create Gentoo system containers.
 
 	To make a container, simply run:
 
-	lxc-${DISTRO} create
+	lxc-gentoo create
 
 	You can override default by environnement variables or commandline options with this override sequence :
 	default, env, cmdline option
@@ -759,13 +758,13 @@ help()
 
 	An interactive script will ask you for various information.
 
-	The first creation will download a ${DISTRO} stage3 and portage
+	The first creation will download a Gentoo stage3 and portage
 	snapshot and store it into a cache at ${CACHE}.
 
 	Updating your cache:
-	At any time you can purge the ${DISTRO} cache download by calling
-	'lxc-${DISTRO} purge'. This will cause a new stage3/portage snapshot
-	to be downloaded on the next 'lxc-${DISTRO} create'.
+	At any time you can purge the Gentoo cache download by calling
+	'lxc-gentoo purge'. This will cause a new stage3/portage snapshot
+	to be downloaded on the next 'lxc-gentoo create'.
 
 	Have fun :)
 
