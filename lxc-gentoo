@@ -199,6 +199,8 @@ setup_portage()
 	mkdir -p "$ROOTFS/etc/portage" && \
 	mkdir -p "$ROOTFS/var/portage/tmp" && \
 	mkdir -p "$ROOTFS/var/portage/tree" && \
+	mkdir -p "$ROOTFS/var/portage/logs" && \
+	mkdir -p "$ROOTFS/var/portage/packages" && \
 	mkdir -p "$ROOTFS/var/portage/distfiles" \
 		|| die 2 "Error: unable to create needed portage directories.\n"
 
@@ -214,7 +216,14 @@ setup_portage()
 	cat <<- EOF >> "$ROOTFS/etc/portage/make.conf"
 	PORTAGE_TMPDIR="/var/portage/tmp"
 	PORTDIR="/var/portage/tree"
+	PORT_LOGDIR="/var/portage/logs"
+	PKGDIR="/var/portage/packages"
 	DISTDIR="/var/portage/distfiles"
+
+	FEATURES="\$FEATURES buildpkg"
+	FEATURES="\$FEATURES compress-build-logs"
+	FEATURES="\$FEATURES split-log"
+	FEATURES="\$FEATURES split-elog"
 	EOF
 
 	if [[ "$PORTAGE_SOURCE" == "none" ]]; then
@@ -520,34 +529,22 @@ configure()
 {
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
-		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME"
+		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME" NAME
 
-		if [ -n "$REPLY" ]; then
-			NAME="$REPLY"
-		fi
 
 		# choose a hostname, default is the container name
-		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME"
+		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME" UTSNAME
 
-		if [ -n "$REPLY" ]; then
-			UTSNAME="$REPLY"
-		fi
 
 		# choose an ipv4 address, better to choose the same network than
 		# your host
-		read -p "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? " -ei "$IPV4"
+		read -p "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? " -ei "$IPV4" IPV4
 
-		if [ -n "$REPLY" ]; then
-			IPV4="$REPLY"
-		fi
 
 		# choose the gateway ip address
 		if [ "${IPV4}" != "dhcp" ]; then
-			read -p "What is the gateway IP address ? " -ei "$GATEWAY"
+			read -p "What is the gateway IP address ? " -ei "$GATEWAY" GATEWAY
 
-			if [ -n "$REPLY" ]; then
-				GATEWAY="$REPLY"
-			fi
 		fi
 
 		# Type guest root password
@@ -559,34 +556,22 @@ configure()
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
-			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH"
-			if [ -n "$REPLY" ]; then
-				ARCH="$REPLY"
-			fi
+			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH" ARCH
 
 			# choose architecture variant
-			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT"
-			if [ -n "$REPLY" ]; then
-				ARCHVARIANT="$REPLY"
-			fi
+			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
 
 			LXC_ARCH="x86_64"
 			# if x86 is given prompt for "subarch"
 			if [ "${ARCH}" == 'x86' ]; then
-				read -p "Sub architecture of x86 ? " -ei "$SUBARCH"
-				if [ -n "$REPLY" ]; then
-					SUBARCH="$REPLY"
-				fi
+				read -p "Sub architecture of x86 ? " -ei "$SUBARCH" SUBARCH
 				LXC_ARCH="${SUBARCH}"
 			elif [ "${ARCH}" == "amd64" ]; then
 				SUBARCH=${ARCH}
 			fi
 
 			# choose the mirror
-			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR"
-			if [ -n "$REPLY" ]; then
-				MIRROR="$REPLY"
-			fi
+			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR" MIRROR
 		fi
 
 	fi
