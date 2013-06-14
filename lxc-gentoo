@@ -500,7 +500,7 @@ fetch_stage3()
 
 	local -a array_of_words
 	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
-		|| die 6 "Error: unable to fetch: wget exited with: %s\n" "$?"
+		|| die 6 "Error: unable to fetch\n"
 
 	# take the last word and convert it to string form:
 	latest_stage3_subpath="${array_of_words[-1]}"
@@ -523,7 +523,7 @@ fetch_stage3()
 		printf " => %s ...\n" "$input_url"
 
 		wget -O "$output_file" "$input_url" \
-			|| die 6 " => unable to fetch (or save)\n"
+			|| die 6 "Error: unable to fetch\n"
 		printf " => saved to: %s\n" "$output_file"
 	fi
 
@@ -541,11 +541,9 @@ fetch_portage()
 		# don't update
 		printf "Downloading Gentoo portage (software build database) snapshot...\n"
 
-		wget -O "$dest" "$url"
-		if [[ $? -ne 0 ]]; then
-			printf " => failed.\n"
-			return 1
-		fi
+		wget -O "$dest" "$url" \
+			|| die 6 "Error: unable to fetch\n"
+
 		printf " => done.\n"
 	fi
 
