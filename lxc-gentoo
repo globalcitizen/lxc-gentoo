@@ -511,7 +511,7 @@ fetch_stage3()
 	if [[ -f "$output_file" ]]; then
 		printf "Skipping download of stage3 as it is already present.\n"
 	else
-		printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
+		printf "Downloading the actual stage3 tarball...\n"
 
 		#  - ensure output directory exists
 		local output_dir="${output_file%/*}"
