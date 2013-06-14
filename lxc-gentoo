@@ -506,23 +506,24 @@ fetch_stage3()
 
 
 	# Download the actual stage3
-	printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
 	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
+	if [[ -f "$output_file" ]]; then
+		printf "Skipping download of stage3 as it is already present.\n"
+	else
+		printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
 
-	#  - ensure output directory exists
-	local output_dir="${output_file%/*}"
-	mkdir -p "$output_dir"
+		#  - ensure output directory exists
+		local output_dir="${output_file%/*}"
+		mkdir -p "$output_dir"
 
-	#  - grab
-	local input_url="$stage3url/$latest_stage3_subpath"
-	printf " => %s ...\n" "$input_url"
+		#  - grab
+		local input_url="$stage3url/$latest_stage3_subpath"
+		printf " => %s ...\n" "$input_url"
 
-	wget -O "$output_file" "$input_url"
-	if [[ $? -ne 0 ]]; then
-		printf " => failed!\n"
-		exit 1
+		wget -O "$output_file" "$input_url" \
+			|| die 6 " => unable to fetch (or save)\n"
+		printf " => saved to: %s\n" "$output_file"
 	fi
-	printf " => saved to: %s\n" "$output_file"
 
 	# used by calling function
 	STAGE3_TARBALL="$output_file"
