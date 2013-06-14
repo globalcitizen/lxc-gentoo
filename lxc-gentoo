@@ -178,8 +178,8 @@ populate_dev()
 	} 2> /dev/null
 	cd - > /dev/null
 }
-# custom fstab
 
+# custom fstab
 write_distro_fstab()
 {
 	cat <<- EOF > ${ROOTFS}/${FSTAB}
