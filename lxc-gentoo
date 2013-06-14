@@ -124,6 +124,7 @@ execute_exclusively()
 
 die()
 {
+	printf "\n[the last exit code leading to this death was: %s ]\n" "$?"
 	local retval="$1"
 	shift 1
 	printf "$@"
