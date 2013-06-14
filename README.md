@@ -134,6 +134,18 @@ Available environment variables are as follows.
 Updates
 -------
 
+___June 2013___
+ - Bashisms
+ - Cleaner syntax
+ - Improved error handling
+ - Speedups
+ - Better/improved locking
+ - More full-featured prompting
+ - Portage tree bind mount support
+ - Portage workspace now `tmpfs` mounted
+ - More verbose download
+ - Compress cache at `/var/cache/lxc/gentoo`
+
 ___January 2013___
  - Deployment of whizz-bang screenshot eyecandy.
  - Up to date OpenRC fixes for fast and minimalist
