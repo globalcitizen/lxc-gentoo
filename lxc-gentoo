@@ -712,7 +712,7 @@ destroy()
 help()
 {
 	cat <<-EOF
-	Usage: $0 {create|destroy|purge|help} [options]
+	Usage: $0 {create|help} [options]
 		-q : Quiet, use vars from env or options and do not ask me.
 		-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
 			Env. Var.: IPV4
@@ -770,10 +770,13 @@ help()
 	The first creation will download a Gentoo stage3 and portage
 	snapshot and store it into a cache at ${CACHE}.
 
-	Updating your cache:
-	At any time you can purge the Gentoo cache download by calling
-	'lxc-gentoo purge'. This will cause a new stage3/portage snapshot
-	to be downloaded on the next 'lxc-gentoo create'.
+	If you wish to remove the cache, point your file manager/shell into
+	"$CACHE" and remove the files you consider unneeded.
+	If you wish to update, remove the files that you consider unneeded,
+	next lxc-gentoo create run will re-download needed ones.
+
+	To destroy the container, just remove <container_name>* wherever you created it.
+	Are you sure it is not running at the moment? (use lxc-stop/kill -n <container_name> to stop/kill it.
 
 	Have fun :)
 
@@ -787,6 +790,8 @@ purge()
 	cat <<- EOF
 	If you wish to remove the cache, point your file manager/shell into
 	"$CACHE" and remove the files you consider unneeded.
+	If you wish to update, remove the files that you consider unneeded,
+	next lxc-gentoo create run will re-download needed ones.
 	EOF
 }
 
@@ -826,13 +831,15 @@ case "$1" in
 	create)
 		create;;
 	destroy)
-		destroy;;
+		destroy
+		die 16 "destroy is to be removed\n" ;;
 	fetch)
 		fetch;;
 	help)
 		help;;
 	purge)
-		purge;;
+		purge
+		die 16 "purge is to be removed\n" ;;
 	*)
 		help
 		exit 1;;
