@@ -620,20 +620,18 @@ create()
 {
 	configure
 
+	# never hurts to have a fail-safe.
+	[[ -n "${NAME//\/}" ]] \
+		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
+
 	# the rootfs name will be built with the container name
 	ROOTFS="./${NAME}"
 
 	# check if the conffile already exists
-	if [ -e "${CONFFILE}" ]; then
-		echo "ERROR: ${CONFFILE} already exists!"
-		return 1
-	fi
+	[[ -e "$CONFFILE" ]] && die 18 "Error: config file (%s) already exists!\n" "$CONFFILE"
 
 	# check if the rootfs already exists
-	if [ -e "${ROOTFS}" ]; then
-		echo "ERROR: ${ROOTFS} already exists!"
-		return 1
-	fi
+	[[ -e "$ROOTFS" ]] && die 18 "Error: \$ROOTFS (%s) already exists!" "$ROOTFS"
 	
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
