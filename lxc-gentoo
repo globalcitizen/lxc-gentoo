@@ -244,7 +244,9 @@ setup_portage()
 	PKGDIR="/var/portage/packages"
 	DISTDIR="/var/portage/distfiles"
 
-	FEATURES="\$FEATURES buildpkg"
+	# enable this to store built binary packages
+	#FEATURES="\$FEATURES buildpkg"
+
 	FEATURES="\$FEATURES compress-build-logs"
 	FEATURES="\$FEATURES split-log"
 	FEATURES="\$FEATURES split-elog"
