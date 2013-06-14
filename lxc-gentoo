@@ -497,11 +497,12 @@ fetch_stage3()
 	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
-	local latest_stage3_subpath="$(wget -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
-	if [[ $? -ne 0 ]]; then
-		printf " => failed!\n"
-		exit 1
-	fi
+	local -a array_of_words
+	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
+		|| die 6 "Error: unable to fetch: wget exited with: %s\n" "$?"
+
+	# take the last word and convert it to string form:
+	latest_stage3_subpath="${array_of_words[-1]}"
 	printf " => Got: %s\n" "$latest_stage3_subpath"
 
 
