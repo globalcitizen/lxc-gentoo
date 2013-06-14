@@ -53,8 +53,7 @@
 #
 ###############################################################################
 
-DISTRO="gentoo"
-CACHE=${CACHE:-/var/cache/lxc/$DISTRO}
+CACHE=${CACHE:-/var/cache/lxc/gentoo}
 alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
@@ -115,8 +114,17 @@ execute_exclusively()
 	} 50> "/var/lock/subsys/$lock_name"
 }
 
+# Please use these suggested error codes:
+# die 1 ... -- general/unspecified failure
+# die 2 ... -- filesystem error (e.g. tar unpacking failed)
+# die 4 ... -- network error
+# die 8 ... -- error in program logic
+# die 16 .. -- erroneous (user) input
+# or any combination of these.
+
 die()
 {
+	printf "\n[the last exit code leading to this death was: %s ]\n" "$?"
 	local retval="$1"
 	shift 1
 	printf "$@"
@@ -127,29 +135,54 @@ die()
 #                    DISTRO custom configuration files
 ################################################################################
 
-populate_dev() {
-	# we silence errors as newer stage3s appear to include device files
-	DEV="${ROOTFS}/dev"
-	rm -f ${DEV}/null > /dev/null 2>&1
-	mknod -m 666 ${DEV}/null c 1 3 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/zero c 1 5 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/random c 1 8 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/urandom c 1 9 > /dev/null 2>&1
-	mkdir -m 755 ${DEV}/pts > /dev/null 2>&1
-	mkdir -m 1777 ${DEV}/shm > /dev/null 2>&1
-	mknod -m 666 ${DEV}/tty c 5 0 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/tty0 c 4 0 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/tty1 c 4 1 > /dev/null 2>&1
-	mknod -m 600 ${DEV}/console c 5 1 > /dev/null 2>&1
-	mknod -m 666 ${DEV}/full c 1 7 > /dev/null 2>&1
-	mknod -m 600 ${DEV}/initctl p > /dev/null 2>&1
-	mknod -m 666 ${DEV}/ptmx c 5 2 > /dev/null 2>&1
-	mkdir -m 755 ${DEV}/net > /dev/null 2>&1
-	mknod -m 666 ${DEV}/net/tun c 10 200 > /dev/null 2>&1
-}
-# custom fstab
+populate_dev()
+{
+	cd "$ROOTFS/dev" || die 2 "Unable to change directory to %s!\n" "$ROOTFS/dev"
 
-write_distro_fstab() {
+	# we silence errors as newer stage3s already include needed device files
+	{
+		# newer stage3 include too many useless nodes, remove them
+		rm -f hda*
+		rm -f sda*
+		rm -f sdb*
+		rm -f sdc*
+		rm -f sdd*
+		rm -f tty*
+		rm -f core
+		rm -f mem
+		rm -f port
+		rm -rf input/
+
+		# tabsize 4
+		mknod -m 666 null		c 1 3
+		mknod -m 666 zero		c 1 5
+		mknod -m 666 full		c 1 7
+
+		mknod -m 666 random		c 1 8
+		mknod -m 666 urandom	c 1 9
+
+		mknod -m 600 console	c 5 1
+		mknod -m 666 tty		c 5 0
+		mknod -m 666 tty0		c 4 0
+		mknod -m 666 tty1		c 4 1
+
+		mknod -m 600 initctl	p
+
+		mknod -m 666 ptmx		c 5 2
+		mkdir -m 755 pts
+
+		mkdir -m 1777 shm
+
+		mkdir -m 755 net
+		mknod -m 666 net/tun	c 10 200
+
+	} 2> /dev/null
+	cd - > /dev/null
+}
+
+# custom fstab
+write_distro_fstab()
+{
 	cat <<- EOF > ${ROOTFS}/${FSTAB}
 	# required to prevent boot-time error display
 	none    /         none    defaults  0 0
@@ -157,7 +190,8 @@ write_distro_fstab() {
 	EOF
 }
 
-write_distro_timezone() {
+write_distro_timezone()
+{
 	if [ -e /etc/localtime ]; then
 		# duplicate host timezone
 		cat /etc/localtime > ${ROOTFS}/etc/localtime
@@ -169,10 +203,11 @@ write_distro_timezone() {
 }
 
 # custom inittab
-write_distro_inittab() {
+write_distro_inittab()
+{
 	sed -i 's/^c[1-9]/#&/' ${ROOTFS}/${INITTAB} # disable getty
 	echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
-	echo "1:12345:respawn:/sbin/agetty -a root --noclear 38400 console linux" >> ${ROOTFS}/${INITTAB}
+	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$ROOTFS/$INITTAB"
 	# we also blank out /etc/issue here in order to prevent delays spawning login
 	# caused by attempts to determine domainname on disconnected containers
 	rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
@@ -188,6 +223,8 @@ setup_portage()
 	mkdir -p "$ROOTFS/etc/portage" && \
 	mkdir -p "$ROOTFS/var/portage/tmp" && \
 	mkdir -p "$ROOTFS/var/portage/tree" && \
+	mkdir -p "$ROOTFS/var/portage/logs" && \
+	mkdir -p "$ROOTFS/var/portage/packages" && \
 	mkdir -p "$ROOTFS/var/portage/distfiles" \
 		|| die 2 "Error: unable to create needed portage directories.\n"
 
@@ -203,7 +240,14 @@ setup_portage()
 	cat <<- EOF >> "$ROOTFS/etc/portage/make.conf"
 	PORTAGE_TMPDIR="/var/portage/tmp"
 	PORTDIR="/var/portage/tree"
+	PORT_LOGDIR="/var/portage/logs"
+	PKGDIR="/var/portage/packages"
 	DISTDIR="/var/portage/distfiles"
+
+	FEATURES="\$FEATURES buildpkg"
+	FEATURES="\$FEATURES compress-build-logs"
+	FEATURES="\$FEATURES split-log"
+	FEATURES="\$FEATURES split-elog"
 	EOF
 
 	if [[ "$PORTAGE_SOURCE" == "none" ]]; then
@@ -229,13 +273,17 @@ setup_portage()
 }
 
 # custom network configuration
-write_distro_network() {
+write_distro_network()
+{
 	# /etc/resolv.conf
 	grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
 	grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
-	# gentoo network configuration
-	if [ "${IPV4}" != "dhcp" ]; then
-		cat <<- EOF > ${ROOTFS}/etc/conf.d/net
+	# Append LXC-specific gentoo network configuration instructions
+	cat <<- EOF >> "$ROOTFS/etc/conf.d/net"
+
+		# =================
+		# LXC CONFIGURATION
+		# =================
 		# eth0 (lxc virtualised network adapter)
 		#  optionally can be bridged.
 		#     - host br0 is managed with the bridge-utils package, ie:
@@ -262,8 +310,7 @@ write_distro_network() {
 		#           between reboots, then after running the above execute:
 		#             /etc/init.d/iptables save
 		#             rc-update add iptables default
-		EOF
-	fi
+	EOF
 	# only link for dchp, since static options render it unnecessary
 	# https://github.com/globalcitizen/lxc-gentoo/issues/33
 	if [ "${IPV4}" == "dhcp" ]; then
@@ -273,7 +320,8 @@ write_distro_network() {
 }
 
 # custom hostname
-write_distro_hostname() {
+write_distro_hostname()
+{
 	echo -n " - setting hostname..."
 	cat <<- EOF > ${ROOTFS}/etc/conf.d/hostname
 	HOSTNAME=${UTSNAME}
@@ -282,7 +330,8 @@ write_distro_hostname() {
 }
 
 # fix init system
-write_distro_init_fixes() {
+write_distro_init_fixes()
+{
 	# short-circuit openrc's autodetection
 	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
 	# fix for error caused by openrc <0.10.2 (~may 2012)
@@ -312,7 +361,8 @@ write_distro_init_fixes() {
 #                        lxc configuration files
 ################################################################################
 
-write_lxc_configuration() {
+write_lxc_configuration()
+{
 	echo -n " - writing LXC guest configuration..."
 	cat <<- EOF > ${CONFFILE}
 	# set arch
@@ -424,7 +474,8 @@ write_lxc_configuration() {
 	echo "done."
 }
 
-set_guest_root_password() {
+set_guest_root_password()
+{
 	[[ -z "$GUESTROOTPASS" ]] && return # pass is empty, abort
 
 	echo -n " - setting guest root password.."
@@ -447,32 +498,34 @@ fetch_stage3()
 	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
-	local latest_stage3_subpath="$(wget -q -O - "$stage3latestSubPathUrl" | tail -n 1)"
-	if [[ $? -ne 0 ]]; then
-		printf " => failed!\n"
-		exit 1
-	fi
+	local -a array_of_words
+	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
+		|| die 6 "Error: unable to fetch\n"
+
+	# take the last word and convert it to string form:
+	latest_stage3_subpath="${array_of_words[-1]}"
 	printf " => Got: %s\n" "$latest_stage3_subpath"
 
 
 	# Download the actual stage3
-	printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
 	local output_file="$CACHE/stage3-$ARCH-$latest_stage3_subpath"
+	if [[ -f "$output_file" ]]; then
+		printf "Skipping download of stage3 as it is already present.\n"
+	else
+		printf "Downloading the actual stage3 tarball (between 100 and 200 MB)...\n"
 
-	#  - ensure output directory exists
-	local output_dir="${output_file%/*}"
-	mkdir -p "$output_dir"
+		#  - ensure output directory exists
+		local output_dir="${output_file%/*}"
+		mkdir -p "$output_dir"
 
-	#  - grab
-	local input_url="$stage3url/$latest_stage3_subpath"
-	printf " => %s ...\n" "$input_url"
+		#  - grab
+		local input_url="$stage3url/$latest_stage3_subpath"
+		printf " => %s ...\n" "$input_url"
 
-	wget -O "$output_file" "$input_url"
-	if [[ $? -ne 0 ]]; then
-		printf " => failed!\n"
-		exit 1
+		wget -O "$output_file" "$input_url" \
+			|| die 6 "Error: unable to fetch\n"
+		printf " => saved to: %s\n" "$output_file"
 	fi
-	printf " => saved to: %s\n" "$output_file"
 
 	# used by calling function
 	STAGE3_TARBALL="$output_file"
@@ -488,11 +541,9 @@ fetch_portage()
 		# don't update
 		printf "Downloading Gentoo portage (software build database) snapshot...\n"
 
-		wget -O "$dest" "$url"
-		if [[ $? -ne 0 ]]; then
-			printf " => failed.\n"
-			return 1
-		fi
+		wget -O "$dest" "$url" \
+			|| die 6 "Error: unable to fetch\n"
+
 		printf " => done.\n"
 	fi
 
@@ -500,37 +551,26 @@ fetch_portage()
 	PORTAGE_SOURCE="$dest"
 }
 
-configure() {
+configure()
+{
 	if [[ -z ${QUIET} ]]; then
 		# choose a container name, default is already in shell NAME variable
-		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME"
+		read -p "What is the name for the container (recommended <=15 chars)? " -ei "$NAME" NAME
 
-		if [ -n "$REPLY" ]; then
-			NAME="$REPLY"
-		fi
 
 		# choose a hostname, default is the container name
-		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME"
+		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME" UTSNAME
 
-		if [ -n "$REPLY" ]; then
-			UTSNAME="$REPLY"
-		fi
 
 		# choose an ipv4 address, better to choose the same network than
 		# your host
-		read -p "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? " -ei "$IPV4"
+		read -p "What IP address do you wish for this container (enter 'dhcp' to use DHCP) ? " -ei "$IPV4" IPV4
 
-		if [ -n "$REPLY" ]; then
-			IPV4="$REPLY"
-		fi
 
 		# choose the gateway ip address
 		if [ "${IPV4}" != "dhcp" ]; then
-			read -p "What is the gateway IP address ? " -ei "$GATEWAY"
+			read -p "What is the gateway IP address ? " -ei "$GATEWAY" GATEWAY
 
-			if [ -n "$REPLY" ]; then
-				GATEWAY="$REPLY"
-			fi
 		fi
 
 		# Type guest root password
@@ -542,34 +582,22 @@ configure() {
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
 			# choose the architecture
-			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH"
-			if [ -n "$REPLY" ]; then
-				ARCH="$REPLY"
-			fi
+			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH" ARCH
 
 			# choose architecture variant
-			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT"
-			if [ -n "$REPLY" ]; then
-				ARCHVARIANT="$REPLY"
-			fi
+			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
 
 			LXC_ARCH="x86_64"
 			# if x86 is given prompt for "subarch"
 			if [ "${ARCH}" == 'x86' ]; then
-				read -p "Sub architecture of x86 ? " -ei "$SUBARCH"
-				if [ -n "$REPLY" ]; then
-					SUBARCH="$REPLY"
-				fi
+				read -p "Sub architecture of x86 ? " -ei "$SUBARCH" SUBARCH
 				LXC_ARCH="${SUBARCH}"
 			elif [ "${ARCH}" == "amd64" ]; then
 				SUBARCH=${ARCH}
 			fi
 
 			# choose the mirror
-			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR"
-			if [ -n "$REPLY" ]; then
-				MIRROR="$REPLY"
-			fi
+			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR" MIRROR
 		fi
 
 	fi
@@ -588,23 +616,22 @@ configure() {
 	fi
 }
 
-create() {
+create()
+{
 	configure
+
+	# never hurts to have a fail-safe.
+	[[ -n "${NAME//\/}" ]] \
+		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
 
 	# the rootfs name will be built with the container name
 	ROOTFS="./${NAME}"
 
 	# check if the conffile already exists
-	if [ -e "${CONFFILE}" ]; then
-		echo "ERROR: ${CONFFILE} already exists!"
-		return 1
-	fi
+	[[ -e "$CONFFILE" ]] && die 18 "Error: config file (%s) already exists!\n" "$CONFFILE"
 
 	# check if the rootfs already exists
-	if [ -e "${ROOTFS}" ]; then
-		echo "ERROR: ${ROOTFS} already exists!"
-		return 1
-	fi
+	[[ -e "$ROOTFS" ]] && die 18 "Error: \$ROOTFS (%s) already exists!" "$ROOTFS"
 	
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
@@ -630,55 +657,31 @@ create() {
 
 	setup_portage
 
-	write_lxc_configuration
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write LXC configuration."
-		return 1
-	fi
+	write_lxc_configuration \
+		|| die 1 "Error: Failed to write LXC configuration.\n"
 
-	write_distro_inittab
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write changes to inittab."
-		return 1
-	fi
+	write_distro_inittab \
+		|| die 1 "Error: Failed to write changes to inittab.\n"
 
-	write_distro_hostname
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write hostname."
-		return 1
-	fi
+	write_distro_hostname \
+		|| die 1 "Error: Failed to write hostname.\n"
 
 	populate_dev
 
-	write_distro_fstab
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write fstab"
-		return 1
-	fi
+	write_distro_fstab \
+		|| die 1 "Error: Failed to write fstab\n"
 
-	write_distro_timezone
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write timezone"
-		return 1
-	fi
+	write_distro_timezone \
+		|| die 1 "Error: Failed to write timezone\n"
 
-	write_distro_network
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write network configuration"
-		return 1
-	fi
+	write_distro_network \
+		|| die 1 "Error: Failed to write network configuration\n"
 
-	write_distro_init_fixes
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to write init fixes"
-		return 1
-	fi
+	write_distro_init_fixes \
+		|| die 1 "Error: Failed to write init fixes\n"
 
-	set_guest_root_password
-	if [ ! $? -eq 0 ]; then
-		echo "ERROR: Failed to set guest root password"
-		return 1
-	fi
+	set_guest_root_password \
+		|| die 1 "Error: Failed to set guest root password\n"
 
 	cat <<-EOF
 	All done!
@@ -700,14 +703,16 @@ create() {
 	EOF
 }
 
-destroy() {
+destroy()
+{
 	printf "To destroy the container, just remove <container_name>* wherever you created it.\n"
 	printf "Are you sure it is not running at the moment? (use lxc-kill -n <container_name> to stop/kill it.\n"
 }
 
-help() {
+help()
+{
 	cat <<-EOF
-	Usage: $0 {create|destroy|purge|help} [options]
+	Usage: $0 {create|help} [options]
 		-q : Quiet, use vars from env or options and do not ask me.
 		-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
 			Env. Var.: IPV4
@@ -741,18 +746,18 @@ help() {
 			 - tarball -- will be extracted
 			 - directory -- will be bind-mounted read-only
 			 - "none" -- do not set up a portage tree
-			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
+			A portage snapshot will be downloaded if not specified
 			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
 		-C CUSTOMURL : URL for a custom tarball
 			Env. Var.: CUSTOMURL
 			Current/Default: ${CUSTOMURL}
 
-	This script is a helper to create ${DISTRO} system containers.
+	This script is a helper to create Gentoo system containers.
 
 	To make a container, simply run:
 
-	lxc-${DISTRO} create
+	lxc-gentoo create
 
 	You can override default by environnement variables or commandline options with this override sequence :
 	default, env, cmdline option
@@ -762,13 +767,16 @@ help() {
 
 	An interactive script will ask you for various information.
 
-	The first creation will download a ${DISTRO} stage3 and portage
+	The first creation will download a Gentoo stage3 and portage
 	snapshot and store it into a cache at ${CACHE}.
 
-	Updating your cache:
-	At any time you can purge the ${DISTRO} cache download by calling
-	'lxc-${DISTRO} purge'. This will cause a new stage3/portage snapshot
-	to be downloaded on the next 'lxc-${DISTRO} create'.
+	If you wish to remove the cache, point your file manager/shell into
+	"$CACHE" and remove the files you consider unneeded.
+	If you wish to update, remove the files that you consider unneeded,
+	next lxc-gentoo create run will re-download needed ones.
+
+	To destroy the container, just remove <container_name>* wherever you created it.
+	Are you sure it is not running at the moment? (use lxc-stop/kill -n <container_name> to stop/kill it.
 
 	Have fun :)
 
@@ -777,31 +785,18 @@ help() {
 	EOF
 }
 
-purge() {
-	if [ ! -e ${CACHE} ]; then
-		exit 0
-	fi
-
-	[[ -d /var/lock/subsys ]] || mkdir -p /var/lock/subsys
-
-	# lock, so we won't purge while someone is creating a repository
-	(
-	flock -n -x 200
-
-	RES=$?
-	if [ "${RES}" != "0" ]; then
-		echo "Cache repository is busy."
-		exit 1
-	fi
-
-	echo -n "Purging the download cache..."
-	rm --preserve-root --one-file-system -rf ${CACHE} && echo "done" || exit 1
-	exit 0
-
-	) 200> "/var/lock/subsys/lxc"
+purge()
+{
+	cat <<- EOF
+	If you wish to remove the cache, point your file manager/shell into
+	"$CACHE" and remove the files you consider unneeded.
+	If you wish to update, remove the files that you consider unneeded,
+	next lxc-gentoo create run will re-download needed ones.
+	EOF
 }
 
-fetch() {
+fetch()
+{
 	configure
 	# download
 	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
@@ -836,13 +831,15 @@ case "$1" in
 	create)
 		create;;
 	destroy)
-		destroy;;
+		destroy
+		die 16 "destroy is to be removed\n" ;;
 	fetch)
 		fetch;;
 	help)
 		help;;
 	purge)
-		purge;;
+		purge
+		die 16 "purge is to be removed\n" ;;
 	*)
 		help
 		exit 1;;
