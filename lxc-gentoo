@@ -746,7 +746,7 @@ help()
 			 - tarball -- will be extracted
 			 - directory -- will be bind-mounted read-only
 			 - "none" -- do not set up a portage tree
-			A portage snapshot will be downloaded if not specified and usr/portage is not a directory @ tarball
+			A portage snapshot will be downloaded if not specified
 			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
 		-C CUSTOMURL : URL for a custom tarball
