@@ -212,6 +212,10 @@ write_distro_inittab()
 	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
 	# quiet login
 	touch ${ROOTFS}/root/.hushlogin
+
+	# finally we add a pf line to enable clean shutdown on SIGPWR (issue 60)
+	echo "# clean container shutdown on SIGPWR" >> ${ROOTFS}/${INITTAB}
+	echo "pf:12345:powerwait:/sbin/halt" >> ${ROOTFS}/${INITTAB}
 }
 
 setup_portage()
