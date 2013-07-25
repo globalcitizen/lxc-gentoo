@@ -752,9 +752,6 @@ help()
 			A portage snapshot will be downloaded if not specified
 			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
-		-C CUSTOMURL : URL for a custom tarball
-			Env. Var.: CUSTOMURL
-			Current/Default: ${CUSTOMURL}
 
 	This script is a helper to create Gentoo system containers.
 
@@ -813,14 +810,13 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:t:P:q" opt; do
+while getopts "i:g:n:u:a:p:m:t:P:q" opt; do
 	case $opt in
 		i) IPV4=$OPTARG ;;
 		g) GATEWAY=$OPTARG ;;
 		n) NAME=$OPTARG ;;
 		u) UTSNAME=$OPTARG ;;
 		a) ARCH=$OPTARG ;;
-		C) CUSTOMURL=$OPTARG;;
 		p) GUESTROOTPASS=$OPTARG ;;
 		m) MIRROR=$OPTARG ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
