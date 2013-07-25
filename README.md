@@ -111,12 +111,6 @@ Available environment variables are as follows.
    <td>Gentoo architecture code.</td>
   </tr>
   <tr>
-   <td><b>Gentoo Subarchitecture</b></td>
-   <td><pre>$SUBARCH</pre></td>
-   <td><i>amd64</i></td>
-   <td>Gentoo subarchitecture code.</td>
-  </tr>
-  <tr>
    <td><b>Gentoo Architecture Variant</b></td>
    <td><pre>$ARCHVARIANT</pre></td>
    <td>(none)</td>

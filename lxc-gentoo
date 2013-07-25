@@ -732,9 +732,6 @@ help()
 		-a ARCHITECTURE : for now x86 or amd64
 			Env. Var.: ARCH
 			Current/Default: ${ARCH}
-		-s SUBARCH : subarch for x86
-			Env. Var.: SUBARCH
-			Current/Default: ${SUBARCH}
 		-p GUESTROOTPASS : password for root account
 			Env. Var.: GUESTROOTPASS
 			Current/Default: ${GUESTROOTPASS}
