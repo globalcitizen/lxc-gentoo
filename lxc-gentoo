@@ -367,9 +367,19 @@ write_distro_init_fixes()
 write_lxc_configuration()
 {
 	echo -n " - writing LXC guest configuration..."
-	cat <<- EOF > ${CONFFILE}
-	# set arch
-	lxc.arch = ${LXC_ARCH}
+
+	if [[ "$ARCH" == "x86" || "$ARCH" == "amd64" ]]; then
+		local arch_line="lxc.arch = $ARCH"
+	else
+		local arch_line="# lxc.arch = $ARCH"
+	fi
+
+	cat <<- EOF >> "$CONFFILE"
+	# sets container architecture
+	# If desired architecture != amd64 or x86, then we leave it unset as
+	# LXC does not oficially support anything other than x86 or amd64.
+	# (Qemu masks arch in those cases anyway).
+	$arch_line
 
 	# set the hostname
 	lxc.utsname = ${UTSNAME}
@@ -590,11 +600,9 @@ configure()
 			# choose architecture variant
 			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
 
-			LXC_ARCH="x86_64"
 			# if x86 is given prompt for "subarch"
 			if [ "${ARCH}" == 'x86' ]; then
 				read -p "Sub architecture of x86 ? " -ei "$SUBARCH" SUBARCH
-				LXC_ARCH="${SUBARCH}"
 			elif [ "${ARCH}" == "amd64" ]; then
 				SUBARCH=${ARCH}
 			fi
