@@ -61,10 +61,8 @@ GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS="$GUESTROOTPASS"
 if [ `uname -m` == "x86_64" ]; then
 	ARCH=${ARCH:-amd64}
-	SUBARCH=${SUBARCH:-amd64}
 else
 	ARCH=${ARCH:-x86}
-	SUBARCH=${SUBARCH:-$(uname -m)}
 fi
 ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
@@ -498,17 +496,14 @@ set_guest_root_password()
 
 fetch_stage3()
 {
-	# prepend '-' to nonblank ARCHVARIANT for URL construction
-	local archvariant="${ARCHVARIANT:+-$ARCHVARIANT}"
-
 	# base stage3 URL
 	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
 	# get latest-stage3....txt file for subpath
 	mkdir -p "$CACHE"
-	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
+	local stage3latestSubPathUrl="$stage3url/latest-stage3-${ARCHVARIANT}.txt"
 
-	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
+	printf "Determining path to latest Gentoo %s (%s) stage3 archive...\n" "$ARCH" "$ARCHVARIANT"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
 	local -a array_of_words
@@ -598,14 +593,7 @@ configure()
 			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH" ARCH
 
 			# choose architecture variant
-			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
-
-			# if x86 is given prompt for "subarch"
-			if [ "${ARCH}" == 'x86' ]; then
-				read -p "Sub architecture of x86 ? " -ei "$SUBARCH" SUBARCH
-			elif [ "${ARCH}" == "amd64" ]; then
-				SUBARCH=${ARCH}
-			fi
+			read -p "Architecture variant (usually 'amd64', 'amd64-hardened' or 'amd64-hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
 
 			# choose the mirror
 			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR" MIRROR
@@ -646,7 +634,7 @@ create()
 	
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
-		execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+		execute_exclusively "${ARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 		if [[ $? -ne 0 ]]; then
 			printf "ERROR: Failed to fetch stage3.\n"
 			return 1
@@ -804,7 +792,7 @@ fetch()
 {
 	configure
 	# download
-	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+	execute_exclusively "${ARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 	execute_exclusively "portage" fetch_portage
 }
 
