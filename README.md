@@ -108,7 +108,7 @@ Available environment variables are as follows.
    <td><b>Gentoo Architecture</b></td>
    <td><pre>$ARCH</pre></td>
    <td><i>amd64</i></td>
-   <td>Gentoo architecture code.</td>
+   <td>Gentoo architecture code: alpha, amd64, arm, hppa, ia64, ppc, s390, sh, sparc, x86</td>
   </tr>
   <tr>
    <td><b>Gentoo Architecture Variant</b></td>

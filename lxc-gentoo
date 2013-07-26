@@ -589,14 +589,62 @@ configure()
 		printf "\n" # \n eaten by noecho
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
-			# choose the architecture
-			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH" ARCH
-
-			# choose architecture variant
-			read -p "Architecture variant (usually 'amd64', 'amd64-hardened' or 'amd64-hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
-
 			# choose the mirror
 			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR" MIRROR
+
+			# choose the container architecture
+			local -a arches
+			arches+=("alpha")
+			arches+=("amd64")
+			arches+=("arm")
+			arches+=("hppa")
+			arches+=("ia64")
+			# arches+=("mips") # project only has experimental stages?
+			arches+=("ppc")
+			arches+=("s390")
+			arches+=("sh")
+			arches+=("sparc")
+			arches+=("x86")
+
+			printf "\n\nNote that you will have to set up Qemu? emulation yourself\n"
+			printf "if your CPU cannot natively execute the chosen architecture (see README).\n"
+
+			printf "\n\nSelect desired container architecture:\n"
+			select ARCH in "${arches[@]}"; do
+				if [[ -n "$ARCH" ]]; then
+					break
+				fi
+			done
+
+			printf "\nDownloading the list of available variants...\n"
+			# we got a valid answer, proceed with variant list
+			mapfile -t < <(wget -O - "$MIRROR/releases/$ARCH/autobuilds")
+			# I tried to check for errors here but failed miserably, hence the check
+			# for an empty variant list down below.
+
+			# parse the returned HTML for latest-stage3-VARIANT.txt
+			local -a variants
+			local variant
+
+			for line in "${MAPFILE[@]}"; do
+				if [[ "$line" = *latest-stage3-*.txt* ]]; then
+					variant="${line#*latest-stage3-}"
+					variant="${variant%%.txt*}"
+
+					variants+=("$variant")
+				fi
+			done
+
+			if [[ ${#variants[@]} -eq 0 ]]; then
+				die 6 "variants list empty, see wget's output above\n"
+			fi
+
+			printf "\n\nSelect desired container subarchitecture/variant for %s:\n" "$ARCH"
+			select ARCHVARIANT in "${variants[@]}"; do
+				if [[ -n "$ARCHVARIANT" ]]; then
+					break
+				fi
+			done
 		fi
 
 	fi
@@ -725,7 +773,7 @@ help()
 		-u UTSNAME : hostname of the container
 			Env. Var.: UTSNAME
 			Current/Default: ${UTSNAME}
-		-a ARCHITECTURE : for now x86 or amd64
+		-a ARCHITECTURE : at the moment all but mips.
 			Env. Var.: ARCH
 			Current/Default: ${ARCH}
 		-p GUESTROOTPASS : password for root account
