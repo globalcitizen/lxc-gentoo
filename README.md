@@ -119,8 +119,12 @@ Available environment variables are as follows.
   <tr>
    <td><b>lxc.conf Location</b></td>
    <td><pre>$CONFFILE</pre></td>
-   <td><i>${UTSNAME}.conf</i></td>
-   <td>Path at which to generate the <i>lxc.conf</i> file.</td>
+   <td><i>${NAME}.conf</i></td>
+   <td>Path at which to generate the <i>lxc.conf</i> file, one of:
+    <li> undefined -- config will be placed into ./${NAME}.conf</li>
+    <li> a directory -- config will be placed into dir/${NAME}.conf</li>
+    <li> file path -- config will be placed into it</li>
+   </td>
   </tr>
  </tbody>
 </table>

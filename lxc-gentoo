@@ -61,7 +61,7 @@ GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS="$GUESTROOTPASS"
 ARCH="$ARCH"
 ARCHVARIANT=${ARCHVARIANT:-}
-CONFFILE="${UTSNAME}.conf"
+CONFFILE="$CONFFILE"
 MIRROR=${MIRROR:-http://distfiles.gentoo.org}
 STAGE3_TARBALL="${STAGE3_TARBALL}"
 PORTAGE_SOURCE="$PORTAGE_SOURCE"
@@ -645,7 +645,16 @@ configure()
 
 	fi
 
-	CONFFILE="${UTSNAME}.conf"
+	if [[ -n "$CONFFILE" ]]; then
+		if [[ -d "$CONFFILE" ]]; then
+			CONFFILE="$CONFFILE/${NAME}.conf"
+		# else
+		#	we already have a valid config file name
+		fi
+	else
+		CONFFILE="${NAME}.conf"
+	fi
+
 	echo -e "Thanks! Now sit back and relax while your gentoo brews...\n\n"
 	# nice pondering material
 	if which fortune > /dev/null 2>&1 ; then
