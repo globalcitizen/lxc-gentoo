@@ -59,11 +59,7 @@ UTSNAME=${UTSNAME:-gentoo}
 IPV4=${IPV4:-172.20.0.2/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS="$GUESTROOTPASS"
-if [ `uname -m` == "x86_64" ]; then
-	ARCH=${ARCH:-amd64}
-else
-	ARCH=${ARCH:-x86}
-fi
+ARCH="$ARCH"
 ARCHVARIANT=${ARCHVARIANT:-}
 CONFFILE="${UTSNAME}.conf"
 MIRROR=${MIRROR:-http://distfiles.gentoo.org}
