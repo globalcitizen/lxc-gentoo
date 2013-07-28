@@ -49,13 +49,13 @@ Available environment variables are as follows.
    <td><b>Cache Path</b></td>
    <td><pre>$CACHE</pre></td>
    <td><i>/var/cache/lxc/gentoo</i></td>
-   <td>Stores arch/subarch/variant combo specific stage3 tarballs + extracted root filesystem images, plus the latest portage snapshot.</td>
+   <td>Stores arch/subarch/variant combo specific stage3 tarballs and the portage snapshot.</td>
   </tr>
   <tr>
    <td><b>Mirror</b></td>
    <td><pre>$MIRROR</pre></td>
    <td><i>http://distfiles.gentoo.org</i>
-   <td>Specifies the location from which the stage3 tarball and portage snapshot should be fetched.</td>
+   <td>Specifies the location from which the stage3 tarball, portage snapshot and metadata should be fetched.</td>
   </tr>
   <tr>
    <td><b>Stage 3 tarball</b></td>
@@ -71,7 +71,7 @@ Available environment variables are as follows.
     <li> a tarball -- will be extracted</li>
     <li> a directory -- will be bind-mounted read-only</li>
     <li> "none" -- do not set up a portage tree</li>
-    <li> undefined -- a portage snapshot will be downloaded</li>
+    <li> undefined -- a portage snapshot will be downloaded and extracted into the rootfs</li>
    </td>
   </tr>
   <tr>
@@ -101,7 +101,7 @@ Available environment variables are as follows.
   <tr>
    <td><b>Guest Root Password</b></td>
    <td><pre>$GUESTROOTPASS</pre></td>
-   <td><i>toor</i></td>
+   <td><i></i></td>
    <td>Will be phased out soon.</td>
   </tr>
   <tr>
