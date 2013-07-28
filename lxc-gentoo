@@ -409,16 +409,16 @@ write_lxc_configuration()
 	lxc.rootfs = `readlink -f ${ROOTFS}`
 
 	# mounts that allow us to drop CAP_SYS_ADMIN
-	lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
+	lxc.mount.entry=proc proc proc nodev,noexec,nosuid 0 0
 	# disabled for security, see http://blog.bofh.it/debian/id_413
-	#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
-	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
-	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
-	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+	#lxc.mount.entry=sys sys sysfs defaults 0 0
+	lxc.mount.entry=shm dev/shm tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=tmp tmp tmpfs rw,nosuid,nodev,noexec 0 0
+	lxc.mount.entry=run run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
 	# if you are unable to emerge something due to low ram, tell emerge to build somewhere else:
 	# e.g. # PORTAGE_TMPDIR=/path/to/some/directory/on/disk emerge -avu htop
-	lxc.mount.entry=portagetmp $(readlink -f "$ROOTFS/var/portage/tmp") tmpfs rw,nosuid,nodev 0 0
+	lxc.mount.entry=portagetmp var/portage/tmp tmpfs rw,nosuid,nodev 0 0
 
 	EOF
 
