@@ -409,7 +409,7 @@ write_lxc_configuration()
 	lxc.rootfs = `readlink -f ${ROOTFS}`
 
 	# mounts that allow us to drop CAP_SYS_ADMIN
-	lxc.mount.entry=proc proc proc nodev,noexec,nosuid 0 0
+	lxc.mount.entry=proc proc proc ro,nodev,noexec,nosuid 0 0
 	# disabled for security, see http://blog.bofh.it/debian/id_413
 	#lxc.mount.entry=sys sys sysfs defaults 0 0
 	lxc.mount.entry=shm dev/shm tmpfs rw,nosuid,nodev,noexec,relatime 0 0
