@@ -125,6 +125,24 @@ Available environment variables are as follows.
  </tbody>
 </table>
 
+Manual QEMU emulation setup
+---------------------------
+ - enable binfmt_misc support in your kernel.
+
+ - emerge *static* qemu with the relevant architecture enabled in
+   QEMU_USER_TARGETS="".
+   hint: do this in a native container so you don't have left over
+   static binaries on your system :)
+
+ - use either the qemu-provided /etc/init.d/qemu-binfmt script to set
+   up the binfmt handlers or something of your own.
+   Note that the ARM handler @ qemu-binfmt is broken
+   and you will probably have to replace it with the line found here:
+   https://bugs.gentoo.org/show_bug.cgi?id=407099
+
+ - copy the staticaly-linked qemu-$ARCH executable into the rootfs
+   (do cat /proc/sys/fs/binfmt_misc/$ARCH to see where).
+
 Updates
 -------
 
