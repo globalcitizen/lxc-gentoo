@@ -50,25 +50,19 @@
 #
 ###############################################################################
 
-CACHE=${CACHE:-/var/cache/lxc/gentoo}
+CACHE="${CACHE:-/var/cache/lxc/gentoo}"
 alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
-NAME=${NAME:-gentoo}
-UTSNAME=${UTSNAME:-gentoo}
-IPV4=${IPV4:-172.20.0.2/24}
-GATEWAY=${GATEWAY:-172.20.0.1}
+NAME="${NAME:-gentoo}"
+UTSNAME="${UTSNAME:-gentoo}"
+IPV4="${IPV4:-172.20.0.2/24}"
+GATEWAY="${GATEWAY:-172.20.0.1}"
 GUESTROOTPASS="$GUESTROOTPASS"
-if [ `uname -m` == "x86_64" ]; then
-	ARCH=${ARCH:-amd64}
-	SUBARCH=${SUBARCH:-amd64}
-else
-	ARCH=${ARCH:-x86}
-	SUBARCH=${SUBARCH:-$(uname -m)}
-fi
-ARCHVARIANT=${ARCHVARIANT:-}
-CONFFILE="${UTSNAME}.conf"
-MIRROR=${MIRROR:-http://distfiles.gentoo.org}
+ARCH="$ARCH"
+ARCHVARIANT="$ARCHVARIANT"
+CONFFILE="$CONFFILE"
+MIRROR="${MIRROR:-http://distfiles.gentoo.org}"
 STAGE3_TARBALL="${STAGE3_TARBALL}"
 PORTAGE_SOURCE="$PORTAGE_SOURCE"
 
@@ -180,7 +174,7 @@ populate_dev()
 # custom fstab
 write_distro_fstab()
 {
-	cat <<- EOF > ${ROOTFS}/${FSTAB}
+	cat <<- EOF > "$ROOTFS/$FSTAB"
 	# required to prevent boot-time error display
 	none    /         none    defaults  0 0
 	tmpfs   /dev/shm  tmpfs   defaults  0 0
@@ -191,31 +185,31 @@ write_distro_timezone()
 {
 	if [ -e /etc/localtime ]; then
 		# duplicate host timezone
-		cat /etc/localtime > ${ROOTFS}/etc/localtime
+		cat /etc/localtime > "$ROOTFS/etc/localtime"
 	else
 		# otherwise set up UTC
-		rm ${ROOTFS}/etc/localtime > /dev/null 2>&1
-		ln -s ../usr/share/zoneinfo/UTC ${ROOTFS}/etc/localtime
+		rm "$ROOTFS/etc/localtime" > /dev/null 2>&1
+		ln -s ../usr/share/zoneinfo/UTC "$ROOTFS/etc/localtime"
 	fi
 }
 
 # custom inittab
 write_distro_inittab()
 {
-	sed -i 's/^c[1-9]/#&/' ${ROOTFS}/${INITTAB} # disable getty
-	echo "# Lxc main console" >> ${ROOTFS}/${INITTAB}
+	sed -i 's/^c[1-9]/#&/' "$ROOTFS/$INITTAB" # disable getty
+	echo "# Lxc main console" >> "$ROOTFS/$INITTAB"
 	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$ROOTFS/$INITTAB"
 	# we also blank out /etc/issue here in order to prevent delays spawning login
 	# caused by attempts to determine domainname on disconnected containers
-	rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
+	rm "$ROOTFS/etc/issue" && touch "$ROOTFS/etc/issue"
 	# we also disable the /etc/init.d/termencoding script which can cause errors
-	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
+	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' "$ROOTFS/etc/init.d/termencoding"
 	# quiet login
-	touch ${ROOTFS}/root/.hushlogin
+	touch "$ROOTFS/root/.hushlogin"
 
 	# finally we add a pf line to enable clean shutdown on SIGPWR (issue 60)
-	echo "# clean container shutdown on SIGPWR" >> ${ROOTFS}/${INITTAB}
-	echo "pf:12345:powerwait:/sbin/halt" >> ${ROOTFS}/${INITTAB}
+	echo "# clean container shutdown on SIGPWR" >> "$ROOTFS/$INITTAB"
+	echo "pf:12345:powerwait:/sbin/halt" >> "$ROOTFS/$INITTAB"
 }
 
 setup_portage()
@@ -279,8 +273,8 @@ setup_portage()
 write_distro_network()
 {
 	# /etc/resolv.conf
-	grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
-	grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
+	grep -i 'search ' /etc/resolv.conf > "$ROOTFS/etc/resolv.conf"
+	grep -i 'nameserver ' /etc/resolv.conf >> "$ROOTFS/etc/resolv.conf"
 	# Append LXC-specific gentoo network configuration instructions
 	cat <<- EOF >> "$ROOTFS/etc/conf.d/net"
 
@@ -317,8 +311,8 @@ write_distro_network()
 	# only link for dchp, since static options render it unnecessary
 	# https://github.com/globalcitizen/lxc-gentoo/issues/33
 	if [ "${IPV4}" == "dhcp" ]; then
-	 ln -s net.lo ${ROOTFS}/etc/init.d/net.eth0
-	 ln -s /etc/init.d/net.eth0 ${ROOTFS}/etc/runlevels/default/net.eth0
+		ln -s net.lo "$ROOTFS/etc/init.d/net.eth0"
+		ln -s /etc/init.d/net.eth0 "$ROOTFS/etc/runlevels/default/net.eth0"
 	fi
 }
 
@@ -326,9 +320,7 @@ write_distro_network()
 write_distro_hostname()
 {
 	echo -n " - setting hostname..."
-	cat <<- EOF > ${ROOTFS}/etc/conf.d/hostname
-	HOSTNAME=${UTSNAME}
-	EOF
+	printf "HOSTNAME=%s\n" "$UTSNAME" > "$ROOTFS/etc/conf.d/hostname"
 	echo "done."
 }
 
@@ -336,19 +328,19 @@ write_distro_hostname()
 write_distro_init_fixes()
 {
 	# short-circuit openrc's autodetection
-	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i ${ROOTFS}/etc/rc.conf
+	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i "$ROOTFS/etc/rc.conf"
 	# fix for error caused by openrc <0.10.2 (~may 2012)
-	rm ${ROOTFS}/etc/runlevels/boot/termencoding >/dev/null 2>&1
+	rm "$ROOTFS/etc/runlevels/boot/termencoding" >/dev/null 2>&1
 	# fix boot-time interface config wipe under aggressive cap drop
 	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
-	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' ${ROOTFS}/etc/rc.conf
+	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
 	# remove netmount from default runlevel (openrc leaves it in)
-	rm ${ROOTFS}/etc/runlevels/default/netmount
+	rm "$ROOTFS/etc/runlevels/default/netmount"
 	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
 	# https://bugs.gentoo.org/show_bug.cgi?id=436270
-	rm ${ROOTFS}/etc/runlevels/boot/urandom
+	rm "$ROOTFS/etc/runlevels/boot/urandom"
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
-	rm ${ROOTFS}/etc/runlevels/boot/net.lo
+	rm "$ROOTFS/etc/runlevels/boot/net.lo"
 	# unless we are using DHCP to configure the container, we now
 	# force openrc to automatic provision of the 'net' dep. this is
 	# avoided for DHCP as it would prohibit service start from waiting
@@ -356,7 +348,7 @@ write_distro_init_fixes()
 	# many daemon start issues such as failed binds / bad connectivity
 	# (~jan 2013)
 	if [ "${IPV4}" != "dhcp" ]; then
-		echo 'rc_provide="net"' >>${ROOTFS}/etc/rc.conf
+		echo 'rc_provide="net"' >> "$ROOTFS/etc/rc.conf"
 	fi
 }
 
@@ -367,9 +359,19 @@ write_distro_init_fixes()
 write_lxc_configuration()
 {
 	echo -n " - writing LXC guest configuration..."
-	cat <<- EOF > ${CONFFILE}
-	# set arch
-	lxc.arch = ${LXC_ARCH}
+
+	if [[ "$ARCH" == "x86" || "$ARCH" == "amd64" ]]; then
+		local arch_line="lxc.arch = $ARCH"
+	else
+		local arch_line="# lxc.arch = $ARCH"
+	fi
+
+	cat <<- EOF >> "$CONFFILE"
+	# sets container architecture
+	# If desired architecture != amd64 or x86, then we leave it unset as
+	# LXC does not oficially support anything other than x86 or amd64.
+	# (Qemu masks arch in those cases anyway).
+	$arch_line
 
 	# set the hostname
 	lxc.utsname = ${UTSNAME}
@@ -387,34 +389,34 @@ write_lxc_configuration()
 	EOF
 
 	if [ "${IPV4}" == "dhcp" ]; then
-		cat <<- EOF >> ${CONFFILE}
+		cat <<- EOF >> "$CONFFILE"
 		# disabled (guest uses DHCP)
 		#lxc.network.ipv4 = X.X.X.X
 		#lxc.network.ipv4.gateway = Y.Y.Y.Y
 		EOF
 	else
-		cat <<- EOF >> ${CONFFILE}
+		cat <<- EOF >> "$CONFFILE"
 		lxc.network.ipv4 = ${IPV4}
 		lxc.network.ipv4.gateway = ${GATEWAY}
 		EOF
 	fi
 
-	cat <<- EOF >> ${CONFFILE}
+	cat <<- EOF >> "$CONFFILE"
 
 	# root filesystem location
-	lxc.rootfs = `readlink -f ${ROOTFS}`
+	lxc.rootfs = $(readlink -f "$ROOTFS")
 
 	# mounts that allow us to drop CAP_SYS_ADMIN
-	lxc.mount.entry=proc `readlink -f ${ROOTFS}/proc` proc nodev,noexec,nosuid 0 0
+	lxc.mount.entry=proc proc proc ro,nodev,noexec,nosuid 0 0
 	# disabled for security, see http://blog.bofh.it/debian/id_413
-	#lxc.mount.entry=sys `readlink -f ${ROOTFS}/sys` sysfs defaults 0 0
-	lxc.mount.entry=shm `readlink -f ${ROOTFS}/dev/shm` tmpfs rw,nosuid,nodev,noexec,relatime 0 0
-	lxc.mount.entry=tmp `readlink -f ${ROOTFS}/tmp` tmpfs rw,nosuid,nodev,noexec 0 0
-	lxc.mount.entry=run `readlink -f ${ROOTFS}/run` tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+	#lxc.mount.entry=sys sys sysfs defaults 0 0
+	lxc.mount.entry=shm dev/shm tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=tmp tmp tmpfs rw,nosuid,nodev,noexec 0 0
+	lxc.mount.entry=run run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
 	# if you are unable to emerge something due to low ram, tell emerge to build somewhere else:
 	# e.g. # PORTAGE_TMPDIR=/path/to/some/directory/on/disk emerge -avu htop
-	lxc.mount.entry=portagetmp $(readlink -f "$ROOTFS/var/portage/tmp") tmpfs rw,nosuid,nodev 0 0
+	lxc.mount.entry=portagetmp var/portage/tmp tmpfs rw,nosuid,nodev 0 0
 
 	EOF
 
@@ -482,23 +484,20 @@ set_guest_root_password()
 	[[ -z "$GUESTROOTPASS" ]] && return # pass is empty, abort
 
 	echo -n " - setting guest root password.."
-	echo "root:$GUESTROOTPASS" | chroot ${ROOTFS} chpasswd
+	echo "root:$GUESTROOTPASS" | chroot "$ROOTFS" chpasswd
 	echo "done."
 }
 
 fetch_stage3()
 {
-	# prepend '-' to nonblank ARCHVARIANT for URL construction
-	local archvariant="${ARCHVARIANT:+-$ARCHVARIANT}"
-
 	# base stage3 URL
 	local stage3url="$MIRROR/releases/$ARCH/autobuilds"
 
 	# get latest-stage3....txt file for subpath
 	mkdir -p "$CACHE"
-	local stage3latestSubPathUrl="$stage3url/latest-stage3-${SUBARCH}${archvariant}.txt"
+	local stage3latestSubPathUrl="$stage3url/latest-stage3-${ARCHVARIANT}.txt"
 
-	printf "Determining path to latest Gentoo %s%s stage3 archive...\n" "$ARCH" "$archvariant"
+	printf "Determining path to latest Gentoo %s (%s) stage3 archive...\n" "$ARCH" "$ARCHVARIANT"
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
 	local -a array_of_words
@@ -584,28 +583,76 @@ configure()
 		printf "\n" # \n eaten by noecho
 
 		if [[ -z "${STAGE3_TARBALL}" ]]; then
-			# choose the architecture
-			read -p "Which gentoo architecture should we use in this container? " -ei "$ARCH" ARCH
-
-			# choose architecture variant
-			read -p "Architecture variant (usually '', 'hardened' or 'hardened+nomultilib')? " -ei "$ARCHVARIANT" ARCHVARIANT
-
-			LXC_ARCH="x86_64"
-			# if x86 is given prompt for "subarch"
-			if [ "${ARCH}" == 'x86' ]; then
-				read -p "Sub architecture of x86 ? " -ei "$SUBARCH" SUBARCH
-				LXC_ARCH="${SUBARCH}"
-			elif [ "${ARCH}" == "amd64" ]; then
-				SUBARCH=${ARCH}
-			fi
-
 			# choose the mirror
 			read -p "Which mirror to use for stage3 and Portage archive ? " -ei "$MIRROR" MIRROR
+
+			# choose the container architecture
+			local -a arches
+			arches+=("alpha")
+			arches+=("amd64")
+			arches+=("arm")
+			arches+=("hppa")
+			arches+=("ia64")
+			# arches+=("mips") # project only has experimental stages?
+			arches+=("ppc")
+			arches+=("s390")
+			arches+=("sh")
+			arches+=("sparc")
+			arches+=("x86")
+
+			printf "\n\nNote that you will have to set up Qemu? emulation yourself\n"
+			printf "if your CPU cannot natively execute the chosen architecture (see README).\n"
+
+			printf "\n\nSelect desired container architecture:\n"
+			select ARCH in "${arches[@]}"; do
+				if [[ -n "$ARCH" ]]; then
+					break
+				fi
+			done
+
+			printf "\nDownloading the list of available variants...\n"
+			# we got a valid answer, proceed with variant list
+			mapfile -t < <(wget -O - "$MIRROR/releases/$ARCH/autobuilds")
+			# I tried to check for errors here but failed miserably, hence the check
+			# for an empty variant list down below.
+
+			# parse the returned HTML for latest-stage3-VARIANT.txt
+			local -a variants
+			local variant
+
+			for line in "${MAPFILE[@]}"; do
+				if [[ "$line" = *latest-stage3-*.txt* ]]; then
+					variant="${line#*latest-stage3-}"
+					variant="${variant%%.txt*}"
+
+					variants+=("$variant")
+				fi
+			done
+
+			if [[ ${#variants[@]} -eq 0 ]]; then
+				die 6 "variants list empty, see wget's output above\n"
+			fi
+
+			printf "\n\nSelect desired container subarchitecture/variant for %s:\n" "$ARCH"
+			select ARCHVARIANT in "${variants[@]}"; do
+				if [[ -n "$ARCHVARIANT" ]]; then
+					break
+				fi
+			done
 		fi
 
 	fi
 
-	CONFFILE="${UTSNAME}.conf"
+	if [[ -n "$CONFFILE" ]]; then
+		if [[ -d "$CONFFILE" ]]; then
+			CONFFILE="$CONFFILE/${NAME}.conf"
+		# else
+		#	we already have a valid config file name
+		fi
+	else
+		CONFFILE="${NAME}.conf"
+	fi
+
 	echo -e "Thanks! Now sit back and relax while your gentoo brews...\n\n"
 	# nice pondering material
 	if which fortune > /dev/null 2>&1 ; then
@@ -638,7 +685,7 @@ create()
 	
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
-		execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+		execute_exclusively "${ARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 		if [[ $? -ne 0 ]]; then
 			printf "ERROR: Failed to fetch stage3.\n"
 			return 1
@@ -689,18 +736,18 @@ create()
 	cat <<-EOF
 	All done!
 
-	You can run your container with the 'lxc-start -f ${CONFFILE} -n ${NAME}'
-	For host-side networking setup info, see ${ROOTFS}/etc/conf.d/net
+	You can run your container with the 'lxc-start -f "$CONFFILE" -n "$NAME"'
+	For host-side networking setup info, see "$ROOTFS/etc/conf.d/net"
 
 	To enter your container for setup WITHOUT running it, try:
-	 # mount -t proc proc ${ROOTFS}/proc
-	 # mount -o bind /dev ${ROOTFS}/dev
-	 # chroot ${ROOTFS} /bin/bash
-	 # export PS1="(${NAME}) \$PS1"
+	   mount -t proc proc "$ROOTFS/proc"
+	   mount -o bind /dev "$ROOTFS/dev"
+	   chroot "$ROOTFS" /bin/bash
+	   export PS1="(${NAME}) \$PS1"
 	 (${NAME}) #   <-- you are now in the guest
 	... or, start it on the current console with:
-	    'lxc-start -f ${CONFFILE} -n ${NAME}'
-	... or, start it elsewhere then use 'lxc-console -n ${NAME}' for a shell
+	   lxc-start -f "$CONFFILE" -n "$NAME"
+	... or, start it elsewhere then use 'lxc-console -n "$NAME"' for a shell
 	
 	(Report bugs to https://github.com/globalcitizen/lxc-gentoo/issues )";
 	EOF
@@ -729,12 +776,9 @@ help()
 		-u UTSNAME : hostname of the container
 			Env. Var.: UTSNAME
 			Current/Default: ${UTSNAME}
-		-a ARCHITECTURE : for now x86 or amd64
+		-a ARCHITECTURE : at the moment all but mips.
 			Env. Var.: ARCH
 			Current/Default: ${ARCH}
-		-s SUBARCH : subarch for x86
-			Env. Var.: SUBARCH
-			Current/Default: ${SUBARCH}
 		-p GUESTROOTPASS : password for root account
 			Env. Var.: GUESTROOTPASS
 			Current/Default: ${GUESTROOTPASS}
@@ -752,9 +796,6 @@ help()
 			A portage snapshot will be downloaded if not specified
 			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
-		-C CUSTOMURL : URL for a custom tarball
-			Env. Var.: CUSTOMURL
-			Current/Default: ${CUSTOMURL}
 
 	This script is a helper to create Gentoo system containers.
 
@@ -771,7 +812,7 @@ help()
 	An interactive script will ask you for various information.
 
 	The first creation will download a Gentoo stage3 and portage
-	snapshot and store it into a cache at ${CACHE}.
+	snapshot and store it into a cache at "$CACHE".
 
 	If you wish to remove the cache, point your file manager/shell into
 	"$CACHE" and remove the files you consider unneeded.
@@ -802,7 +843,7 @@ fetch()
 {
 	configure
 	# download
-	execute_exclusively "${ARCH}_${SUBARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
+	execute_exclusively "${ARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 	execute_exclusively "portage" fetch_portage
 }
 
@@ -813,16 +854,15 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 OPTIND=2
-while getopts "i:g:n:u:a:C:p:m:t:P:q" opt; do
-	case $opt in
-		i) IPV4=$OPTARG ;;
-		g) GATEWAY=$OPTARG ;;
-		n) NAME=$OPTARG ;;
-		u) UTSNAME=$OPTARG ;;
-		a) ARCH=$OPTARG ;;
-		C) CUSTOMURL=$OPTARG;;
-		p) GUESTROOTPASS=$OPTARG ;;
-		m) MIRROR=$OPTARG ;;
+while getopts "i:g:n:u:a:p:m:t:P:q" opt; do
+	case "$opt" in
+		i) IPV4="$OPTARG" ;;
+		g) GATEWAY="$OPTARG" ;;
+		n) NAME="$OPTARG" ;;
+		u) UTSNAME="$OPTARG" ;;
+		a) ARCH="$OPTARG" ;;
+		p) GUESTROOTPASS="$OPTARG" ;;
+		m) MIRROR="$OPTARG" ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
 		P) PORTAGE_SOURCE="$OPTARG" ;;
 		q) QUIET=Yes ;;

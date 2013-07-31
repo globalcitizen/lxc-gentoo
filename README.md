@@ -49,13 +49,13 @@ Available environment variables are as follows.
    <td><b>Cache Path</b></td>
    <td><pre>$CACHE</pre></td>
    <td><i>/var/cache/lxc/gentoo</i></td>
-   <td>Stores arch/subarch/variant combo specific stage3 tarballs + extracted root filesystem images, plus the latest portage snapshot.</td>
+   <td>Stores arch/subarch/variant combo specific stage3 tarballs and the portage snapshot.</td>
   </tr>
   <tr>
    <td><b>Mirror</b></td>
    <td><pre>$MIRROR</pre></td>
    <td><i>http://distfiles.gentoo.org</i>
-   <td>Specifies the location from which the stage3 tarball and portage snapshot should be fetched.</td>
+   <td>Specifies the location from which the stage3 tarball, portage snapshot and metadata should be fetched.</td>
   </tr>
   <tr>
    <td><b>Stage 3 tarball</b></td>
@@ -71,7 +71,7 @@ Available environment variables are as follows.
     <li> a tarball -- will be extracted</li>
     <li> a directory -- will be bind-mounted read-only</li>
     <li> "none" -- do not set up a portage tree</li>
-    <li> undefined -- a portage snapshot will be downloaded</li>
+    <li> undefined -- a portage snapshot will be downloaded and extracted into the rootfs</li>
    </td>
   </tr>
   <tr>
@@ -101,20 +101,14 @@ Available environment variables are as follows.
   <tr>
    <td><b>Guest Root Password</b></td>
    <td><pre>$GUESTROOTPASS</pre></td>
-   <td><i>toor</i></td>
+   <td><i></i></td>
    <td>Will be phased out soon.</td>
   </tr>
   <tr>
    <td><b>Gentoo Architecture</b></td>
    <td><pre>$ARCH</pre></td>
    <td><i>amd64</i></td>
-   <td>Gentoo architecture code.</td>
-  </tr>
-  <tr>
-   <td><b>Gentoo Subarchitecture</b></td>
-   <td><pre>$SUBARCH</pre></td>
-   <td><i>amd64</i></td>
-   <td>Gentoo subarchitecture code.</td>
+   <td>Gentoo architecture code: alpha, amd64, arm, hppa, ia64, ppc, s390, sh, sparc, x86</td>
   </tr>
   <tr>
    <td><b>Gentoo Architecture Variant</b></td>
@@ -125,11 +119,33 @@ Available environment variables are as follows.
   <tr>
    <td><b>lxc.conf Location</b></td>
    <td><pre>$CONFFILE</pre></td>
-   <td><i>${UTSNAME}.conf</i></td>
-   <td>Path at which to generate the <i>lxc.conf</i> file.</td>
+   <td><i>${NAME}.conf</i></td>
+   <td>Path at which to generate the <i>lxc.conf</i> file, one of:
+    <li> undefined -- config will be placed into ./${NAME}.conf</li>
+    <li> a directory -- config will be placed into dir/${NAME}.conf</li>
+    <li> file path -- config will be placed into it</li>
+   </td>
   </tr>
  </tbody>
 </table>
+
+Manual QEMU emulation setup
+---------------------------
+ - enable binfmt_misc support in your kernel.
+
+ - emerge *static* qemu with the relevant architecture enabled in
+   QEMU_USER_TARGETS="".
+   hint: do this in a native container so you don't have left over
+   static binaries on your system :)
+
+ - use either the qemu-provided /etc/init.d/qemu-binfmt script to set
+   up the binfmt handlers or something of your own.
+   Note that the ARM handler @ qemu-binfmt is broken
+   and you will probably have to replace it with the line found here:
+   https://bugs.gentoo.org/show_bug.cgi?id=407099
+
+ - copy the staticaly-linked qemu-$ARCH executable into the rootfs
+   (do cat /proc/sys/fs/binfmt_misc/$ARCH to see where).
 
 Updates
 -------
