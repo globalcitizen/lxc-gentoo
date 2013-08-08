@@ -696,8 +696,7 @@ create()
 	printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
 	mkdir -p "$ROOTFS"
 
-	# also exclude redundant .keep files
-	tar --exclude .keep -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
+	tar -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
 	if [[ $? -ne 0 ]]; then
 		printf "FAILED.\n"
 		return 1
