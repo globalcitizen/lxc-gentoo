@@ -15,6 +15,17 @@ as hardware detection and kernel bootstrapping
 is not required, the init process is largely 
 IO bound.
 
+
+Security Notes
+--------------
+ - Don't treat guests as root safe
+ - Best practice is to be paranoid:
+     - Drop most capabilities
+     - Keep the filesystem for each guest on a separate logical block device (eg. LVM2 LV)
+     - Do not use UIDs on the guest that intsersect with the host system
+ - Make sure you never both (1) mount ```proc``` in a guest that you don't trust, and (2) have ```CONFIG_MAGIC_SYSRQ``` 'Magic SysRq Key' enabled in your kernel (which creates ```/proc/sysrq-trigger```) ... as this can be abused for denial of service
+
+
 Requirements
 ------------
  - Recent Linux kernel (>=3.2.x recommended, >=3.7.x actively tested)
