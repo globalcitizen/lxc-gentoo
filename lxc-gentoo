@@ -561,6 +561,7 @@ configure()
 
 
 		# choose a hostname, default is the container name
+		UTSNAME=${NAME}
 		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME" UTSNAME
 
 
