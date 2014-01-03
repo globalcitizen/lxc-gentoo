@@ -781,37 +781,28 @@ help()
 	cat <<-EOF
 	Usage: $0 {create|help} [options]
 		-q : Quiet, use vars from env or options and do not ask me.
-		-i XX.XX.XX.XX/XX | dhcp : IP/MASK of the container or 'dhcp' if you wish to get an IP from a dhcp server
-			Env. Var.: IPV4
+		-i IPV4 : IP and netmask 'XX.XX.XX.XX/XX' or 'dhcp'.
 			Current/Default: ${IPV4}
 		-g GATEWAY : IP address of its gateway
-			Env. Var.: GATEWAY
 			Current/Default: ${GATEWAY}
 		-n NAME : name of the container
-			Env. Var.: NAME
 			Current/Default: ${NAME}
 		-u UTSNAME : hostname of the container
-			Env. Var.: UTSNAME
 			Current/Default: ${UTSNAME}
-		-a ARCHITECTURE : at the moment all but mips.
-			Env. Var.: ARCH
+		-a ARCH : at the moment all but mips.
 			Current/Default: ${ARCH}
 		-p GUESTROOTPASS : password for root account
-			Env. Var.: GUESTROOTPASS
 			Current/Default: ${GUESTROOTPASS}
 		-m MIRROR : mirror for stage3 and Portage archive
-			Env. Var.: MIRROR
 			Current/Default: ${MIRROR}
 		-t STAGE3_TARBALL : path to a stage3 archive to use
 			Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
-			Env. Var.: STAGE3_TARBALL
 			Current: ${STAGE3_TARBALL} Default: null
 		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
 			 - tarball -- will be extracted
 			 - directory -- will be bind-mounted read-only
 			 - "none" -- do not set up a portage tree
 			A portage snapshot will be downloaded if not specified
-			Env. Var.: PORTAGE_SOURCE
 			Current: "$PORTAGE_SOURCE" Default: ""
 
 	This script is a helper to create Gentoo system containers.
