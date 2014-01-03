@@ -161,6 +161,10 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___January 2014___
+ - Working defaults for quiet mode (`lxc-gentoo create -q`)
+ - Minor typo fixes
+
 ___June 2013___
  - Bashisms
  - Cleaner syntax
