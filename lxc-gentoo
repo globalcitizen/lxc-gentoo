@@ -59,8 +59,8 @@ UTSNAME="${UTSNAME:-gentoo}"
 IPV4="${IPV4:-172.20.0.2/24}"
 GATEWAY="${GATEWAY:-172.20.0.1}"
 GUESTROOTPASS="$GUESTROOTPASS"
-ARCH="$ARCH"
-ARCHVARIANT="$ARCHVARIANT"
+ARCH="${ARCH:-amd64}"
+ARCHVARIANT="${ARCHVARIANT}"
 CONFFILE="$CONFFILE"
 MIRROR="${MIRROR:-http://distfiles.gentoo.org}"
 STAGE3_TARBALL="${STAGE3_TARBALL}"
@@ -654,6 +654,20 @@ configure()
 		CONFFILE="${NAME}.conf"
 	fi
 
+	echo "NAME           = $NAME"
+	echo "UTSNAME        = $UTSNAME"
+	echo "ROOTFS         = $ROOTFS"              # blank
+	echo "CONFFILE       = $CONFFILE"
+	echo "ARCH           = $ARCH"
+	echo "ARCHVARIANT    = $ARCHVARIANT"
+	echo "STAGE3_TARBALL = $STAGE3_TARBALL"      # blank
+	echo "GUESTROOTPASS  = $GUESTROOTPASS"       # blank
+	echo "MIRROR         = $MIRROR"
+	echo "PORTAGE_SOURCE = $PORTAGE_SOURCE"      # blank
+	echo "CACHE          = $CACHE"               
+	echo "IPV4           = $IPV4"
+	echo "GATEWAY        = $GATEWAY"
+
 	echo -e "Thanks! Now sit back and relax while your gentoo brews...\n\n"
 	# nice pondering material
 	if which fortune > /dev/null 2>&1 ; then
@@ -786,9 +800,9 @@ help()
 			Env. Var.: MIRROR
 			Current/Default: ${MIRROR}
 		-t STAGE3_TARBALL : path to a stage3 archive to use
-			specifiying this option will override fetching and asking you for arch, variant and mirror
+			Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
 			Env. Var.: STAGE3_TARBALL
-			Cyrrent: ${STAGE3_TARBALL} Default: null
+			Current: ${STAGE3_TARBALL} Default: null
 		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
 			 - tarball -- will be extracted
 			 - directory -- will be bind-mounted read-only
