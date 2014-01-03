@@ -350,6 +350,9 @@ write_distro_init_fixes()
 	if [ "${IPV4}" != "dhcp" ]; then
 		echo 'rc_provide="net"' >> "$ROOTFS/etc/rc.conf"
 	fi
+	# fix boot-time errors on openrc 0.12.4 related to mount permissions
+	# (~jan 2014)
+	rm "$ROOTFS/etc/runlevels/boot/bootmisc"
 }
 
 ################################################################################
