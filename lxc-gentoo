@@ -659,14 +659,14 @@ configure()
 
 	echo "NAME           = $NAME"
 	echo "UTSNAME        = $UTSNAME"
-	echo "ROOTFS         = $ROOTFS"              # blank
+	echo "ROOTFS         = $ROOTFS"
 	echo "CONFFILE       = $CONFFILE"
 	echo "ARCH           = $ARCH"
 	echo "ARCHVARIANT    = $ARCHVARIANT"
-	echo "STAGE3_TARBALL = $STAGE3_TARBALL"      # blank
-	echo "GUESTROOTPASS  = $GUESTROOTPASS"       # blank
+	echo "STAGE3_TARBALL = $STAGE3_TARBALL"
+	echo "GUESTROOTPASS  = (not shown)"
 	echo "MIRROR         = $MIRROR"
-	echo "PORTAGE_SOURCE = $PORTAGE_SOURCE"      # blank
+	echo "PORTAGE_SOURCE = $PORTAGE_SOURCE"
 	echo "CACHE          = $CACHE"               
 	echo "IPV4           = $IPV4"
 	echo "GATEWAY        = $GATEWAY"
