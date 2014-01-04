@@ -330,17 +330,17 @@ write_distro_init_fixes()
 	# short-circuit openrc's autodetection
 	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i "$ROOTFS/etc/rc.conf"
 	# fix for error caused by openrc <0.10.2 (~may 2012)
-	rm "$ROOTFS/etc/runlevels/boot/termencoding" >/dev/null 2>&1
+	rm -f "$ROOTFS/etc/runlevels/boot/termencoding" >/dev/null 2>&1
 	# fix boot-time interface config wipe under aggressive cap drop
 	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
 	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
 	# remove netmount from default runlevel (openrc leaves it in)
-	rm "$ROOTFS/etc/runlevels/default/netmount"
+	rm -f "$ROOTFS/etc/runlevels/default/netmount" >/dev/null 2>&1
 	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
 	# https://bugs.gentoo.org/show_bug.cgi?id=436270
-	rm "$ROOTFS/etc/runlevels/boot/urandom"
+	rm -f "$ROOTFS/etc/runlevels/boot/urandom" >/dev/null 2>&1
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
-	rm "$ROOTFS/etc/runlevels/boot/net.lo"
+	rm -f "$ROOTFS/etc/runlevels/boot/net.lo" >/dev/null 2>&1
 	# unless we are using DHCP to configure the container, we now
 	# force openrc to automatic provision of the 'net' dep. this is
 	# avoided for DHCP as it would prohibit service start from waiting
@@ -352,7 +352,7 @@ write_distro_init_fixes()
 	fi
 	# fix boot-time errors on openrc 0.12.4 related to mount permissions
 	# (~jan 2014)
-	rm "$ROOTFS/etc/runlevels/boot/bootmisc"
+	rm -f "$ROOTFS/etc/runlevels/boot/bootmisc" 2>/dev/null
 }
 
 ################################################################################
