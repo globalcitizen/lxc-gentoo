@@ -162,6 +162,8 @@ Updates
 -------
 
 ___January 2014___
+ - Fallback to local cache when offline
+ - Silence errors for antique OpenRC fixes
  - Minor fixes for recent OpenRC releases
  - Working defaults for quiet mode (`lxc-gentoo create -q`)
  - Minor typo fixes
