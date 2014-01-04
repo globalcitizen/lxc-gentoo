@@ -505,7 +505,7 @@ fetch_stage3()
 
 	local -a array_of_words
 	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
-		|| die 6 "Error: unable to fetch\n"
+		|| printf " => Failed.\n" && return 1
 
 	# take the last word and convert it to string form:
 	latest_stage3_subpath="${array_of_words[-1]}"
@@ -701,17 +701,23 @@ create()
 	# check if the rootfs already exists
 	[[ -e "$ROOTFS" ]] && die 18 "Error: \$ROOTFS (%s) already exists!" "$ROOTFS"
 	
+	# the stage3 might not be possible to fetch, for isntance if we are offline. in that
+	# case we use the latest one available. if that fails also, then we die.
 	if [[ -z "$STAGE3_TARBALL" ]]; then
 		# Fetch us a stage3
 		execute_exclusively "${ARCH}_${ARCHVARIANT}_rootfs" fetch_stage3
 		if [[ $? -ne 0 ]]; then
-			printf "ERROR: Failed to fetch stage3.\n"
-			return 1
+			# try to detect an existing stage3 (sorted to the latest mtime)
+			STAGE3_TARBALL=`find $CACHE |grep '/stage3-'${ARCH} | grep tar | xargs ls -t1|head -n 1`
+			if [[ ! -e "$STAGE3_TARBALL" ]]; then
+				die 18 "ERROR: Failed to fetch stage3, and no previous stage3 available.\n"
+			fi
+			printf "      - Failed to fetch stage3, but found existing stage3 tarball instead.\n"
 		fi
 	fi
 
 	# variable is nonzero, try to unpack
-	printf "Unpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
+	printf "\nUnpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
 	mkdir -p "$ROOTFS"
 
 	tar -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
