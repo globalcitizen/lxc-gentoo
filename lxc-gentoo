@@ -353,6 +353,11 @@ write_distro_init_fixes()
 	# fix boot-time errors on openrc 0.12.4 related to mount permissions
 	# (~jan 2014)
 	rm -f "$ROOTFS/etc/runlevels/boot/bootmisc" 2>/dev/null
+	# fix boot-time errors on openrc 0.12.4 related to lo interface being
+	# already set up by the host system on our behalf (~jan 2014)
+	rm -f "$ROOTFS/etc/runlevels/boot/loopback" 2>/dev/null
+	# set reasonable default unicode-enabled locale, or perl vocallby whinges
+	echo 'en_US.UTF-8 UTF-8' >>"$ROOTFS/etc/locale.gen"
 }
 
 ################################################################################
