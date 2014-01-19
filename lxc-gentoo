@@ -510,7 +510,7 @@ fetch_stage3()
 
 	local -a array_of_words
 	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
-		|| printf " => Failed.\n" && return 1
+		|| printf " => Failed.\n"
 
 	# take the last word and convert it to string form:
 	latest_stage3_subpath="${array_of_words[-1]}"
