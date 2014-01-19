@@ -162,6 +162,7 @@ Updates
 -------
 
 ___January 2014___
+ - Resolve issues downloading stage3 archives
  - Set a default, unicode-enabled locale to silence ```perl``` whinging
  - Fallback to local cache when offline
  - Silence errors for antique OpenRC fixes
