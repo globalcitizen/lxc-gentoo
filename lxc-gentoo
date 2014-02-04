@@ -283,6 +283,11 @@ write_distro_network()
 	if [ "${IPV4}" == "dhcp" ]; then
 		ln -s net.lo "$ROOTFS/etc/init.d/net.eth0"
 		ln -s /etc/init.d/net.eth0 "$ROOTFS/etc/runlevels/default/net.eth0"
+	# otherwise treat network access as auto-provided by openrc, so as to
+	# avoid errors about starting network related scripts when launching
+	# actual network services (sshd, etc.)
+	else
+		echo 'rc_provide="net"' >>"$ROOTFS/etc/rc.conf"
 	fi
 }
 
