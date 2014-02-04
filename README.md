@@ -235,6 +235,10 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___February 2014___
+ - External networking documentation
+ - Discourage intra-guest dynamic network configuration for portability
+
 ___January 2014___
  - Resolve issues downloading stage3 archives
  - Set a default, unicode-enabled locale to silence ```perl``` whinging
