@@ -235,6 +235,12 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___April 2014___
+ - No longer drop the `sys_boot` capability in containers, as this prevents
+   `shutdown` or `poweroff` command within the container from properly
+   closing the container, resulting in a hung `init` process and failure
+   to recognize the container state on the host side.
+
 ___February 2014___
  - External networking documentation
  - Discourage intra-guest dynamic network configuration for portability
