@@ -238,6 +238,7 @@ Updates
 ___February 2014___
  - External networking documentation
  - Discourage intra-guest dynamic network configuration for portability
+ - Add `/etc/rc.conf` line: `rc_provide="net"` to fix service start issues
 
 ___January 2014___
  - Resolve issues downloading stage3 archives

@@ -427,9 +427,9 @@ write_lxc_configuration()
 	# where security is a priority.  note that not only LXC but PAX (and 
 	# others?) were vulnerable to this issue.
 	# 
-	# conservative: lxc.cap.drop = sys_module mknod mac_override sys_boot
-	# aggressive follows. (leaves open: chown dac_override fowner ipc_lock kill lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot)
-	lxc.cap.drop = audit_control audit_write dac_read_search fsetid ipc_owner linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_boot sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
+	# conservative: lxc.cap.drop = sys_module mknod mac_override 
+	# aggressive follows. (leaves open: chown dac_override fowner ipc_lock kill lease net_admin net_bind_service net_broadcast net_raw setgid setuid sys_chroot sys_boot)
+	lxc.cap.drop = audit_control audit_write dac_read_search fsetid ipc_owner linux_immutable mac_admin mac_override mknod setfcap sys_admin sys_module sys_pacct sys_ptrace sys_rawio sys_resource sys_time sys_tty_config syslog
 
 	# deny access to all devices by default, explicitly grant some permissions
 	#
