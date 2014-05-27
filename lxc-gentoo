@@ -333,6 +333,9 @@ write_distro_init_fixes()
 	rm -f "$ROOTFS/etc/runlevels/boot/loopback" 2>/dev/null
 	# set reasonable default unicode-enabled locale, or perl vocallby whinges
 	echo 'en_US.UTF-8 UTF-8' >>"$ROOTFS/etc/locale.gen"
+	# fix boot-time errors on openrc 0.12.4 related to kernel modules
+	# (~may 2014)
+	rm -f "$ROOTFS/etc/runlevels/sysinit/kmod-static-nodes" 2>/dev/null
 }
 
 ################################################################################

@@ -235,6 +235,10 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___May 2014___
+ - Remove `kmod-static-nodes` from `sysinit` runlevel to avoid `openrc`
+   related error messages during guest startup.
+
 ___April 2014___
  - No longer drop the `sys_boot` capability in containers, as this prevents
    `shutdown` or `poweroff` command within the container from properly
