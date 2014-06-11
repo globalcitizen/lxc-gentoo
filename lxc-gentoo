@@ -43,7 +43,7 @@
 ###############################################################################
 
 CACHE="${CACHE:-/var/cache/lxc/gentoo}"
-alias wget="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
 NAME="${NAME:-gentoo}"
@@ -487,7 +487,7 @@ fetch_stage3()
 	printf " => downloading and processing %s\n" "$stage3latestSubPathUrl"
 
 	local -a array_of_words
-	array_of_words=($(wget -q -O - "$stage3latestSubPathUrl")) \
+	array_of_words=($(${WGET} -q -O - "$stage3latestSubPathUrl")) \
 		|| printf " => Failed.\n"
 
 	# take the last word and convert it to string form:
@@ -510,7 +510,7 @@ fetch_stage3()
 		local input_url="$stage3url/$latest_stage3_subpath"
 		printf " => %s ...\n" "$input_url"
 
-		wget -O "$output_file" "$input_url" \
+		${WGET} -O "$output_file" "$input_url" \
 			|| die 6 "Error: unable to fetch\n"
 		printf " => saved to: %s\n" "$output_file"
 	fi
@@ -529,7 +529,7 @@ fetch_portage()
 		# don't update
 		printf "Downloading Gentoo portage (software build database) snapshot...\n"
 
-		wget -O "$dest" "$url" \
+		${WGET} -O "$dest" "$url" \
 			|| die 6 "Error: unable to fetch\n"
 
 		printf " => done.\n"
@@ -599,7 +599,7 @@ configure()
 
 			printf "\nDownloading the list of available variants...\n"
 			# we got a valid answer, proceed with variant list
-			mapfile -t < <(wget -O - "$MIRROR/releases/$ARCH/autobuilds")
+			mapfile -t < <(${WGET} -O - "$MIRROR/releases/$ARCH/autobuilds")
 			# I tried to check for errors here but failed miserably, hence the check
 			# for an empty variant list down below.
 
