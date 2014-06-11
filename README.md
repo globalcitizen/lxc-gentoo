@@ -235,6 +235,10 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___June 2014___
+ - Fix to `wget` argument handling to improve reliability and performance
+   on developing world or other real / half-broken internet connections
+
 ___May 2014___
  - Remove `kmod-static-nodes` from `sysinit` runlevel to avoid `openrc`
    related error messages during guest startup.
