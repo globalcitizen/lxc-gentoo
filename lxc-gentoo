@@ -191,9 +191,6 @@ write_distro_inittab()
 	sed -i 's/^c[1-9]/#&/' "$ROOTFS/$INITTAB" # disable getty
 	echo "# Lxc main console" >> "$ROOTFS/$INITTAB"
 	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$ROOTFS/$INITTAB"
-	# we also blank out /etc/issue here in order to prevent delays spawning login
-	# caused by attempts to determine domainname on disconnected containers
-	rm "$ROOTFS/etc/issue" && touch "$ROOTFS/etc/issue"
 	# we also disable the /etc/init.d/termencoding script which can cause errors
 	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' "$ROOTFS/etc/init.d/termencoding"
 	# quiet login
