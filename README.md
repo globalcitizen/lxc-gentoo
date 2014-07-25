@@ -235,6 +235,9 @@ Manual QEMU emulation setup
 Updates
 -------
 
+___July 2014___
+ - Hacky FQDN support within `UTSNAME`
+
 ___June 2014___
  - Fix to `wget` argument handling to improve reliability and performance
    on developing world or other real / half-broken internet connections
