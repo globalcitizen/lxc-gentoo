@@ -214,8 +214,8 @@ considerations:
    `veth`-style interface configuration. Bear this in mind if moving back!
 
 
-If you want to emulation other architectures via QEMU...
---------------------------------------------------------
+Emulating other architectures with QEMU...
+------------------------------------------
  - Enable `BINFMT_MISC` support in your kernel.
 
  - `emerge` *static* `qemu` with the relevant architecture enabled in
