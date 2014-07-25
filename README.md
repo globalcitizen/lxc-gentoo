@@ -167,7 +167,7 @@ Basic connectivity can be established with the following host-side commands:
 
 Once you have established basic connectivity, external network connectivity
 can be established as follows:
- - `sysctl.net.ipv4.ip_forward=1`
+ - `sysctl net.ipv4.ip_forward=1`
    (Optionally also set this in `/etc/systctl.conf` to persist after reboot)
  - `iptables -t nat -A POSTROUTING -o outward-interface -j MASQUERADE`
    (Where `outward-interface` is the name of the interface that carries
