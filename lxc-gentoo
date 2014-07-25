@@ -47,7 +47,7 @@ WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
 NAME="${NAME:-gentoo}"
-UTSNAME="${UTSNAME:-gentoo}"
+UTSNAME="${UTSNAME:-gentoo.local}"
 IPV4="${IPV4:-172.20.0.2/24}"
 GATEWAY="${GATEWAY:-172.20.0.1}"
 GUESTROOTPASS="$GUESTROOTPASS"
@@ -191,9 +191,6 @@ write_distro_inittab()
 	sed -i 's/^c[1-9]/#&/' "$ROOTFS/$INITTAB" # disable getty
 	echo "# Lxc main console" >> "$ROOTFS/$INITTAB"
 	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$ROOTFS/$INITTAB"
-	# we also blank out /etc/issue here in order to prevent delays spawning login
-	# caused by attempts to determine domainname on disconnected containers
-	rm "$ROOTFS/etc/issue" && touch "$ROOTFS/etc/issue"
 	# we also disable the /etc/init.d/termencoding script which can cause errors
 	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' "$ROOTFS/etc/init.d/termencoding"
 	# quiet login
@@ -294,9 +291,36 @@ write_distro_network()
 # custom hostname
 write_distro_hostname()
 {
-	echo -n " - setting hostname..."
-	printf "HOSTNAME=%s\n" "$UTSNAME" > "$ROOTFS/etc/conf.d/hostname"
-	echo "done."
+	# figure out the host parts
+	local hosts_entries="$UTSNAME"
+	local hosts_entry="$UTSNAME"
+
+	while [[ $hosts_entry = *.* ]]; do
+		hosts_entry="${hosts_entry%.*}"
+
+		hosts_entries="$hosts_entries $hosts_entry"
+	done
+
+	# actual hostname will is now in $hosts_entry
+	printf " - setting hostname..."
+	printf "hostname=\"%s\"\n" "$hosts_entry" > "$ROOTFS/etc/conf.d/hostname"
+
+
+	mapfile -t < "$ROOTFS/etc/hosts"
+	printf "" > "$ROOTFS/etc/hosts" # truncate
+
+	# potential problem: there are more 127... and ::1 entries. Not in stages for now.
+	for line in "${MAPFILE[@]}"; do
+		if [[ $line == 127.0.0.1* ]]; then
+			printf "%-20s %s %s\n" "127.0.0.1" "$hosts_entries" "localhost" >> "$ROOTFS/etc/hosts"
+		elif [[ $line == ::1* ]]; then
+			printf "%-20s %s %s %s\n" "::1" "$hosts_entries" "localhost" >> "$ROOTFS/etc/hosts"
+		else
+			printf "%s\n" "$line" >> "$ROOTFS/etc/hosts"
+		fi
+	done
+
+	printf "done.\n"
 }
 
 # fix init system
@@ -360,7 +384,7 @@ write_lxc_configuration()
 	$arch_line
 
 	# set the hostname
-	lxc.utsname = ${UTSNAME}
+	lxc.utsname = ${UTSNAME%%.*}
 
 	# network interface
 	lxc.network.type = veth
@@ -547,8 +571,11 @@ configure()
 
 
 		# choose a hostname, default is the container name
-		UTSNAME=${NAME}
-		read -p "What hostname do you wish for this container ? " -ei "$UTSNAME" UTSNAME
+		local domain=""
+		if [[ $UTSNAME = *.* ]]; then
+			domain=".${UTSNAME#*.}"
+		fi
+		read -p "What hostname[.domain] do you wish for this container ? " -ei "$NAME$domain" UTSNAME
 
 
 		# choose an ipv4 address, better to choose the same network than
@@ -776,7 +803,7 @@ help()
 			Current/Default: ${GATEWAY}
 		-n NAME : name of the container
 			Current/Default: ${NAME}
-		-u UTSNAME : hostname of the container
+		-u UTSNAME : hostname (+domain) of the container
 			Current/Default: ${UTSNAME}
 		-a ARCH : at the moment all but mips.
 			Current/Default: ${ARCH}
