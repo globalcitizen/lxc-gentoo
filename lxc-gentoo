@@ -329,9 +329,6 @@ write_distro_init_fixes()
 	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
 	# remove netmount from default runlevel (openrc leaves it in)
 	rm -f "$ROOTFS/etc/runlevels/default/netmount" >/dev/null 2>&1
-	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
-	# https://bugs.gentoo.org/show_bug.cgi?id=436270
-	rm -f "$ROOTFS/etc/runlevels/boot/urandom" >/dev/null 2>&1
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
 	rm -f "$ROOTFS/etc/runlevels/boot/net.lo" >/dev/null 2>&1
 	# unless we are using DHCP to configure the container, we now
