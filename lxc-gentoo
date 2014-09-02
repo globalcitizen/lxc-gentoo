@@ -324,9 +324,6 @@ write_distro_hostname()
 # fix init system
 write_distro_init_fixes()
 {
-	# fix boot-time interface config wipe under aggressive cap drop
-	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
-	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
 	# remove netmount from default runlevel (openrc leaves it in)
 	rm -f "$ROOTFS/etc/runlevels/default/netmount" >/dev/null 2>&1
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
