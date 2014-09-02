@@ -324,8 +324,6 @@ write_distro_hostname()
 # fix init system
 write_distro_init_fixes()
 {
-	# short-circuit openrc's autodetection
-	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i "$ROOTFS/etc/rc.conf"
 	# fix boot-time interface config wipe under aggressive cap drop
 	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
 	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
