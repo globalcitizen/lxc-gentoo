@@ -235,6 +235,10 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
+___September 2014___
+ - Cleanup old init system workarounds
+ - Remove hushlogin default
+
 ___July 2014___
  - Hacky FQDN support within `UTSNAME`
 
