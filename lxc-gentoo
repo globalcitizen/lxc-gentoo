@@ -191,10 +191,6 @@ write_distro_inittab()
 	sed -i 's/^c[1-9]/#&/' "$ROOTFS/$INITTAB" # disable getty
 	echo "# Lxc main console" >> "$ROOTFS/$INITTAB"
 	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$ROOTFS/$INITTAB"
-	# we also disable the /etc/init.d/termencoding script which can cause errors
-	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' "$ROOTFS/etc/init.d/termencoding"
-	# quiet login
-	touch "$ROOTFS/root/.hushlogin"
 
 	# finally we add a pf line to enable clean shutdown on SIGPWR (issue 60)
 	echo "# clean container shutdown on SIGPWR" >> "$ROOTFS/$INITTAB"
@@ -326,18 +322,8 @@ write_distro_hostname()
 # fix init system
 write_distro_init_fixes()
 {
-	# short-circuit openrc's autodetection
-	sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i "$ROOTFS/etc/rc.conf"
-	# fix for error caused by openrc <0.10.2 (~may 2012)
-	rm -f "$ROOTFS/etc/runlevels/boot/termencoding" >/dev/null 2>&1
-	# fix boot-time interface config wipe under aggressive cap drop
-	# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
-	sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
 	# remove netmount from default runlevel (openrc leaves it in)
 	rm -f "$ROOTFS/etc/runlevels/default/netmount" >/dev/null 2>&1
-	# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
-	# https://bugs.gentoo.org/show_bug.cgi?id=436270
-	rm -f "$ROOTFS/etc/runlevels/boot/urandom" >/dev/null 2>&1
 	# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
 	rm -f "$ROOTFS/etc/runlevels/boot/net.lo" >/dev/null 2>&1
 	# unless we are using DHCP to configure the container, we now
