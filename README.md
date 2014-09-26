@@ -24,15 +24,17 @@ Security Notes
      - Give each guest a dedicated filesystem (eg. separate LVM2 logical block device, ZFS dataset, or loopback-mounted file)
      - Do not use UIDs on the guest that intsersect with the host system
  - Make sure you never both (1) mount ```proc``` in a guest that you don't trust, and (2) have ```CONFIG_MAGIC_SYSRQ``` 'Magic SysRq Key' enabled in your kernel (which creates ```/proc/sysrq-trigger```) ... as this can be abused for denial of service
+ - If you use DHCP be sure to use the default busybox DHCP daemon as your client (to avoid the bash shellshock issues)
 
 
 Requirements
 ------------
  - Recent Linux kernel (>=3.2.x recommended, >=3.7.x actively tested)
     http://www.kernel.org/ (Gentoo: `emerge hardened-sources` / `emerge gentoo-sources` / `emerge vanilla-sources`)
-     - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://en.gentoo-wiki.com/wiki/LXC)
+     - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://wiki.gentoo.org/wiki/Lxc)
  - Recent lxc userspace utilities
     (Gentoo: `emerge lxc`)
+
 
 Usage
 -----
