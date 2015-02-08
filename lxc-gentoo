@@ -500,8 +500,8 @@ fetch_stage3()
 	array_of_words=($(${WGET} -q -O - "$stage3latestSubPathUrl")) \
 		|| printf " => Failed.\n"
 
-	# take the last word and convert it to string form:
-	latest_stage3_subpath="${array_of_words[-1]}"
+	# take the second last word and convert it to string form:
+	latest_stage3_subpath="${array_of_words[-2]}"
 	printf " => Got: %s\n" "$latest_stage3_subpath"
 
 
