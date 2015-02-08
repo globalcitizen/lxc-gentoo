@@ -237,6 +237,9 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
+___February 2015___
+ - Minor update to mirror information parsing to suit new format
+
 ___September 2014___
  - Cleanup old init system workarounds
  - Remove hushlogin default
