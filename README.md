@@ -341,6 +341,60 @@ ___September 2012___
  - More OpenRC related fixes for faster startup.
  - Various minor updates
 
+
+Troubleshooting
+---------------
+
+If you do not generate your guest on a dedicated
+filesystem and/or block device then you are very
+likely to encounter inode exhaustion on many
+default `extN`-class filesystems. Therefore, do
+create a new device. A good modern solution is
+to use a new ZFS dataset (`man zfs` and/or see
+http://zfsonlinux.org) or an LVM2 logical volume
+(http://sourceware.org/lvm2/). However, ZFS or
+LVM2 are not always available. You can achieve 
+a similar, more portablew, but lower performance
+result with the nearly always available Linux
+loopback device driver.
+
+First, create a 1024MB (for example) virtual
+block device image file.
+
+```
+ # dd if=/dev/zero of=myguest.image bs=1MiB count=1024
+```
+
+Second, manually request the generation of a 
+loopback device in order to facilitate the initial
+process of filesystem creation.
+
+```
+ # losetup --show -f myguest.image
+ /dev/loop0
+```
+
+Third, create an appropriate filesystem.
+
+```
+ # mkfs -t ext4 /dev/loop0
+```
+
+Finally, detach the device.
+```
+ # losetup --detach /dev/loop0
+```
+
+You can now mount the image in which to store your
+guest as follows:
+```
+ # mkdir /mnt/myguest
+ # mount -o loop myguest.image /mnt/myguest
+ # cd /mnt/myguest
+ # /path/to/lxc-gentoo create
+```
+
+
 History
 -------
 
