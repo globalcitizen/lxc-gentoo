@@ -239,6 +239,7 @@ Updates
 
 ___February 2015___
  - Minor update to mirror information parsing to suit new format
+ - Additional notes on loopback setup (see below)
 
 ___September 2014___
  - Cleanup old init system workarounds
