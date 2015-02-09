@@ -352,11 +352,12 @@ default `extN`-class filesystems. Therefore, do
 create a new device. A good modern solution is
 to use a new ZFS dataset (`man zfs` and/or see
 http://zfsonlinux.org) or an LVM2 logical volume
-(http://sourceware.org/lvm2/). However, ZFS or
-LVM2 are not always available. You can achieve 
-a similar, more portablew, but lower performance
-result with the nearly always available Linux
-loopback device driver.
+(`man lvcreate` and/or see http://sourceware.org/lvm2/).
+
+However, ZFS or LVM2 are not always available. 
+You can achieve a similar, more portable but lower
+performance result with the nearly always available
+Linux loopback device driver.
 
 First, create a 1024MB (for example) virtual
 block device image file.
