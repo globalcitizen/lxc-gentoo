@@ -356,8 +356,8 @@ http://zfsonlinux.org) or an LVM2 logical volume
 
 However, ZFS or LVM2 are not always available. 
 You can achieve a similar, more portable but lower
-performance result with the nearly always available
-Linux loopback device driver.
+performance and storage efficiency result with the
+nearly always available Linux loopback device driver.
 
 First, create a 1024MB (for example) virtual
 block device image file.
