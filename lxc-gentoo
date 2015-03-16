@@ -484,6 +484,37 @@ set_guest_root_password()
 	echo "done."
 }
 
+verify_image()
+{
+	local digest_file="$1"
+	local image_file_absolute="$2"
+	local image_file="${image_file_absolute##*/}"
+	local image_dir="${image_file_absolute%/*}"
+
+	# verify it
+	command -v gpg > /dev/null \
+		|| die 2 "gpg program is not installed, unable to verify digest.\n"
+
+	gpg --verify "$digest_file" \
+		|| die 7 "Error: Unable to verify PGP signature!\n%s\n%s\n%s\n%s\n"\
+		         "       ensure that you have imported the PGP key used to sign images"\
+		         "       the keys can be found at: http://www.gentoo.org/proj/en/releng/index.xml"\
+		         "       at the time of this writing, the key's fingerprint is"\
+		         "       13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910"
+
+	# verify sha512 checksum
+	command -v sha512sum > /dev/null \
+		|| die 2 "sha512sum program is not installed, unable to verify checksum.\n"
+
+	# eh eh
+	# if there is no OK line we fail. I don't know how else to make sha*sum -c
+	# behave properly. Maybe ditch it and compare checksums directly?
+	(
+		cd "$image_dir" \
+			&& sha512sum -c "$digest_file" 2>/dev/null | grep "$image_file" | grep OK
+	) || die 7 "Error: Checksum mismatch or other error!\n"
+}
+
 fetch_stage3()
 {
 	# base stage3 URL
@@ -523,6 +554,19 @@ fetch_stage3()
 		${WGET} -O "$output_file" "$input_url" \
 			|| die 6 "Error: unable to fetch\n"
 		printf " => saved to: %s\n" "$output_file"
+
+
+		# Download the signature file
+		printf " => Downloading the signature file\n"
+
+		local input_url="$stage3url/$latest_stage3_subpath.DIGESTS.asc"
+		local digest_file="$output_file.DIGESTS.asc"
+		printf " => %s ...\n" "$input_url"
+
+		wget -O "$digest_file" "$input_url" \
+			|| die 6 "Error: unable to fetch\n"
+
+		printf " => saved to: %s\n" "$digest_file"
 	fi
 
 	# used by calling function
@@ -711,6 +755,8 @@ create()
 			printf "      - Failed to fetch stage3, but found existing stage3 tarball instead.\n"
 		fi
 	fi
+
+	verify_image "$STAGE3_TARBALL.DIGESTS.asc" "$STAGE3_TARBALL"
 
 	# variable is nonzero, try to unpack
 	printf "\nUnpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
