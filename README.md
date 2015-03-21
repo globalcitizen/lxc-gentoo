@@ -130,6 +130,12 @@ Available environment variables are as follows.
    <td>Usually none, <i>hardened</i> or <i>hardened+nomultilib</i></td>
   </tr>
   <tr>
+   <td><b>PGP (gnupg) directory</b></td>
+   <td><pre>$PGP_DIR</pre></td>
+   <td>$HOME/.gnupg</td>
+   <td>your preferred key directory or empty string (disable). See below for PGP setup</td>
+  </tr>
+  <tr>
    <td><b>lxc.conf Location</b></td>
    <td><pre>$CONFFILE</pre></td>
    <td><i>${NAME}.conf</i></td>
@@ -142,6 +148,37 @@ Available environment variables are as follows.
  </tbody>
 </table>
 
+PGP setup
+---------
+
+There are 3 possible setups for PGP (atm. gnu privacy guard) signature checking:
+ - off
+  - PGP_DIR="" lxc-gentoo ...
+ - on with $HOME/.gnupg as the keys directory
+  - lxc-gentoo ...
+  - PGP_DIR="$HOME/.gnupg" lxc-gentoo ...
+ - on with random directory
+  - PGP_DIR="/path/to/random/dir" lxc-gentoo ...
+
+GNUPG key setup:
+
+you need the "Gentoo Linux Release Engineering (Automated Weekly Release Key)"
+that can be found at: http://www.gentoo.org/proj/en/releng/index.xml
+
+the following instructions are for a custom key storage directory, remove --homedir
+to use your default ($HOME/.gnupg) directory.
+
+mkdir -p /path/to/random/dir
+chmod 0700 /path/to/random/dir
+# import key (subkeys.pgp.net is flaky)
+gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
+# check fingerprint (current: 13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910)
+gpg --homedir /path/to/random/dir --fingerprint 0xBB572E0E2D182910
+# trust it
+gpg --homedir /path/to/random/dir --edit-key 0xBB572E0E2D182910 trust
+
+make sure to verify that the key is actually the right one (check fingerprint with
+friends, ask on IRC #gentoo-releng, #gentoo, #gentoo-containers, #lxccontainers, ...)
 
 Network Configuration Notes
 ---------------------------
