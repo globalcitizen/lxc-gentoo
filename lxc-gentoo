@@ -489,6 +489,7 @@ set_guest_root_password()
 	echo "done."
 }
 
+# does not return on failure
 verify_gpg()
 {
 	local signature="$1"
@@ -514,6 +515,7 @@ verify_gpg()
 	fi
 }
 
+# returns nonzero on failure
 # sha512sum, etc. busybox seems to behave the same as coreutils
 verify_with_stdutils()
 {
@@ -522,22 +524,124 @@ verify_with_stdutils()
 	local file_to_verify="$3"
 
 	local stdout
-	local retval
 	stdout="$($program "$file_to_verify")"
-	retval=$?
+	local retval=$?
 
 	if [[ $retval -ne 0 ]]; then
-		die 2 "verify_with_stdoutils(): Error: '%s' returned nonzero (%s)\n" \
+		printf "verify_with_stdoutils(): Error: '%s' returned nonzero (%s)\n" \
 		       "'$program' '$file_to_verify'" "$retval"
+		return 1
 	else
 		stdout="${stdout%% *}" # discard all but the hash
 
 		if [[ "$stdout" == "$known_hash" ]]; then
-			printf "verify_with_stdutils(): '%s': OK\n" "$file_to_verify"
+			printf "verify_with_stdutils(): '%s': %s OK\n" "$file_to_verify" "$program"
 		else
-			die 2 "verify_with_stdutils(): Error: file '%s' differs on disk, checksum\n\t%s\nshould be\n\t%s\n" \
-			      "$file_to_verify" "$stdout" "$known_hash"
+			printf "verify_with_stdutils(): Error: file '%s' differs on disk, %s checksum\n\t%s\nshould be\n\t%s\n" \
+			       "$file_to_verify" "$program" "$stdout" "$known_hash"
+			return 2
 		fi
+	fi
+
+	return 0
+}
+
+# returns nonzero on failure
+verify_with_openssl()
+{
+	local hash_type="$1"
+	local known_hash="$2"
+	local file_to_verify="$3"
+
+	local stdout
+	stdout="$(openssl "$hash_type" "$file_to_verify")"
+	local retval=$?
+
+	if [[ $retval -ne 0 ]]; then
+		printf "verify_with_openssl(): Error: '%s' returned nonzero (%s)\n" \
+		       "openssl '$file_to_verify'" "$retval"
+		return 1
+	else
+		stdout="${stdout##* }" # discard all but the hash
+
+		if [[ "$stdout" == "$known_hash" ]]; then
+			printf "verify_with_openssl(): '%s': %s OK\n" "$file_to_verify" "$hash_type"
+		else
+			printf "verify_with_openssl(): Error: file '%s' differs on disk, %s checksum\n\t%s\n\tshould be\n\t%s\n" \
+			       "$file_to_verify" "$hash_type" "$stdout" "$known_hash"
+			return 2
+		fi
+	fi
+
+	return 0
+}
+
+# returns program invocation on standard output
+verify_find_hash_program()
+{
+	local hash_type="${1,,}" # to lower case
+
+	# check if a standard utility exists and has the required hash
+	if command -v "${hash_type}sum" > /dev/null; then
+		printf "%ssum" "$hash_type"
+		return 0
+	fi
+
+	# check if openssl exists and has the required hash
+	if command -v openssl > /dev/null; then
+		while read -r line; do
+			if [[ "${line,,}" == "$hash_type" ]]; then
+				printf "openssl %s" "$line"
+				return 0
+			fi
+		done < <(openssl list-message-digest-algorithms)
+	fi
+
+	# check if busybox has the required hash
+	if command -v busybox > /dev/null; then
+		while read -r line; do
+			if [[ "${line,,}" == "${hash_type}sum" ]]; then
+				printf "busybox %s" "$line"
+				return 0
+			fi
+		done < <(busybox --list)
+	fi
+
+	return 1
+}
+
+# returns nonzero on failure:
+#   1 generic error
+#   2 on hash mismatch
+#	3 no hash checking program found for given hash
+#	4 do not know how to invoke the above program
+verify_hash()
+{
+	local hash_type="$1"
+	local known_hash="$2"
+	local file_to_verify="$3"
+
+	local invocation
+	invocation="$(verify_find_hash_program "$hash_type")"
+
+	if [[ $? -ne 0 ]]; then
+		return 3
+	fi
+
+	local program="${invocation%% *}" # strip everything but the first word
+	local arguments="${invocation#* }" # strip first word
+
+	if [[ "$program" == "openssl" ]]; then
+		verify_with_openssl "$arguments" "$known_hash" "$file_to_verify"
+		return $?
+	elif [[ "$program" == "busybox" ]]; then
+		verify_with_stdutils "$invocation" "$known_hash" "$file_to_verify"
+		return $?
+	elif [[ "$program" = *sum ]]; then
+		verify_with_stdutils "$program" "$known_hash" "$file_to_verify"
+		return $?
+	else
+		return 4
 	fi
 }
 
@@ -556,8 +660,6 @@ verify_digests()
 	local verified=0
 	local line_number=0
 
-	local verify_hash_type=""
-
 	for line in "${MAPFILE[@]}"; do
 		(( line_number += 1 ))
 		# default state: get next hash type
@@ -566,18 +668,7 @@ verify_digests()
 				local hashtype="${line##\# }" # remove '# ' at start
 				hashtype="${hashtype%% HASH}" # remove ' HASH' at end
 
-				case "$hashtype" in
-					SHA512) if command -v sha512sum > /dev/null; then
-								state="verify_with_stdutils"
-								verify_hash_type="sha512sum"
-								continue
-							fi
-							;;
-					*)		printf "verify_digests(): (this is normal): discarding unknown hash type in '%s':%s: '%s'\n" \
-							       "$digest_file" "$line_number" "$line"
-									continue
-							;;
-				esac
+				state="$hashtype"
 			fi
 		else
 			# these states are names of functions that will verify checksums
@@ -586,15 +677,26 @@ verify_digests()
 			last_component="${file_to_verify##*/}"
 
 			if [[ "$last_component" == "$known_file" ]]; then
-				# will call die()
-				$state "$verify_hash_type" "$known_hash" "$file_to_verify"
-				verified=1
+				verify_hash "$state" "$known_hash" "$file_to_verify"
+				local return_value=$?
+
+				if [[ $return_value -eq 0 ]]; then
+					verified=1
+				elif [[ $return_value -eq 2 ]]; then
+					die 2 "verify_digests(): hash mismatch.\n"
+				elif [[ $return_value -eq 3 ]]; then
+					printf "verify_digests(): '%s':%s: Warning: no program exists for checking: '%s'\n" \
+					       "$digest_file" "$line_number" "$hashtype"
+				elif [[ $return_value -eq 4 ]]; then
+					printf "verify_digests(): '%s':%s: Warning: I do not know what to do with the following: '%s'\n" \
+					       "$digest_file" "$line_number" "$hashtype"
+				fi
 			fi
 			state=""
 		fi
 	done
 
-	[[ $verified -eq 0 ]] && die 2 "Unable to verify checksums for '%s',\ngiven digests '%s'\n" \
+	[[ $verified -eq 0 ]] && die 2 "verify_digests(): Error: Unable to verify checksums for '%s',\n\tgiven digests '%s'\n" \
 	                               "$file_to_verify" "$digest_file"
 }
 
