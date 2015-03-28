@@ -170,15 +170,24 @@ to use your default ($HOME/.gnupg) directory.
 
 mkdir -p /path/to/random/dir
 chmod 0700 /path/to/random/dir
-# import key (subkeys.pgp.net is flaky)
+
+# import stage3 signing key (subkeys.pgp.net is flaky)
 gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
 # check fingerprint (current: 13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910)
 gpg --homedir /path/to/random/dir --fingerprint 0xBB572E0E2D182910
 # trust it
 gpg --homedir /path/to/random/dir --edit-key 0xBB572E0E2D182910 trust
 
+# if you do not have the portage tree yet: import portage signing key
+gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-keys 0xDB6B8C1F96D8BF6D
+# check fingerprint (current: DCD0 5B71 EAB9 4199 527F  44AC DB6B 8C1F 96D8 BF6D)
+gpg --homedir /path/to/random/dir --fingerprint 0xDB6B8C1F96D8BF6D
+# trust it
+gpg --homedir /path/to/random/dir --edit-key 0xDB6B8C1F96D8BF6D trust
+
 make sure to verify that the key is actually the right one (check fingerprint with
-friends, ask on IRC #gentoo-releng, #gentoo, #gentoo-containers, #lxccontainers, ...)
+friends, ask on IRC #gentoo-releng, #gentoo, #gentoo-containers, #lxccontainers,
+visit https://www.gentoo.org/proj/en/releng/index.xml , ...)
 
 Network Configuration Notes
 ---------------------------
