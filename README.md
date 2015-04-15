@@ -171,10 +171,10 @@ Otherwise, GPG will use your default (`$HOME/.gnupg`) directory.
 
 ```
 # create and use a temporary GPG key storage dir (optional)
-KEYDIR=/path/to/random/dir
-mkdir -p ${KEYDIR}
-chmod 0700 ${KEYDIR}
-alias gpg="gpg --homedir ${KEYDIR}"
+PGP_DIR=/path/to/random/dir
+mkdir -p ${PGP_DIR}
+chmod 0700 ${PGP_DIR}
+alias gpg="gpg --homedir ${PGP_DIR}"
 ```
 
 Now continue with the key imports.
@@ -198,6 +198,14 @@ gpg --edit-key 0xDB6B8C1F96D8BF6D trust
 Be sure to verify that the keys are actually the right ones (check fingerprint with
 friends, ask on IRC `#gentoo-releng`, `#gentoo`, `#gentoo-containers`, `#lxccontainers`,
 visit https://wwwold.gentoo.org/proj/en/releng/index.xml )
+
+When you're done running `lxc-gentoo`, if you used a custom key storage dir, you may 
+want to reset your GPG alias and environment.
+
+```
+unalias gpg
+unset PGP_DIR
+```
 
 Network Configuration Notes
 ---------------------------
