@@ -25,7 +25,7 @@ Security Notes
      - Do not use UIDs on the guest that intsersect with the host system
  - Make sure you never both (1) mount ```proc``` in a guest that you don't trust, and (2) have ```CONFIG_MAGIC_SYSRQ``` 'Magic SysRq Key' enabled in your kernel (which creates ```/proc/sysrq-trigger```) ... as this can be abused for denial of service
  - If you use DHCP be sure to use the default busybox DHCP daemon as your client (to avoid the bash shellshock issues)
-
+ - If applicable to your kernel, ensure `sysctl -w kern.core_pattern=core`. (see http://www.openwall.com/lists/oss-security/2015/04/14/4 for details)
 
 Requirements
 ------------
