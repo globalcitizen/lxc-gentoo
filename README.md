@@ -130,10 +130,10 @@ Available environment variables are as follows.
    <td>Usually none, <i>hardened</i> or <i>hardened+nomultilib</i></td>
   </tr>
   <tr>
-   <td><b>PGP (gnupg) directory</b></td>
+   <td><b>PGP (`gpg`/GNUPG) directory</b></td>
    <td><pre>$PGP_DIR</pre></td>
-   <td>$HOME/.gnupg</td>
-   <td>your preferred key directory or empty string (disable). See below for PGP setup</td>
+   <td><i>$HOME/.gnupg</i></td>
+   <td>Preferred key directory, or empty string (disable). See notes below.</td>
   </tr>
   <tr>
    <td><b>lxc.conf Location</b></td>
@@ -151,16 +151,16 @@ Available environment variables are as follows.
 PGP setup
 ---------
 
-There are 3 possible setups for PGP (atm. gnu privacy guard) signature checking:
- - off
-  - PGP_DIR="" lxc-gentoo ...
- - on with $HOME/.gnupg as the keys directory
-  - lxc-gentoo ...
-  - PGP_DIR="$HOME/.gnupg" lxc-gentoo ...
- - on with random directory
-  - PGP_DIR="/path/to/random/dir" lxc-gentoo ...
+There are 3 possible setups for PGP/GPG (GNU Privacy Guard) signature checking:
+ - ___off___
+  - `PGP_DIR="" lxc-gentoo ...`
+ - ___on with $HOME/.gnupg as the keys directory___
+  - `lxc-gentoo ...`
+  - `PGP_DIR="$HOME/.gnupg" lxc-gentoo ...`
+ - ___on with random directory___
+  - `PGP_DIR="/path/to/random/dir" lxc-gentoo ...`
 
-GNUPG key setup:
+___GNUPG key setup:___
 
 You need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
 that can be found at https://wwwold.gentoo.org/proj/en/releng/index.xml
