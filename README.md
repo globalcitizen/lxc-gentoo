@@ -238,6 +238,10 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
+___April 2015___
+ - Add major kernel bug to security notes
+ - Improved documentation
+
 ___February 2015___
  - Minor update to mirror information parsing to suit new format
  - Additional notes on loopback setup (see below)
