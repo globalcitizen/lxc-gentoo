@@ -130,7 +130,7 @@ Available environment variables are as follows.
    <td>Usually none, <i>hardened</i> or <i>hardened+nomultilib</i></td>
   </tr>
   <tr>
-   <td><b>PGP (`gpg`/GNUPG) directory</b></td>
+   <td><b>PGP (GPG/GNUPG) directory</b></td>
    <td><pre>$PGP_DIR</pre></td>
    <td><i>$HOME/.gnupg</i></td>
    <td>Preferred key directory, or empty string (disable). See notes below.</td>
