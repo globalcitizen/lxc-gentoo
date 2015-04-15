@@ -13,7 +13,8 @@ Typical startup time on modern hardware (even
 without an SSD) is under half a second, and 
 as hardware detection and kernel bootstrapping
 is not required, the init process is largely 
-IO bound.
+IO bound (however adding more network interfaces
+does increase startup latency).
 
 
 Security Notes
