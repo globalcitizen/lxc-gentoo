@@ -162,12 +162,13 @@ There are 3 possible setups for PGP (atm. gnu privacy guard) signature checking:
 
 GNUPG key setup:
 
-you need the "Gentoo Linux Release Engineering (Automated Weekly Release Key)"
-that can be found at: http://www.gentoo.org/proj/en/releng/index.xml
+You need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
+that can be found at https://wwwold.gentoo.org/proj/en/releng/index.xml
 
-the following instructions are for a custom key storage directory, remove --homedir
-to use your default ($HOME/.gnupg) directory.
+The following instructions are for a custom key storage directory, remove `--homedir`
+to use your default (`$HOME/.gnupg`) directory.
 
+```
 mkdir -p /path/to/random/dir
 chmod 0700 /path/to/random/dir
 
@@ -184,10 +185,11 @@ gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-key
 gpg --homedir /path/to/random/dir --fingerprint 0xDB6B8C1F96D8BF6D
 # trust it
 gpg --homedir /path/to/random/dir --edit-key 0xDB6B8C1F96D8BF6D trust
+```
 
-make sure to verify that the key is actually the right one (check fingerprint with
-friends, ask on IRC #gentoo-releng, #gentoo, #gentoo-containers, #lxccontainers,
-visit https://www.gentoo.org/proj/en/releng/index.xml , ...)
+Be sure to verify that the key is actually the right one (check fingerprint with
+friends, ask on IRC `#gentoo-releng`, `#gentoo`, `#gentoo-containers`, `#lxccontainers`,
+visit https://wwwold.gentoo.org/proj/en/releng/index.xml )
 
 Network Configuration Notes
 ---------------------------
@@ -285,6 +287,7 @@ Updates
 -------
 
 ___April 2015___
+ - Add GPG signature and checksum validation
  - Add major kernel bug to security notes
  - Improved documentation
 
@@ -320,7 +323,7 @@ ___February 2014___
 
 ___January 2014___
  - Resolve issues downloading stage3 archives
- - Set a default, unicode-enabled locale to silence ```perl``` whinging
+ - Set a default, unicode-enabled locale to silence `perl` whinging
  - Fallback to local cache when offline
  - Silence errors for antique OpenRC fixes
  - Minor fixes for recent OpenRC releases
