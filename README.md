@@ -165,8 +165,8 @@ __GNUPG key setup:__
 You need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
 that can be found at https://wwwold.gentoo.org/proj/en/releng/index.xml
 
-The following instructions are for a custom key storage directory, remove `--homedir`
-to use your default (`$HOME/.gnupg`) directory.
+If you wish to use a custom key storage directory, first create it as follows.
+Otherwise, GPG will use your default (`$HOME/.gnupg`) directory.
 
 ```
 # create and use a temporary GPG key storage dir (optional)
@@ -174,7 +174,11 @@ KEYDIR=/path/to/random/dir
 mkdir -p ${KEYDIR}
 chmod 0700 ${KEYDIR}
 alias gpg="gpg --homedir ${KEYDIR}"
+```
 
+Now continue with the key imports.
+
+```
 # Import stage3 signing key (subkeys.pgp.net is flakey)
 gpg --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
 # Check fingerprint (2015/04 = 13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910)
@@ -190,7 +194,7 @@ gpg --fingerprint 0xDB6B8C1F96D8BF6D
 gpg --edit-key 0xDB6B8C1F96D8BF6D trust
 ```
 
-Be sure to verify that the key is actually the right one (check fingerprint with
+Be sure to verify that the keys are actually the right ones (check fingerprint with
 friends, ask on IRC `#gentoo-releng`, `#gentoo`, `#gentoo-containers`, `#lxccontainers`,
 visit https://wwwold.gentoo.org/proj/en/releng/index.xml )
 
