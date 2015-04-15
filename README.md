@@ -160,7 +160,7 @@ There are 3 possible setups for PGP/GPG (GNU Privacy Guard) signature checking:
  - ___on with random directory___
   - `PGP_DIR="/path/to/random/dir" lxc-gentoo ...`
 
-___GNUPG key setup:___
+__GNUPG key setup:__
 
 You need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
 that can be found at https://wwwold.gentoo.org/proj/en/releng/index.xml
@@ -169,22 +169,25 @@ The following instructions are for a custom key storage directory, remove `--hom
 to use your default (`$HOME/.gnupg`) directory.
 
 ```
-mkdir -p /path/to/random/dir
-chmod 0700 /path/to/random/dir
+# create and use a temporary GPG key storage dir (optional)
+KEYDIR=/path/to/random/dir
+mkdir -p ${KEYDIR}
+chmod 0700 ${KEYDIR}
+alias gpg="gpg --homedir ${KEYDIR}"
 
-# import stage3 signing key (subkeys.pgp.net is flaky)
-gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
-# check fingerprint (current: 13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910)
-gpg --homedir /path/to/random/dir --fingerprint 0xBB572E0E2D182910
-# trust it
-gpg --homedir /path/to/random/dir --edit-key 0xBB572E0E2D182910 trust
+# Import stage3 signing key (subkeys.pgp.net is flakey)
+gpg --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
+# Check fingerprint (2015/04 = 13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910)
+gpg --fingerprint 0xBB572E0E2D182910
+# Trust it
+gpg --edit-key 0xBB572E0E2D182910 trust
 
-# if you do not have the portage tree yet: import portage signing key
-gpg --homedir /path/to/random/dir --keyserver pool.sks-keyservers.net --recv-keys 0xDB6B8C1F96D8BF6D
-# check fingerprint (current: DCD0 5B71 EAB9 4199 527F  44AC DB6B 8C1F 96D8 BF6D)
-gpg --homedir /path/to/random/dir --fingerprint 0xDB6B8C1F96D8BF6D
-# trust it
-gpg --homedir /path/to/random/dir --edit-key 0xDB6B8C1F96D8BF6D trust
+# If you do not have the portage tree yet: import portage signing key
+gpg --keyserver pool.sks-keyservers.net --recv-keys 0xDB6B8C1F96D8BF6D
+# Check fingerprint (2015/04 = DCD0 5B71 EAB9 4199 527F  44AC DB6B 8C1F 96D8 BF6D)
+gpg --fingerprint 0xDB6B8C1F96D8BF6D
+# Trust it
+gpg --edit-key 0xDB6B8C1F96D8BF6D trust
 ```
 
 Be sure to verify that the key is actually the right one (check fingerprint with
