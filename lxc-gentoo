@@ -57,6 +57,9 @@ CONFFILE="$CONFFILE"
 MIRROR="${MIRROR:-http://distfiles.gentoo.org}"
 STAGE3_TARBALL="${STAGE3_TARBALL}"
 PORTAGE_SOURCE="$PORTAGE_SOURCE"
+if [[ ! -v PGP_DIR ]]; then
+	PGP_DIR="$HOME/.gnupg"
+fi
 
 # These paths are within the container so do not need to obey configure prefixes
 INITTAB="/etc/inittab"
@@ -243,6 +246,8 @@ setup_portage()
 
 		# PORTAGE_SOURCE will be set by fetch_portage.
 		if [[ -f "$PORTAGE_SOURCE" ]]; then
+			verify_gpg "$PORTAGE_SOURCE.gpgsig" "$PORTAGE_SOURCE"
+
 			printf "Extracting the portage tree into %s/var/portage/tree...\n" "$ROOTFS"
 			tar -xp --strip-components 1 -C "$ROOTFS/var/portage/tree/" -f "$PORTAGE_SOURCE" \
 				|| die 2 "Error: unable to extract the portage tree.\n"
@@ -484,6 +489,217 @@ set_guest_root_password()
 	echo "done."
 }
 
+# does not return on failure
+verify_gpg()
+{
+	local signature="$1"
+	local file="$2"
+	local numargs=$#
+
+	if [[ -d "$PGP_DIR" && -f "$PGP_DIR/pubring.gpg" ]]; then
+		command -v gpg > /dev/null \
+			|| die 2 "verify_gpg(): Error: GNU privacy guard (gpg) is not installed, unable to verify.\n"
+
+		if [[ $numargs -eq 1 ]]; then
+			# signed file, e.g. DIGESTS.asc
+			gpg --homedir "$PGP_DIR" --verify "$signature" \
+				|| die 7 "verify_gpg(): Error: Unable to verify attached PGP signature! Please refer to README, section PGP setup\n"
+		else
+			# detached signature, e.g. portage-latest.tar.bz2.gpgsig
+			gpg --homedir "$PGP_DIR" --verify "$signature" "$file" \
+				|| die 7 "verify_gpg(): Error: Unable to verify detached PGP signature! Please refer to README, section PGP setup\n"
+		fi
+	else
+		printf "verify_gpg(): Warning: \$PGP_DIR is empty or not a directory or $PGP_DIR/pubring.gpg\n%s\n" \
+		       "doesen't exist, disabling signature checking!"
+	fi
+}
+
+# returns nonzero on failure
+# sha512sum, etc. busybox seems to behave the same as coreutils
+verify_with_stdutils()
+{
+	local program="$1"
+	local known_hash="$2"
+	local file_to_verify="$3"
+
+	local stdout
+	stdout="$($program "$file_to_verify")"
+	local retval=$?
+
+	if [[ $retval -ne 0 ]]; then
+		printf "verify_with_stdoutils(): Error: '%s' returned nonzero (%s)\n" \
+		       "'$program' '$file_to_verify'" "$retval"
+		return 1
+	else
+		stdout="${stdout%% *}" # discard all but the hash
+
+		if [[ "$stdout" == "$known_hash" ]]; then
+			printf "verify_with_stdutils(): '%s': %s OK\n" "$file_to_verify" "$program"
+		else
+			printf "verify_with_stdutils(): Error: file '%s' differs on disk, %s checksum\n\t%s\nshould be\n\t%s\n" \
+			       "$file_to_verify" "$program" "$stdout" "$known_hash"
+			return 2
+		fi
+	fi
+
+	return 0
+}
+
+# returns nonzero on failure
+verify_with_openssl()
+{
+	local hash_type="$1"
+	local known_hash="$2"
+	local file_to_verify="$3"
+
+	local stdout
+	stdout="$(openssl "$hash_type" "$file_to_verify")"
+	local retval=$?
+
+	if [[ $retval -ne 0 ]]; then
+		printf "verify_with_openssl(): Error: '%s' returned nonzero (%s)\n" \
+		       "openssl '$file_to_verify'" "$retval"
+		return 1
+	else
+		stdout="${stdout##* }" # discard all but the hash
+
+		if [[ "$stdout" == "$known_hash" ]]; then
+			printf "verify_with_openssl(): '%s': %s OK\n" "$file_to_verify" "$hash_type"
+		else
+			printf "verify_with_openssl(): Error: file '%s' differs on disk, %s checksum\n\t%s\n\tshould be\n\t%s\n" \
+			       "$file_to_verify" "$hash_type" "$stdout" "$known_hash"
+			return 2
+		fi
+	fi
+
+	return 0
+}
+
+# returns program invocation on standard output
+verify_find_hash_program()
+{
+	local hash_type="${1,,}" # to lower case
+
+	# check if a standard utility exists and has the required hash
+	if command -v "${hash_type}sum" > /dev/null; then
+		printf "%ssum" "$hash_type"
+		return 0
+	fi
+
+	# check if openssl exists and has the required hash
+	if command -v openssl > /dev/null; then
+		while read -r line; do
+			if [[ "${line,,}" == "$hash_type" ]]; then
+				printf "openssl %s" "$line"
+				return 0
+			fi
+		done < <(openssl list-message-digest-algorithms)
+	fi
+
+	# check if busybox has the required hash
+	if command -v busybox > /dev/null; then
+		while read -r line; do
+			if [[ "${line,,}" == "${hash_type}sum" ]]; then
+				printf "busybox %s" "$line"
+				return 0
+			fi
+		done < <(busybox --list)
+	fi
+
+	return 1
+}
+
+# returns nonzero on failure:
+#   1 generic error
+#   2 on hash mismatch
+#	3 no hash checking program found for given hash
+#	4 do not know how to invoke the above program
+verify_hash()
+{
+	local hash_type="$1"
+	local known_hash="$2"
+	local file_to_verify="$3"
+
+	local invocation
+	invocation="$(verify_find_hash_program "$hash_type")"
+
+	if [[ $? -ne 0 ]]; then
+		return 3
+	fi
+
+	local program="${invocation%% *}" # strip everything but the first word
+	local arguments="${invocation#* }" # strip first word
+
+	if [[ "$program" == "openssl" ]]; then
+		verify_with_openssl "$arguments" "$known_hash" "$file_to_verify"
+		return $?
+	elif [[ "$program" == "busybox" ]]; then
+		verify_with_stdutils "$invocation" "$known_hash" "$file_to_verify"
+		return $?
+	elif [[ "$program" = *sum ]]; then
+		verify_with_stdutils "$program" "$known_hash" "$file_to_verify"
+		return $?
+	else
+		return 4
+	fi
+}
+
+# parses a .DIGESTS file and attempts to verify the given file
+verify_digests()
+{
+	local digest_file="$1"
+	local file_to_verify="$2"
+
+	[[ ! -f "$digest_file" ]]    && die 18 "verify_digests(): digest_file '%s' is not a file\n" "$digest_file"
+	[[ ! -f "$file_to_verify" ]] && die 18 "verify_digests(): file_to_verify '%s' is not a file\n" "$file_to_verify"
+
+	mapfile -t < "$digest_file"
+
+	local state=""
+	local verified=0
+	local line_number=0
+
+	for line in "${MAPFILE[@]}"; do
+		(( line_number += 1 ))
+		# default state: get next hash type
+		if [[ "$state" == "" ]]; then
+			if [[ "$line" = *HASH ]]; then
+				local hashtype="${line##\# }" # remove '# ' at start
+				hashtype="${hashtype%% HASH}" # remove ' HASH' at end
+
+				state="$hashtype"
+			fi
+		else
+			# these states are names of functions that will verify checksums
+			known_hash="${line%%  *}" # remove everything but the hash
+			known_file="${line##*  }" # remove everything but the filename
+			last_component="${file_to_verify##*/}"
+
+			if [[ "$last_component" == "$known_file" ]]; then
+				verify_hash "$state" "$known_hash" "$file_to_verify"
+				local return_value=$?
+
+				if [[ $return_value -eq 0 ]]; then
+					verified=1
+				elif [[ $return_value -eq 2 ]]; then
+					die 2 "verify_digests(): hash mismatch.\n"
+				elif [[ $return_value -eq 3 ]]; then
+					printf "verify_digests(): '%s':%s: Warning: no program exists for checking: '%s'\n" \
+					       "$digest_file" "$line_number" "$hashtype"
+				elif [[ $return_value -eq 4 ]]; then
+					printf "verify_digests(): '%s':%s: Warning: I do not know what to do with the following: '%s'\n" \
+					       "$digest_file" "$line_number" "$hashtype"
+				fi
+			fi
+			state=""
+		fi
+	done
+
+	[[ $verified -eq 0 ]] && die 2 "verify_digests(): Error: Unable to verify checksums for '%s',\n\tgiven digests '%s'\n" \
+	                               "$file_to_verify" "$digest_file"
+}
+
 fetch_stage3()
 {
 	# base stage3 URL
@@ -523,6 +739,19 @@ fetch_stage3()
 		${WGET} -O "$output_file" "$input_url" \
 			|| die 6 "Error: unable to fetch\n"
 		printf " => saved to: %s\n" "$output_file"
+
+
+		# Download the signature file
+		printf " => Downloading the signature file\n"
+
+		local input_url="$stage3url/$latest_stage3_subpath.DIGESTS.asc"
+		local digest_file="$output_file.DIGESTS.asc"
+		printf " => %s ...\n" "$input_url"
+
+		wget -O "$digest_file" "$input_url" \
+			|| die 6 "Error: unable to fetch\n"
+
+		printf " => saved to: %s\n" "$digest_file"
 	fi
 
 	# used by calling function
@@ -532,7 +761,9 @@ fetch_stage3()
 fetch_portage()
 {
 	local url="$MIRROR/snapshots/portage-latest.tar.bz2"
+	local signature_url="$url.gpgsig"
 	local dest="$CACHE/portage-latest.tar.bz2"
+	local signature_dest="$dest.gpgsig"
 
 	mkdir -p "$CACHE"
 	if [[ ! -f "$dest" ]]; then
@@ -540,6 +771,15 @@ fetch_portage()
 		printf "Downloading Gentoo portage (software build database) snapshot...\n"
 
 		${WGET} -O "$dest" "$url" \
+			|| die 6 "Error: unable to fetch\n"
+
+		printf " => done.\n"
+	fi
+
+	if [[ ! -f "$signature_dest" ]]; then
+		printf "Downloading Gentoo portage (software build database) snapshot GPG signatures...\n"
+
+		${WGET} -O "$signature_dest" "$signature_url" \
 			|| die 6 "Error: unable to fetch\n"
 
 		printf " => done.\n"
@@ -711,6 +951,9 @@ create()
 			printf "      - Failed to fetch stage3, but found existing stage3 tarball instead.\n"
 		fi
 	fi
+
+	verify_gpg "$STAGE3_TARBALL.DIGESTS.asc"
+	verify_digests "$STAGE3_TARBALL.DIGESTS.asc" "$STAGE3_TARBALL"
 
 	# variable is nonzero, try to unpack
 	printf "\nUnpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
