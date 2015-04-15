@@ -180,10 +180,11 @@ can be established as follows:
     any distribution)
 
 Alternatively to a pure `iptables`-based approach, you may consider
-interface bridging. A bridge is like a software-switch interface on the 
-host and requires some configuration, ie:
+interface bridging. A bridge interface is a layer 2 software-based bridge 
+on the host to which guest interfaces may be linked. It requires some 
+configuration, ie:
  - install the `bridge-utils` package (gentoo: `emerge bridge-utils`)
- - `brctl addbr br0` (create a bridge (~=software switch backplane))
+ - `brctl addbr br0` (create a bridge called br0)
  - `brctl setfd br0 0` (set forward delay of zero for optimisation)
  - `ifconfig br0 172.20.0.1 255.255.255.0` (select an address range)
  - `brctl addif br0 <guest-interface>` (add guest to bridge)
