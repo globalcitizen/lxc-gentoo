@@ -103,14 +103,26 @@ Available environment variables are as follows.
   <tr>
    <td><b>IPv4 Address</b></td>
    <td><pre>$IPV4</pre></td>
-   <td><i>172.20.0.2/24</i></td>
-   <td>The special value <i>dhcp</i> may also be used.</td>
+   <td><i>dhcp</i></td>
+   <td><i>dhcp</i> is a special value; normally format is <i>x.x.x.x/y</i>.</td>
   </tr>
   <tr>
    <td><b>IPv4 Gateway</b></td>
-   <td><pre>$GATEWAY</pre></td>
-   <td><i>172.20.0.1</i></td>
-   <td>Ignored if <i>$IPV4</i> is <i>dhcp</i>.</td>
+   <td><pre>$IPV4_GATEWAY</pre></td>
+   <td><i>auto</i></td>
+   <td><i>auto</i> is a special value; normally format is <i>x.x.x.x/y</i>. Ignored if <i>$IPV4</i> is <i>dhcp</i>.</td>
+  </tr>
+  <tr>
+   <td><b>IPv6 Address</b></td>
+   <td><pre>$IPV6</pre></td>
+   <td><i>dhcp</i></td>
+   <td><i>dhcp</i> is a special value; normally format is <i>x/y</i>.</td>
+  </tr>
+  <tr>
+   <td><b>IPv6 Gateway</b></td>
+   <td><pre>$IPV6_GATEWAY</pre></td>
+   <td><i>auto</i></td>
+   <td><i>auto</i> is a special value; normally format is <i>x/y</i>. Ignored if <i>$IPV6</i> is <i>dhcp</i>.</td>
   </tr>
   <tr>
    <td><b>Guest Root Password</b></td>
