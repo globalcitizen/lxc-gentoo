@@ -245,8 +245,8 @@ Basic connectivity can be established with the following host-side commands:
 
 Once you have established basic connectivity, external network connectivity
 can be established as follows:
- - `sysctl net.ipv4.ip_forward=1`
-   (Optionally also set this in `/etc/systctl.conf` to persist after reboot)
+ - `sysctl net.ipv4.ip_forward=1` and/or `sysctl net.ipv6.ip_forward=1`
+   (Optionally also set these in `/etc/systctl.conf` to persist after reboot)
  - `iptables -t nat -A POSTROUTING -o outward-interface -j MASQUERADE`
    (Where `outward-interface` is the name of the interface that carries
     traffic to/from the host and the internet, or other destination that
@@ -258,7 +258,7 @@ can be established as follows:
 Alternatively to a pure `iptables`-based approach, you may consider
 interface bridging. A bridge interface is a layer 2 software-based bridge 
 on the host to which guest interfaces may be linked. It requires some 
-configuration, ie:
+configuration. Here is an IPv4 example:
  - install the `bridge-utils` package (gentoo: `emerge bridge-utils`)
  - `brctl addbr br0` (create a bridge called br0)
  - `brctl setfd br0 0` (set forward delay of zero for optimisation)
@@ -313,6 +313,10 @@ Emulating other architectures with QEMU...
 
 Updates
 -------
+
+___October 2015___
+ - Add IPv6 support (largely untested)
+ - Adopt new defaults ('dhcp' for IPv4/IPv6 addresses, and 'auto' for gateways)
 
 ___April 2015___
  - Add GPG signature and checksum validation
