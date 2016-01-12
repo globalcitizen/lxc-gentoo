@@ -314,6 +314,9 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
+___January 2016___
+ - Add basic versionless ebuild (thanks to @josch09)
+
 ___October 2015___
  - Add IPv6 support (largely untested)
  - Adopt new defaults ('dhcp' for IPv4/IPv6 addresses, and 'auto' for gateways)
