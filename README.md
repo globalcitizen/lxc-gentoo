@@ -318,6 +318,7 @@ Updates
 
 ___January 2016___
  - Add basic versionless ebuild (thanks to @josch09)
+ - Add Travis CI automated build testing
 
 ___October 2015___
  - Add IPv6 support (largely untested)
