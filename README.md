@@ -1,6 +1,8 @@
 lxc-gentoo: Linux Containers Gentoo Guest Template Script
 =========================================================
 
+[![Build Status](https://travis-ci.org/globalcitizen/lxc-gentoo.png)](https://travis-ci.org/globalcitizen/lxc-gentoo)
+
 https://github.com/globalcitizen/lxc-gentoo
 
 The script creates a root filesystem and config
