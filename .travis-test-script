@@ -4,10 +4,10 @@ chown -R go-rwx .gnupg
 # set up gpg keys
 gpg --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
 gpg --fingerprint 0xBB572E0E2D182910
-echo 4 | gpg --edit-key 0xBB572E0E2D182910 trust
 gpg --keyserver pool.sks-keyservers.net --recv-keys 0xDB6B8C1F96D8BF6D
 gpg --fingerprint 0xDB6B8C1F96D8BF6D
-echo 4 | gpg --edit-key 0xDB6B8C1F96D8BF6D trust
+# trust keys
+gpg --list-keys --fingerprint --with-colons | sed -E -n -e 's/^fpr:::::::::([0-9A-F]+):$/\1:6:/p' | gpg --import-ownertrust
 # run lxc-gentoo
 sudo ./lxc-gentoo create -q || exit 1
 exit 0
