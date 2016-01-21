@@ -217,7 +217,7 @@ setup_portage()
 	dest="${dest##*../}"
 	dest="${dest//usr\/portage/var/portage/tree}"
 	dest="$ROOTFS/$dest"
-	ln -f -s -r "$dest" "$src" \
+	ln -f -s "$dest" "$src" \
 		|| die 2 "Error: unable to relocate portage symlink:\n%s -> %s\n" "$src" "$dest"
 
 	cat <<- EOF >> "$ROOTFS/etc/portage/make.conf"
