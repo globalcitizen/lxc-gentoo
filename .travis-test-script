@@ -1,6 +1,6 @@
 #!/bin/bash
 # fix permisions
-chown -R go-rwx .gnupg
+chmod -R go-rwx .gnupg
 # set up gpg keys
 gpg --keyserver pool.sks-keyservers.net --recv-keys 0xBB572E0E2D182910
 gpg --fingerprint 0xBB572E0E2D182910
