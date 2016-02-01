@@ -18,10 +18,15 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#   requires:
+#   this script requires:
+#    - bash
+#    - flock
+#    - gpg (source validation)
+#    - wget and a working internet connection for HTTP fetches
+#
+#   output requires (at runtime):
 #    - lxc-utils package
 #    - linux kernel with relevant options enabled (see lxc-checkconfig)
-#    - wget and a working internet connection for HTTP fetches
 #
 #   output environment description:
 #    - uses the latest stage3 and portage (ie: 'very latest gentoo')
