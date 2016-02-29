@@ -310,7 +310,7 @@ Emulating other architectures with QEMU...
    and you will probably have to replace it with the line found here:
    https://bugs.gentoo.org/show_bug.cgi?id=407099
 
- - Copy the staticaly-linked `qemu-$ARCH` executable into the rootfs
+ - Copy the statically-linked `qemu-$ARCH` executable into the rootfs
    (do `cat /proc/sys/fs/binfmt_misc/$ARCH` to see where).
 
 Updates
