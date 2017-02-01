@@ -316,7 +316,7 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
-___January 2017___
+___Feburary 2017___
  - Fix comment typo
 
 ___January 2016___
