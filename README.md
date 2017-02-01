@@ -316,6 +316,9 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
+___January 2017___
+ - Fix comment typo
+
 ___January 2016___
  - Add basic versionless ebuild (thanks to @josch09)
  - Add Travis CI automated build testing
