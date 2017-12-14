@@ -937,10 +937,12 @@ configure()
 		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
 
 	# the rootfs name will be built with the container name
-	if [ -n "$ROOTFS" ];then
-	    ROOTFS="$(pwd)/$NAME"
-	else
-	    ROOTFS="$(lxc-config lxc.lxcpath)/$NAME/rootfs"
+	if [ -z "$ROOTFS" ];then
+	    if [ -e "$(which lxc-config 2>/dev/null)" ];then
+		ROOTFS="$(lxc-config lxc.lxcpath)/$NAME/rootfs"
+	    else
+		ROOTFS="$(pwd)/$NAME"
+	    fi
 	fi
 
 	echo "NAME           = $NAME"
