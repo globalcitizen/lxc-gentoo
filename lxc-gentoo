@@ -927,6 +927,11 @@ configure()
 	else
 		CONFFILE="$(lxc-config lxc.lxcpath)/$NAME/config"
 	fi
+
+	if [ ! -d "$(dirname $CONFFILE)" ];then
+	    mkdir -p $(dirname $CONFFILE)
+	fi
+
 	# never hurts to have a fail-safe.
 	[[ -n "${NAME//\/}" ]] \
 		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
@@ -1246,7 +1251,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 OPTIND=2
-while getopts "i:g:n:u:a:p:m:t:P:B:r:s:q" opt; do
+while getopts "i:g:n:u:a:p:m:t:P:B:r:s:c:q" opt; do
 	case "$opt" in
 		i) IPV4="$OPTARG" ;;
 		g) IPV4_GATEWAY="$OPTARG" ;;
