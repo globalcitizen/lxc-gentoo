@@ -420,10 +420,16 @@ write_lxc_configuration()
 		EOF
 	fi
 
+	if [ -n "$BDEV" ];then
+	    ROOTFS_PATH="$BDEV:/dev/$VGNAME/$LVNAME"
+	else
+	    ROOTFS_PATH=$(readlink -f "$ROOTFS")
+	fi
+
 	cat <<- EOF >> "$CONFFILE"
 
 	# root filesystem location
-	lxc.rootfs.path = $(readlink -f "$ROOTFS")
+	lxc.rootfs.path = $ROOTFS_PATH
 
 	# mounts that allow us to drop CAP_SYS_ADMIN
 	lxc.mount.entry=proc proc proc ro,nodev,noexec,nosuid 0 0
@@ -951,9 +957,31 @@ configure()
 	fi
 }
 
-create()
+create_lvm()
 {
-	configure
+    if [ "$BDEV" == 'lvm' ];then
+	if [ -z "$VGNAME" ];then
+	    VGNAME="$(lxc-config lxc.bdev.lvm.vg)"
+	fi
+	if [ -z "$LVNAME" ];then
+	    LVNAME="$NAME"
+	fi
+	if [ -z "$FSTYPE" ];then
+	    FSTYPE="ext4"
+	fi
+	if [ -z "$FSSIZE" ];then
+	    FSSIZE="5G"
+	fi
+	lvcreate -n $LVNAME -L $FSSIZE $VGNAME \
+	    || die 2 "Error: create lvm\n"
+	mkfs.$FSTYPE -L $NAME /dev/$VGNAME/$LVNAME \
+	    || die 2 "Error: format lvm\n"
+	mount /dev/$VGNAME/$LVNAME $ROOTFS \
+	    || die 2 "Error: mount lvm\n"
+    else
+	die 1 "Error: BDEV invlaide lvm"
+    fi
+}
 
 	# never hurts to have a fail-safe.
 	[[ -n "${NAME//\/}" ]] \
@@ -1028,6 +1056,10 @@ apply_subid()
 	printf "\nUnpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
 	mkdir -p "$ROOTFS"
 
+	if [ -n "$BDEV" ];then
+	    create_lvm
+	fi
+
 	tar -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
 	if [[ $? -ne 0 ]]; then
 		printf "FAILED.\n"
@@ -1066,6 +1098,10 @@ apply_subid()
 
 	if [ -n "$SUB_UID" ] && [ -n "$SUB_GID" ];then
 	    apply_subid
+	fi
+
+	if [ -n "$BDEV" ];then
+	    umount /dev/$VGNAME/$LVNAME
 	fi
 
 	cat <<-EOF
@@ -1130,6 +1166,16 @@ help()
 			usermod --add-subuids 100000-165536 lxc
 			usermod --add-subgids 200000-265536 lxc
 			-s 100000:200000
+  -B BDEV		Backing store type to use (lvm)
+			LVNAME=LogicalVolumeName
+			VGNAME=PhysicalVolumePath
+			 default: lxc-config lxc.bdev.lvm.vg
+			FSSIZE=5G
+			 Create filesystem of size SIZE * unit U (bBkKmMgGtT)
+			 default: 5G
+			FSTYPE=ext4
+			 Create fstype TYPE
+			 Default: ext4
 
 	This script is a helper to create Gentoo system containers.
 
@@ -1201,6 +1247,7 @@ while getopts "i:g:n:u:a:p:m:t:P:B:r:s:q" opt; do
 		m) MIRROR="$OPTARG" ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
 		P) PORTAGE_SOURCE="$OPTARG" ;;
+		B) BDEV="$OPTARG" ;;
 		s)
 		    SUB_UID="$(echo $OPTARG | cut -d: -f1)"
 		    SUB_GID="$(echo $OPTARG | cut -d: -f2)"
