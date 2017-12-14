@@ -994,7 +994,7 @@ create_lvm()
 	mount /dev/$VGNAME/$LVNAME $ROOTFS \
 	    || die 2 "Error: mount lvm\n"
     else
-	die 1 "Error: BDEV invlaide lvm"
+	die 1 "Error: BDEV invalide lvm"
     fi
 }
 
