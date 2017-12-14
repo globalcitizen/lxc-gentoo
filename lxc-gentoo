@@ -1002,6 +1002,7 @@ apply_subid()
 {
     printf "Apply sub_uid/sub_gid\n"
     if [ -n "$SUB_UID" ] && [ -n "$SUB_GID" ];then
+	cur_path=$(pwd)
 	cd $ROOTFS
 	LANG=C \
 	    find . -exec stat -c "%u|%g|%n|%a|%F" {}  \; \
@@ -1016,10 +1017,12 @@ apply_subid()
 		print "chmod -fc "$4" -- '\''"$3"'\'';"
 	    }
 	  }' | /bin/sh
+	cd $cur_path
 
 	# Permition for sub uid/gid
 	b='';
-	echo $ROOTFS \
+	# absolute path
+	echo $(realpath $ROOTFS) \
 	    | tr '/' '\n' \
 	    | while read dir;
 	do
