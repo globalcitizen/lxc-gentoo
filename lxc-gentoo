@@ -925,7 +925,17 @@ configure()
 		#	we already have a valid config file name
 		fi
 	else
-		CONFFILE="${NAME}.conf"
+		CONFFILE="$(lxc-config lxc.lxcpath)/$NAME/config"
+	fi
+	# never hurts to have a fail-safe.
+	[[ -n "${NAME//\/}" ]] \
+		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
+
+	# the rootfs name will be built with the container name
+	if [ -n "$ROOTFS" ];then
+	    ROOTFS="$(pwd)/$NAME"
+	else
+	    ROOTFS="$(lxc-config lxc.lxcpath)/$NAME/rootfs"
 	fi
 
 	echo "NAME           = $NAME"
@@ -983,9 +993,6 @@ create_lvm()
     fi
 }
 
-	# never hurts to have a fail-safe.
-	[[ -n "${NAME//\/}" ]] \
-		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
 apply_subid()
 {
     printf "Apply sub_uid/sub_gid\n"
@@ -1025,8 +1032,9 @@ apply_subid()
     fi
 }
 
-	# the rootfs name will be built with the container name
-	ROOTFS="./${NAME}"
+create()
+{
+	configure
 
 	# check if the conffile already exists
 	[[ -e "$CONFFILE" ]] && die 18 "Error: config file (%s) already exists!\n" "$CONFFILE"
@@ -1132,33 +1140,33 @@ destroy()
 
 help()
 {
-	cat <<-EOF
-	Usage: $0 {create|help} [options]
-		-q : Quiet, use vars from env or options and do not ask me.
-		-i IPV4 : IPv4 IP and netmask 'XX.XX.XX.XX/XX' or 'dhcp'.
-			Current/Default: ${IPV4}
-		-g IPV4_GATEWAY : IP address of the IPv4 gateway
-			Current/Default: ${IPV4_GATEWAY}
-		-i IPV6 : IPv6 IP and netmask 'X/X' or 'dhcp'.
-			Current/Default: ${IPV6}
-		-g IPV6_GATEWAY : IP address of the IPv6 gateway
-			Current/Default: ${IPV6_GATEWAY}
-		-n NAME : name of the container
-			Current/Default: ${NAME}
-		-u UTSNAME : hostname (+domain) of the container
-			Current/Default: ${UTSNAME}
-		-a ARCH : at the moment all but mips.
-			Current/Default: ${ARCH}
-		-p GUESTROOTPASS : password for root account
-			Current/Default: ${GUESTROOTPASS}
-		-m MIRROR : mirror for stage3 and Portage archive
-			Current/Default: ${MIRROR}
-		-t STAGE3_TARBALL : path to a stage3 archive to use
-			Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
-			Current: ${STAGE3_TARBALL} Default: null
-		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
+    cat <<EOF
+Usage: $0 {create|help} [options]
+  -q			Quiet, use vars from env or options and do not ask me.
+  -i IPV4		IPv4 IP and netmask 'XX.XX.XX.XX/XX' or 'dhcp'.
+			 Current/Default: ${IPV4}
+  -g IPV4_GATEWAY	IP address of the IPv4 gateway
+			 Current/Default: ${IPV4_GATEWAY}
+  -i IPV6		IPv6 IP and netmask 'X/X' or 'dhcp'.
+			 Current/Default: ${IPV6}
+  -g IPV6_GATEWAY	IP address of the IPv6 gateway
+			 Current/Default: ${IPV6_GATEWAY}
+  -n NAME		name of the container
+			 Current/Default: ${NAME}
+  -u UTSNAME		hostname (+domain) of the container
+			 Current/Default: ${UTSNAME}
+  -a ARCH		at the moment all but mips.
+			 Current/Default: ${ARCH}
+  -p GUESTROOTPASS	password for root account
+			 Current/Default: ${GUESTROOTPASS}
+  -m MIRROR		mirror for stage3 and Portage archive
+			 Current/Default: ${MIRROR}
+  -t STAGE3_TARBALL	path to a stage3 archive to use
+			 Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
+			 Current: ${STAGE3_TARBALL} Default: null
+  -P PORTAGE_SOURCE	path to a custom portage to use. Can be one of:
 			 - tarball -- will be extracted
-			 - directory -- will be bind-mounted read-only
+			 - directory -- will be bind-mounted read-only (/usr/portage/tree)
 			 - "none" -- do not set up a portage tree
 			A portage snapshot will be downloaded if not specified
 			Current: "$PORTAGE_SOURCE" Default: ""
@@ -1176,6 +1184,10 @@ help()
 			FSTYPE=ext4
 			 Create fstype TYPE
 			 Default: ext4
+  -c CONFFILE		lxc configuration file:
+			 CONFFILE="$(lxc-config lxc.lxcpath)/$NAME/config"
+  -r ROOTFS		ROOTFS="$(lxc-config lxc.lxcpath)/$NAME"
+
 
 	This script is a helper to create Gentoo system containers.
 
@@ -1206,7 +1218,7 @@ help()
 
 	(PS: Unix hackers with a conscience do not work for morally corrupt
 		corporations or governments. Use your powers for good!)
-	EOF
+EOF
 }
 
 purge()
@@ -1248,10 +1260,12 @@ while getopts "i:g:n:u:a:p:m:t:P:B:r:s:q" opt; do
 		t) STAGE3_TARBALL="$OPTARG" ;;
 		P) PORTAGE_SOURCE="$OPTARG" ;;
 		B) BDEV="$OPTARG" ;;
+		r) ROOTFS="$OPTARG" ;;
 		s)
 		    SUB_UID="$(echo $OPTARG | cut -d: -f1)"
 		    SUB_GID="$(echo $OPTARG | cut -d: -f2)"
 		    ;;
+		c) CONFFILE="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
