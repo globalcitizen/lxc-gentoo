@@ -54,6 +54,11 @@ accepts input from various environment variables.
  - interactive (with environment): `CACHE=/cache lxc-gentoo create`
  - automated: `lxc-gentoo create -q`
  - automated (with environment): `CACHE=/cache lxc-gentoo create -q`
+ - automated: `lxc-gentoo create -n test-lvm -u test-lvm.local \
+  -a amd64 -q \
+  -s 10000000:10000000 \
+  -i 192.168.3.99/24 -g 192.168.3.254 \
+  -P /usr/portage/tree -B lvm`
 
 Available environment variables are as follows.
 
