@@ -1188,6 +1188,24 @@ Usage: $0 {create|help} [options]
 
 	Example :
 	$ IPV4_GATEWAY=10.0.0.254 ./lxc-gentoo create -i 10.0.0.1/24 -n gentooserver -u gentooserver
+	
+	Example lvm:
+	$ FSSIZE=10G FSTYPE=ext2 ./lxc-gentoo create -n test-lvm3 -u test-lvm3.local -a amd64 -q -B lvm
+	$ lsblk /dev/VG_RAID1/test-lvm3 -o NAME,SIZE,TYPE,FSTYPE
+	NAME                SIZE TYPE FSTYPE
+	VG_RAID1-test--lvm3  10G lvm  ext2
+	
+	Example -P directory:
+	Host:
+	$ nano /etc/portage/make.conf
+	PORTDIR="/usr/portage/tree"
+	$ lxc-gentoo create -n test -u test.local -a amd64 -q -P /usr/portage/tree -r ./test/rootfs -c ./test/config
+	$ grep portage/tree ./test/config
+	lxc.mount.entry=/usr/portage/tree var/portage/tree none ro,bind 0 0
+	$ lxc-start -f test/config -n test
+	$ lxc-attach -n test
+	test / # mount | grep portage/tree
+	/dev/sda5 on /var/portage/tree type ext3 (ro,noatime,data=ordered)
 
 	An interactive script will ask you for various information.
 
