@@ -49,7 +49,7 @@
 
 CACHE="${CACHE:-/var/cache/lxc/gentoo}"
 WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
-
+FUIDSHIFT="${FUIDSHIFT:-fuidshift}"
 # Defaults only
 NAME="${NAME:-gentoo}"
 UTSNAME="${UTSNAME:-gentoo.local}"
@@ -1004,23 +1004,9 @@ apply_subid()
 {
     printf "Apply sub_uid/sub_gid\n"
     if [ -n "$SUB_UID" ] && [ -n "$SUB_GID" ];then
-	cur_path=$(pwd)
-	cd $ROOTFS
-	LANG=C \
-	    find . -exec stat -c "%u|%g|%n|%a|%F" {}  \; \
-	    | awk -F'|' -v subuid=$SUB_UID -v subgid=$SUB_GID '{
-	    if ($1 < subuid ) {
-		print "chown -h "subuid + $1" -- '\''"$3"'\'';"
-	    }
-	    if ($2 < subgid ) {
-		print "chgrp -h "subgid + $2" -- '\''"$3"'\'';"
-	    }
-	    if ( $5 != "symbolic link" ) {
-		print "chmod -fc "$4" -- '\''"$3"'\'';"
-	    }
-	  }' | /bin/sh
-	cd $cur_path
-
+	$FUIDSHIFT $ROOTFS u:0:$SUB_UID:65536 g:0:$SUB_GID:65536
+        [[ $? -ne 0 ]] \
+	    && die 1 'Error: map id'
 	# Permition for sub uid/gid
 	b='';
 	# absolute path

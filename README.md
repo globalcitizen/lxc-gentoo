@@ -37,7 +37,13 @@ Requirements
      - Relevant kernel options enabled (try `lxc-checkconfig` or review the documentation at http://wiki.gentoo.org/wiki/Lxc)
  - Recent lxc userspace utilities
     (Gentoo: `emerge lxc`)
-
+ - fuidshift
+   ```
+   go get github.com/lxc/lxd && go get github.com/gorilla/websocket
+   git clone https://github.com/lxc/lxd
+   cd lxd/fuidshift
+   make && cp fuidshift /usr/local/bin
+   ```
 
 Usage
 -----
