@@ -1206,6 +1206,12 @@ Usage: $0 {create|help} [options]
 	$ lxc-attach -n test
 	test / # mount | grep portage/tree
 	/dev/sda5 on /var/portage/tree type ext3 (ro,noatime,data=ordered)
+	
+	Example other:
+	$ ./lxc-gentoo create -n test -u test.local -a amd64 -q \
+	-s 10000000:10000000 \
+	-i 192.168.3.99/24 -g 192.168.3.254 \
+	-P /usr/portage/tree -B lvm
 
 	An interactive script will ask you for various information.
 
