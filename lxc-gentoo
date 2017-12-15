@@ -977,18 +977,10 @@ configure()
 create_lvm()
 {
     if [ "$BDEV" == 'lvm' ];then
-	if [ -z "$VGNAME" ];then
-	    VGNAME="$(lxc-config lxc.bdev.lvm.vg)"
-	fi
-	if [ -z "$LVNAME" ];then
-	    LVNAME="$NAME"
-	fi
-	if [ -z "$FSTYPE" ];then
-	    FSTYPE="ext4"
-	fi
-	if [ -z "$FSSIZE" ];then
-	    FSSIZE="5G"
-	fi
+	VGNAME="${VGNAME:-$(lxc-config lxc.bdev.lvm.vg)}"
+	LVNAME="${LVNAME:-$NAME}"
+	FSTYPE="${FSTYPE:-ext4}"
+	FSSIZE="${FSSIZE:-5G}"
 	lvcreate -n $LVNAME -L $FSSIZE $VGNAME \
 	    || die 2 "Error: create lvm\n"
 	mkfs.$FSTYPE -L $NAME /dev/$VGNAME/$LVNAME \
