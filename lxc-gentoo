@@ -49,7 +49,7 @@
 
 CACHE="${CACHE:-/var/cache/lxc/gentoo}"
 WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
-
+FUIDSHIFT="${FUIDSHIFT:-fuidshift}"
 # Defaults only
 NAME="${NAME:-gentoo}"
 UTSNAME="${UTSNAME:-gentoo.local}"
@@ -380,56 +380,62 @@ write_lxc_configuration()
 	$arch_line
 
 	# set the hostname
-	lxc.utsname = ${UTSNAME%%.*}
+	lxc.uts.name = ${UTSNAME%%.*}
 
 	# network interface
-	lxc.network.type = veth
-	lxc.network.flags = up
+	lxc.net.0.type = veth
+	lxc.net.0.flags = up
 	# - name in host (max 15 chars; defaults to 'tun'+random)
-	lxc.network.veth.pair = ${NAME}
+	lxc.net.0.veth.pair = ${NAME}
 	# - name in guest
-	lxc.network.name = eth0
+	lxc.net.0.name = eth0
 	# enable for bridging
 	# (eg. 'brctl addbr br0; brctl setfd br0 0; brctl addif br0 eth0')
-	#lxc.network.link = br0
+	#lxc.net.0.link = br0
 	EOF
 
 	if [ "${IPV4}" == "dhcp" ]; then
 		cat <<- EOF >> "$CONFFILE"
 		# disabled (guest uses DHCP)
-		#lxc.network.ipv4 = X.X.X.X
-		#lxc.network.ipv4.gateway = Y.Y.Y.Y   # or 'auto'
+		#lxc.net.0.ipv4.address = X.X.X.X
+		#lxc.net.0.ipv4.gateway = Y.Y.Y.Y   # or 'auto'
 		EOF
 	else
 		cat <<- EOF >> "$CONFFILE"
-		lxc.network.ipv4 = ${IPV4}
-		lxc.network.ipv4.gateway = ${IPV4_GATEWAY}
+		lxc.net.0.ipv4.address = ${IPV4}
+		lxc.net.0.ipv4.gateway = ${IPV4_GATEWAY}
 		EOF
 	fi
 
 	if [ "${IPV6}" == "dhcp" ]; then
 		cat <<- EOF >> "$CONFFILE"
 		# disabled (guest uses DHCP)
-		#lxc.network.ipv6 = X/X
-		#lxc.network.ipv6.gateway = X/X    # or 'auto'
+		#lxc.net.0.ipv6.address = X/X
+		#lxc.net.0.ipv6.gateway = X/X    # or 'auto'
 		EOF
 	else
 		cat <<- EOF >> "$CONFFILE"
-		lxc.network.ipv6 = ${IPV6}
-		lxc.network.ipv6.gateway = ${IPV6_GATEWAY}
+		lxc.net.0.ipv6.address = ${IPV6}
+		lxc.net.0.ipv6.gateway = ${IPV6_GATEWAY}
 		EOF
+	fi
+
+	if [ -n "$BDEV" ];then
+	    ROOTFS_PATH="$BDEV:/dev/$VGNAME/$LVNAME"
+	else
+	    ROOTFS_PATH=$(readlink -f "$ROOTFS")
 	fi
 
 	cat <<- EOF >> "$CONFFILE"
 
 	# root filesystem location
-	lxc.rootfs = $(readlink -f "$ROOTFS")
+	lxc.rootfs.path = $ROOTFS_PATH
 
 	# mounts that allow us to drop CAP_SYS_ADMIN
 	lxc.mount.entry=proc proc proc ro,nodev,noexec,nosuid 0 0
 	# disabled for security, see http://blog.bofh.it/debian/id_413
 	#lxc.mount.entry=sys sys sysfs defaults 0 0
-	lxc.mount.entry=shm dev/shm tmpfs rw,nosuid,nodev,noexec,relatime 0 0
+	lxc.mount.entry=shm dev/shm tmpfs rw,nosuid,nodev,noexec,relatime,mode=1777,create=dir 0 0
 	lxc.mount.entry=tmp tmp tmpfs rw,nosuid,nodev,noexec 0 0
 	lxc.mount.entry=run run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 
@@ -446,8 +452,8 @@ write_lxc_configuration()
 	cat <<- EOF >> "$CONFFILE"
 
 	# console access
-	lxc.tty = 1
-	lxc.pts = 128
+	lxc.tty.max = 1
+	lxc.pty.max = 128
 
 	# this part is based on 'linux capabilities', see: man 7 capabilities
 	#  eg: you may also wish to drop 'cap_net_raw' (though it breaks ping)
@@ -495,6 +501,12 @@ write_lxc_configuration()
 	lxc.cgroup.devices.allow = c 10:200 rwm
 
 	EOF
+	if [ -n "$SUB_UID" ];then
+	    printf "lxc.idmap = u 0 %d 65536\n" $SUB_UID >> "$CONFFILE"
+	fi
+	if [ -n "$SUB_GID" ];then
+	    printf "lxc.idmap = g 0 %d 65536\n" $SUB_GID >> "$CONFFILE"
+	fi
 	echo "done."
 }
 
@@ -913,7 +925,24 @@ configure()
 		#	we already have a valid config file name
 		fi
 	else
-		CONFFILE="${NAME}.conf"
+		CONFFILE="$(lxc-config lxc.lxcpath)/$NAME/config"
+	fi
+
+	if [ ! -d "$(dirname $CONFFILE)" ];then
+	    mkdir -p $(dirname $CONFFILE)
+	fi
+
+	# never hurts to have a fail-safe.
+	[[ -n "${NAME//\/}" ]] \
+		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
+
+	# the rootfs name will be built with the container name
+	if [ -z "$ROOTFS" ];then
+	    if [ -e "$(which lxc-config 2>/dev/null)" ];then
+		ROOTFS="$(lxc-config lxc.lxcpath)/$NAME/rootfs"
+	    else
+		ROOTFS="$(pwd)/$NAME"
+	    fi
 	fi
 
 	echo "NAME           = $NAME"
@@ -945,16 +974,55 @@ configure()
 	fi
 }
 
+create_lvm()
+{
+    if [ "$BDEV" == 'lvm' ];then
+	VGNAME="${VGNAME:-$(lxc-config lxc.bdev.lvm.vg)}"
+	LVNAME="${LVNAME:-$NAME}"
+	FSTYPE="${FSTYPE:-ext4}"
+	FSSIZE="${FSSIZE:-5G}"
+	lvcreate -n $LVNAME -L $FSSIZE $VGNAME \
+	    || die 2 "Error: create lvm\n"
+	mkfs.$FSTYPE -L $NAME /dev/$VGNAME/$LVNAME \
+	    || die 2 "Error: format lvm\n"
+	mount /dev/$VGNAME/$LVNAME $ROOTFS \
+	    || die 2 "Error: mount lvm\n"
+    else
+	die 1 "Error: BDEV invalide lvm"
+    fi
+}
+
+apply_subid()
+{
+    printf "Apply sub_uid/sub_gid\n"
+    if [ -n "$SUB_UID" ] && [ -n "$SUB_GID" ];then
+	$FUIDSHIFT $ROOTFS u:0:$SUB_UID:65536 g:0:$SUB_GID:65536
+        [[ $? -ne 0 ]] \
+	    && die 1 'Error: map id'
+	# Permition for sub uid/gid
+	b='';
+	# absolute path
+	echo $(realpath $ROOTFS) \
+	    | tr '/' '\n' \
+	    | while read dir;
+	do
+	    if [ -n "$dir" ];then
+		b+="/$dir" ;
+		# permition other xx1
+		perm_other=$(($(echo "$(stat -c %a $b)%10" | bc)&1))
+		if [ $perm_other -ne 1 ];then
+		    setfacl -m u:$SUB_UID:X $b
+		fi
+	    fi
+	done
+    else
+	printf "Error: value of sub_uid/sub_gid\n"
+    fi
+}
+
 create()
 {
 	configure
-
-	# never hurts to have a fail-safe.
-	[[ -n "${NAME//\/}" ]] \
-		|| die 8 "\$NAME (%s) IS EMPTY OR MADE OF ONLY DIRECTORY SEPERATORS, THIS IS *VERY* BAD!\n" "$NAME"
-
-	# the rootfs name will be built with the container name
-	ROOTFS="./${NAME}"
 
 	# check if the conffile already exists
 	[[ -e "$CONFFILE" ]] && die 18 "Error: config file (%s) already exists!\n" "$CONFFILE"
@@ -983,6 +1051,10 @@ create()
 	# variable is nonzero, try to unpack
 	printf "\nUnpacking filesystem from %s to %s ... " "$STAGE3_TARBALL" "$ROOTFS"
 	mkdir -p "$ROOTFS"
+
+	if [ -n "$BDEV" ];then
+	    create_lvm
+	fi
 
 	tar -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
 	if [[ $? -ne 0 ]]; then
@@ -1020,6 +1092,14 @@ create()
 	set_guest_root_password \
 		|| die 1 "Error: Failed to set guest root password\n"
 
+	if [ -n "$SUB_UID" ] && [ -n "$SUB_GID" ];then
+	    apply_subid
+	fi
+
+	if [ -n "$BDEV" ];then
+	    umount /dev/$VGNAME/$LVNAME
+	fi
+
 	cat <<-EOF
 	All done!
 
@@ -1048,36 +1128,54 @@ destroy()
 
 help()
 {
-	cat <<-EOF
-	Usage: $0 {create|help} [options]
-		-q : Quiet, use vars from env or options and do not ask me.
-		-i IPV4 : IPv4 IP and netmask 'XX.XX.XX.XX/XX' or 'dhcp'.
-			Current/Default: ${IPV4}
-		-g IPV4_GATEWAY : IP address of the IPv4 gateway
-			Current/Default: ${IPV4_GATEWAY}
-		-i IPV6 : IPv6 IP and netmask 'X/X' or 'dhcp'.
-			Current/Default: ${IPV6}
-		-g IPV6_GATEWAY : IP address of the IPv6 gateway
-			Current/Default: ${IPV6_GATEWAY}
-		-n NAME : name of the container
-			Current/Default: ${NAME}
-		-u UTSNAME : hostname (+domain) of the container
-			Current/Default: ${UTSNAME}
-		-a ARCH : at the moment all but mips.
-			Current/Default: ${ARCH}
-		-p GUESTROOTPASS : password for root account
-			Current/Default: ${GUESTROOTPASS}
-		-m MIRROR : mirror for stage3 and Portage archive
-			Current/Default: ${MIRROR}
-		-t STAGE3_TARBALL : path to a stage3 archive to use
-			Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
-			Current: ${STAGE3_TARBALL} Default: null
-		-P PORTAGE_SOURCE : path to a custom portage to use. Can be one of:
+    cat <<EOF
+Usage: $0 {create|help} [options]
+  -q			Quiet, use vars from env or options and do not ask me.
+  -i IPV4		IPv4 IP and netmask 'XX.XX.XX.XX/XX' or 'dhcp'.
+			 Current/Default: ${IPV4}
+  -g IPV4_GATEWAY	IP address of the IPv4 gateway
+			 Current/Default: ${IPV4_GATEWAY}
+  -i IPV6		IPv6 IP and netmask 'X/X' or 'dhcp'.
+			 Current/Default: ${IPV6}
+  -g IPV6_GATEWAY	IP address of the IPv6 gateway
+			 Current/Default: ${IPV6_GATEWAY}
+  -n NAME		name of the container
+			 Current/Default: ${NAME}
+  -u UTSNAME		hostname (+domain) of the container
+			 Current/Default: ${UTSNAME}
+  -a ARCH		at the moment all but mips.
+			 Current/Default: ${ARCH}
+  -p GUESTROOTPASS	password for root account
+			 Current/Default: ${GUESTROOTPASS}
+  -m MIRROR		mirror for stage3 and Portage archive
+			 Current/Default: ${MIRROR}
+  -t STAGE3_TARBALL	path to a stage3 archive to use
+			 Specifying this option will avoid fetching stage (or asking for arch, variant and mirror)
+			 Current: ${STAGE3_TARBALL} Default: null
+  -P PORTAGE_SOURCE	path to a custom portage to use. Can be one of:
 			 - tarball -- will be extracted
-			 - directory -- will be bind-mounted read-only
+			 - directory -- will be bind-mounted read-only (/usr/portage/tree)
 			 - "none" -- do not set up a portage tree
 			A portage snapshot will be downloaded if not specified
 			Current: "$PORTAGE_SOURCE" Default: ""
+  -s SUB_UID:SUB_GID	Exemple:
+			usermod --add-subuids 100000-165536 lxc
+			usermod --add-subgids 200000-265536 lxc
+			-s 100000:200000
+  -B BDEV		Backing store type to use (lvm)
+			LVNAME=LogicalVolumeName
+			VGNAME=PhysicalVolumePath
+			 default: lxc-config lxc.bdev.lvm.vg
+			FSSIZE=5G
+			 Create filesystem of size SIZE * unit U (bBkKmMgGtT)
+			 default: 5G
+			FSTYPE=ext4
+			 Create fstype TYPE
+			 Default: ext4
+  -c CONFFILE		lxc configuration file:
+			 CONFFILE="$(lxc-config lxc.lxcpath)/$NAME/config"
+  -r ROOTFS		ROOTFS="$(lxc-config lxc.lxcpath)/$NAME"
+
 
 	This script is a helper to create Gentoo system containers.
 
@@ -1090,6 +1188,30 @@ help()
 
 	Example :
 	$ IPV4_GATEWAY=10.0.0.254 ./lxc-gentoo create -i 10.0.0.1/24 -n gentooserver -u gentooserver
+	
+	Example lvm:
+	$ FSSIZE=10G FSTYPE=ext2 ./lxc-gentoo create -n test-lvm3 -u test-lvm3.local -a amd64 -q -B lvm
+	$ lsblk /dev/VG_RAID1/test-lvm3 -o NAME,SIZE,TYPE,FSTYPE
+	NAME                SIZE TYPE FSTYPE
+	VG_RAID1-test--lvm3  10G lvm  ext2
+	
+	Example -P directory:
+	Host:
+	$ nano /etc/portage/make.conf
+	PORTDIR="/usr/portage/tree"
+	$ lxc-gentoo create -n test -u test.local -a amd64 -q -P /usr/portage/tree -r ./test/rootfs -c ./test/config
+	$ grep portage/tree ./test/config
+	lxc.mount.entry=/usr/portage/tree var/portage/tree none ro,bind 0 0
+	$ lxc-start -f test/config -n test
+	$ lxc-attach -n test
+	test / # mount | grep portage/tree
+	/dev/sda5 on /var/portage/tree type ext3 (ro,noatime,data=ordered)
+	
+	Example other:
+	$ ./lxc-gentoo create -n test -u test.local -a amd64 -q \
+	-s 10000000:10000000 \
+	-i 192.168.3.99/24 -g 192.168.3.254 \
+	-P /usr/portage/tree -B lvm
 
 	An interactive script will ask you for various information.
 
@@ -1108,7 +1230,7 @@ help()
 
 	(PS: Unix hackers with a conscience do not work for morally corrupt
 		corporations or governments. Use your powers for good!)
-	EOF
+EOF
 }
 
 purge()
@@ -1136,7 +1258,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 OPTIND=2
-while getopts "i:g:n:u:a:p:m:t:P:q" opt; do
+while getopts "i:g:n:u:a:p:m:t:P:B:r:s:c:q" opt; do
 	case "$opt" in
 		i) IPV4="$OPTARG" ;;
 		g) IPV4_GATEWAY="$OPTARG" ;;
@@ -1149,6 +1271,13 @@ while getopts "i:g:n:u:a:p:m:t:P:q" opt; do
 		m) MIRROR="$OPTARG" ;;
 		t) STAGE3_TARBALL="$OPTARG" ;;
 		P) PORTAGE_SOURCE="$OPTARG" ;;
+		B) BDEV="$OPTARG" ;;
+		r) ROOTFS="$OPTARG" ;;
+		s)
+		    SUB_UID="$(echo $OPTARG | cut -d: -f1)"
+		    SUB_GID="$(echo $OPTARG | cut -d: -f2)"
+		    ;;
+		c) CONFFILE="$OPTARG" ;;
 		q) QUIET=Yes ;;
 		\?) ;;
 	esac
@@ -1171,4 +1300,3 @@ case "$1" in
 		help
 		exit 1;;
 esac
-
