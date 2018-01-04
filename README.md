@@ -188,7 +188,13 @@ There are 3 possible setups for PGP/GPG (GNU Privacy Guard) signature checking:
 
 __GNUPG key setup:__
 
-You need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
+If you have never used GPG before, first [generate a GPG keypair](https://help.github.com/articles/generating-a-new-gpg-key/):
+
+```
+gpg --full-generate-key
+```
+
+You then need the 'Gentoo Linux Release Engineering (Automated Weekly Release Key)'
 that can be found at https://wwwold.gentoo.org/proj/en/releng/index.xml
 
 If you wish to use a custom key storage directory, first create it as follows.
