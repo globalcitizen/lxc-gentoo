@@ -333,7 +333,15 @@ Emulating other architectures with QEMU...
 Updates
 -------
 
-___Feburary 2017___
+___January 2018___
+ - Improve documentation for new GPG users
+
+___December 2017___
+ - LVM support
+ - sub uid/gid
+ - LXC 2.1 suport
+
+___February 2017___
  - Fix comment typo
 
 ___January 2016___
