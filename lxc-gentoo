@@ -480,25 +480,25 @@ write_lxc_configuration()
 	# char/block -'     \`- device number    \`-- read, write, mknod
 	#
 	# first deny all...
-	lxc.cgroup.devices.deny = a
+	lxc.${CGROUP}.devices.deny = a
 	# /dev/null and zero
-	lxc.cgroup.devices.allow = c 1:3 rw
-	lxc.cgroup.devices.allow = c 1:5 rw
+	lxc.${CGROUP}.devices.allow = c 1:3 rw
+	lxc.${CGROUP}.devices.allow = c 1:5 rw
 	# /dev/{,u}random
-	lxc.cgroup.devices.allow = c 1:9 rw
-	lxc.cgroup.devices.allow = c 1:8 r
+	lxc.${CGROUP}.devices.allow = c 1:9 rw
+	lxc.${CGROUP}.devices.allow = c 1:8 r
 	# /dev/pts/*
-	lxc.cgroup.devices.allow = c 136:* rw
-	lxc.cgroup.devices.allow = c 5:2 rw
+	lxc.${CGROUP}.devices.allow = c 136:* rw
+	lxc.${CGROUP}.devices.allow = c 5:2 rw
 	# /dev/tty{0,1}
-	lxc.cgroup.devices.allow = c 4:1 rwm
-	lxc.cgroup.devices.allow = c 4:0 rwm
+	lxc.${CGROUP}.devices.allow = c 4:1 rwm
+	lxc.${CGROUP}.devices.allow = c 4:0 rwm
 	# /dev/tty
-	lxc.cgroup.devices.allow = c 5:0 rwm
+	lxc.${CGROUP}.devices.allow = c 5:0 rwm
 	# /dev/console
-	lxc.cgroup.devices.allow = c 5:1 rwm
+	lxc.${CGROUP}.devices.allow = c 5:1 rwm
 	# /dev/net/tun
-	lxc.cgroup.devices.allow = c 10:200 rwm
+	lxc.${CGROUP}.devices.allow = c 10:200 rwm
 
 	EOF
 	if [ -n "$SUB_UID" ];then
@@ -931,6 +931,11 @@ configure()
 	if [ ! -d "$(dirname $CONFFILE)" ];then
 	    mkdir -p $(dirname $CONFFILE)
 	fi
+
+	# check which cgroup version host supports
+	CGROUP="cgroup"
+	grep "/sys/fs/cgroup.*cgroup2" /proc/mounts && CGROUP="cgroup2"
+
 
 	# never hurts to have a fail-safe.
 	[[ -n "${NAME//\/}" ]] \
