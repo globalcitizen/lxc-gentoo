@@ -334,7 +334,7 @@ Updates
 -------
 
 ___May 2020___
- - Add cgroups 2 support (thanks to [@bircoph](https://github.com/bircoph)
+ - Add cgroups 2 support (thanks to [@bircoph](https://github.com/bircoph))
 
 ___January 2018___
  - Improve documentation for new GPG users
