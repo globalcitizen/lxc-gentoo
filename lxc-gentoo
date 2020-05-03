@@ -488,8 +488,8 @@ write_lxc_configuration()
 	lxc.${CGROUP}.devices.allow = c 1:9 rw
 	lxc.${CGROUP}.devices.allow = c 1:8 r
 	# /dev/pts/*
-	lxc.${CGROUP}.devices.allow = c 136:* rw
-	lxc.${CGROUP}.devices.allow = c 5:2 rw
+	lxc.${CGROUP}.devices.allow = c 136:* rwm
+	lxc.${CGROUP}.devices.allow = c 5:2 rwm
 	# /dev/tty{0,1}
 	lxc.${CGROUP}.devices.allow = c 4:1 rwm
 	lxc.${CGROUP}.devices.allow = c 4:0 rwm
